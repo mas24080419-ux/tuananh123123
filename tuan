@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Website Demo</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background: #f4f4f9;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      background: #0070f3;
+      color: white;
+      padding: 20px;
+    }
+    main {
+      padding: 40px;
+    }
+    h1 {
+      color: #333;
+    }
+    p {
+      font-size: 18px;
+      color: #555;
+    }
+    footer {
+      margin-top: 50px;
+      padding: 10px;
+      background: #eee;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h2>Chào mừng đến với Website Demo 🎉</h2>
+  </header>
+
+  <main>
+    <h1>Xin chào GitHub Pages!</h1>
+    <p>Đây là trang thử nghiệm đầu tiên của bạn chạy trên GitHub Pages.</p>
+  </main>
+
+  <footer>
+    <p>© 2025 - Demo by Tuấn</p>
+  </footer>
+</body>
+</html>
