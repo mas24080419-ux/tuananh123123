@@ -31,6 +31,15 @@
       <div class="qr-section-head"><h2>Giỏ hàng <span id="cartTitleCount" class="qr-count">0 món</span></h2><p>Kiểm tra lại món trước khi đặt cho <strong id="cartTable">bàn của bạn</strong>.</p></div>
       <div class="qr-voucher" aria-label="Thông tin ưu đãi"><span class="qr-voucher-icon" aria-hidden="true">⌑</span><span><strong>Ưu đãi & voucher</strong><small>Chưa hỗ trợ áp dụng mã giảm giá tại bàn</small></span></div>
       <div id="cartList" class="qr-cart-list"></div><button type="button" id="backToMenu" class="qr-back-menu">← Quay lại thực đơn</button>
+      <fieldset id="paymentMethodFieldset" class="qr-payment-methods">
+        <legend>Phương thức thanh toán</legend>
+        <p class="qr-payment-subtitle">Chọn cách thanh toán cho đơn hàng này</p>
+        <div class="qr-payment-options">
+          <label class="qr-payment-option"><input type="radio" name="paymentMethod" value="cash" checked><span class="qr-payment-icon" aria-hidden="true">💵</span><span><strong>Tiền mặt</strong><small>Thanh toán trực tiếp với nhân viên</small></span></label>
+          <label class="qr-payment-option"><input type="radio" name="paymentMethod" value="bank_transfer"><span class="qr-payment-icon" aria-hidden="true">🏦</span><span><strong>Chuyển khoản</strong><small>CK ngân hàng theo hướng dẫn của cửa hàng</small></span></label>
+        </div>
+        <p id="paymentMethodHint" class="qr-payment-hint">Bạn sẽ thanh toán tiền mặt với nhân viên. Đơn sẽ được ghi nhận trước khi thanh toán.</p>
+      </fieldset>
       <label class="qr-note-label" for="note">Ghi chú chung cho bếp <span>(không bắt buộc)</span></label>
       <textarea class="qr-note" id="note" maxlength="160" rows="2" placeholder="Ví dụ: Món ít cay, đồ uống mang sau…"></textarea>
       <p id="submitError" class="qr-error hidden" role="alert"></p>
@@ -76,6 +85,7 @@
       <h2 id="orderSuccessTitle">Gọi món thành công!</h2>
       <p id="orderSuccessDescription">Đơn của bạn đã được hệ thống ghi nhận. Bạn có thể theo dõi từng món tại mục Đơn đã đặt.</p>
       <div class="qr-success-reference"><span>Mã đơn hàng</span><strong id="successOrderId">#--------</strong></div>
+      <p id="successPaymentMethod" class="qr-success-payment"></p>
       <button id="viewNewOrder" type="button" class="qr-success-action">Xem chi tiết đơn hàng <span aria-hidden="true">→</span></button>
       <small class="qr-success-hint">Thông báo sẽ không tự đóng. Bấm “Xem chi tiết đơn hàng” để tiếp tục.</small>
     </div>
@@ -95,6 +105,22 @@ let pendingPayload = null; // keep snapshot and requestId on ambiguous errors
 let currentView = 'menu';
 const note = $('#note');
 const submit = $('#submit');
+let selectedPaymentMethod = 'cash';
+const paymentOptions = document.querySelectorAll('input[name="paymentMethod"]');
+function syncPaymentMethod() {
+  paymentOptions.forEach(input => {
+    input.checked = input.value === selectedPaymentMethod;
+    input.disabled = sending || Boolean(pendingPayload) || confirmed;
+  });
+  $('#paymentMethodHint').textContent = selectedPaymentMethod === 'bank_transfer'
+    ? 'Chọn chuyển khoản không đồng nghĩa đã thanh toán. Nhân viên sẽ cung cấp thông tin nhận tiền chính thức và xác nhận sau khi nhận tiền.'
+    : 'Bạn sẽ thanh toán tiền mặt với nhân viên. Đơn sẽ được ghi nhận trước khi thanh toán.';
+}
+paymentOptions.forEach(input => input.addEventListener('change', () => {
+  if (sending || pendingPayload || confirmed) return;
+  if(input.checked && ['cash','bank_transfer'].includes(input.value)) selectedPaymentMethod = input.value;
+  syncPaymentMethod();
+}));
 const newUUID = () => crypto.randomUUID();
 const pendingKey = tableToken ? `saleshub:pending-order:${tableToken}` : null;
 const recentKey = tableToken ? `saleshub:recent-order:${tableToken}` : null;
@@ -144,7 +170,8 @@ function receiptCard(d) {
   }).join('')+'</div>'+
   (d.note?'<p class="qr-receipt-note">Ghi chú đơn: '+safe(d.note)+'</p>':'')+
   '<div class="qr-receipt-total"><span>Tổng tiền món chưa hủy</span><strong>'+money(priceTotal)+'</strong></div>'+
-  '<p class="qr-receipt-payment">Thanh toán: '+safe(d.payment_status==='paid'?'Đã thanh toán':d.payment_status==='refunded'?'Đã hoàn tiền':'Chưa xác nhận thanh toán')+'</p>'+
+  '<p class="qr-receipt-payment">Phương thức: '+safe(d.payment_method==='cash'?'Tiền mặt':d.payment_method==='bank_transfer'?'Chuyển khoản':'Chưa có thông tin (đơn cũ)')+'</p>'+
+  '<p class="qr-receipt-payment">Trạng thái: '+safe(d.payment_status==='paid'?'Đã thanh toán':d.payment_status==='refunded'?'Đã hoàn tiền':'Chưa xác nhận thanh toán')+'</p>'+
   '<small class="qr-receipt-footnote">Giá lấy từ đơn đã lưu trên máy chủ. Trạng thái “Chờ bếp xử lý” không có nghĩa bếp đã bắt đầu chế biến.</small></article>';
 }
 function renderSavedOrders() {
@@ -176,7 +203,7 @@ async function refreshSavedOrders(all=false) {
 function startNewOrder() {
   if(sending||pendingPayload)return;
   confirmed=false;showError('');hidden('#confirmation',true);
-  cart.clear();note.value='';render();showView('menu');
+  cart.clear();note.value='';selectedPaymentMethod='cash';syncPaymentMethod();render();showView('menu');
 }
 
 async function verifyRecentOrder() {
@@ -212,7 +239,13 @@ function restorePending() {
         snapshot.items.some(it => !products.some(p => p.id === it.id) || !Number.isInteger(it.qty) || it.qty < 1 || it.qty > 20)) {
       sessionStorage.removeItem(pendingKey); return false;
     }
+    // Keep the method identical on retry; never silently switch from transfer to cash.
+    if (snapshot.paymentMethod && !['cash','bank_transfer'].includes(snapshot.paymentMethod)) {
+      sessionStorage.removeItem(pendingKey); return false;
+    }
     pendingPayload = snapshot;
+    if(snapshot.paymentMethod) selectedPaymentMethod = snapshot.paymentMethod;
+    syncPaymentMethod();
     cart.clear(); snapshot.items.forEach(it => cart.set(it.id, it.qty));
     note.value = snapshot.note || '';
     return true;
@@ -282,6 +315,7 @@ function render() {
   $('#viewCartLabel').textContent = `Xem giỏ hàng · ${count} món`;
   submit.disabled = sending || !count || !table || confirmed;
   note.disabled = sending || Boolean(pendingPayload) || confirmed;
+  syncPaymentMethod();
   if (!sending && !confirmed) setOrderButton('idle');
   wireSteppers();
 }
@@ -321,6 +355,7 @@ function finishSuccessAnimation() {
 function playOrderSuccessAnimation(orderId) {
   const overlay = $('#orderSuccessOverlay');
   $('#successOrderId').textContent = '#' + orderId.slice(0, 8);
+  $('#successPaymentMethod').textContent = 'Phương thức: ' + (selectedPaymentMethod === 'bank_transfer' ? 'Chuyển khoản' : 'Tiền mặt') + ' · Chưa xác nhận thanh toán';
   overlay.classList.add('hidden');
   setOrderButton('check');
   successTimers.push(setTimeout(() => {
@@ -339,6 +374,7 @@ async function submitOrder() {
     token: tableToken,
     items: [...cart].map(([id, qty]) => ({id, qty})),
     requestId: newUUID(),
+    paymentMethod: selectedPaymentMethod,
     note: note.value.trim().slice(0,160),
   };
   savePending();
