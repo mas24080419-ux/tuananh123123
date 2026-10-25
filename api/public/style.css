@@ -1,1 +1,85 @@
 :root{font-family:system-ui,-apple-system,"Segoe UI",sans-serif;background:#f3f7f6;color:#233637}*{box-sizing:border-box}body{margin:0}a{color:#186c60}button,input,textarea,select{font:inherit}button{cursor:pointer}button:disabled{opacity:.5}main{max-width:1150px;margin:auto;padding:23px}.top{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-size:25px;font-weight:850;color:#155d52}.muted{font-size:13px;color:#71827f}h2{font-size:20px;margin:10px 0}h3{font-size:16px;margin:0}.card{background:white;border:1px solid #e0e9e5;border-radius:16px;padding:18px;box-shadow:0 4px 20px #00332207}.banner{margin:15px 0;padding:13px 15px;background:#fff2da;border:1px solid #f5d69c;color:#815519;border-radius:11px;font-size:13px}.btn{border:0;border-radius:10px;background:#187666;color:white;font-weight:700;padding:11px 16px}.btn.secondary{background:#e8f4f1;color:#146356}.btn.red{background:#fff0ef;color:#9b3737}.btn.small{font-size:12px;padding:8px 10px}.input{width:100%;padding:12px;border-radius:10px;border:1px solid #d5e2df;background:white}.row{display:flex;align-items:center;gap:9px}.between{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.hidden{display:none!important}.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.pill{background:#e4f2ed;color:#11634e;border-radius:20px;padding:5px 9px;font-size:12px;font-weight:750}.item{border-top:1px solid #eef0f0;margin-top:12px;padding-top:12px}.status{background:#f2f6f6;border-radius:7px;padding:5px 8px;font-size:12px;color:#6c767c}.empty{padding:50px 20px;text-align:center;grid-column:1/-1;color:#71817e}.tab{background:#e4edeb;color:#48655f;border:0;padding:11px 16px;border-radius:10px;font-weight:700}.tab.on{background:#186d5e;color:#fff}.qr{display:block;background:white;border:1px solid #e2e8e6;border-radius:9px;padding:9px;width:170px;height:170px;margin:14px auto}.menu-item{background:white;border:1px solid #e2e9e6;border-radius:14px;margin:10px 0;padding:15px;display:flex;justify-content:space-between;align-items:center;gap:10px}.price{color:#17755d;font-weight:800}.step{display:flex;align-items:center;gap:12px}.step button{border:0;border-radius:9px;background:#dff1eb;color:#145f51;font-weight:bold;width:34px;height:34px;font-size:20px}.fixed{position:fixed;bottom:0;left:0;right:0;background:white;box-shadow:0 -4px 25px #0001;padding:15px;border-top:1px solid #e6efec}.wrap{max-width:720px;margin:auto}.guest-head{background:#166557;color:#fff;padding:28px 20px 42px;border-radius:0 0 20px 20px}.guest-head p{color:#c6e6df}.guest-main{margin-top:-27px;margin-bottom:110px}.note{padding:12px;border:1px solid #dce6e4;border-radius:10px;width:100%}@media(max-width:760px){main{padding:14px}.grid{grid-template-columns:1fr}.brand{font-size:21px}.card{padding:14px}.qr{width:190px;height:190px}}@media print{.btn,.tab,.banner,#login,#kdsTab{display:none!important}.grid{grid-template-columns:repeat(3,1fr)}}
+
+/* SalesHub guest cart V6: all selectors scoped to QR guest to preserve staff/KDS. */
+body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-apple-system,'Segoe UI',sans-serif}
+.guest-orange .hidden{display:none!important}
+.guest-orange :is(button,textarea):focus-visible{outline:3px solid #f6b394;outline-offset:2px}
+.guest-orange .qr-app{min-height:100dvh;padding-bottom:226px}
+.guest-orange .qr-header{background:linear-gradient(139deg,#fff9f3,#ffede4);padding:21px 20px 25px;border-bottom:1px solid #ffe1d2}
+.guest-orange .qr-header>h1,.guest-orange .qr-header>p,.guest-orange .qr-brandline{max-width:790px;margin-left:auto;margin-right:auto}
+.guest-orange .qr-brandline{display:flex;align-items:center;gap:9px;font-weight:800;margin-bottom:19px}
+.guest-orange .qr-brandicon{height:34px;width:34px;border-radius:11px;display:grid;place-items:center;background:#e84e1b;color:#fff;font-size:20px}
+.guest-orange .qr-brandtext small{font-size:10px;color:#ad553a;letter-spacing:1px}
+.guest-orange .qr-table-pill{margin-left:auto;padding:8px 10px;border:1px solid #ffdbc5;border-radius:30px;background:#fff;color:#a94d2d;font-size:11px;max-width:44%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.guest-orange .qr-header h1{font-size:clamp(24px,5vw,32px);letter-spacing:-.7px;line-height:1.15;margin:0 0 7px}
+.guest-orange .qr-header p{font-size:13px;color:#816758;margin:0}
+.guest-orange main.qr-main{max-width:790px;margin:0 auto;padding:17px 16px 34px}
+.guest-orange .qr-notice{padding:13px 15px;background:#fff8ea;border:1px solid #ffdb9a;border-radius:14px;font-size:12px;color:#895b1b;margin-bottom:16px;line-height:1.5}
+.guest-orange .qr-notice.is-online{background:#edf9f3;border-color:#cfecdb;color:#1a7653}
+.guest-orange .qr-tabs{display:grid;grid-template-columns:1fr 1fr;background:#efe8e4;padding:4px;border-radius:15px;margin-bottom:20px}
+.guest-orange .qr-tabs button{border:0;border-radius:11px;padding:11px 8px;background:transparent;color:#78685d;font-weight:750}
+.guest-orange .qr-tabs button.active{background:white;color:#e84e1b;box-shadow:0 3px 10px #31170a12}
+.guest-orange .cart-badge{background:#e84e1b;color:#fff;padding:2px 7px;border-radius:999px;font-size:11px}
+.guest-orange .qr-section-head{margin-bottom:15px}
+.guest-orange .qr-section-head h2{font-size:21px;margin:0 0 5px;letter-spacing:-.4px}
+.guest-orange .qr-section-head p{font-size:12px;color:#85746a;margin:0}
+.guest-orange .qr-count{font-size:12px;color:#897c73;font-weight:600}
+.guest-orange .qr-category{font-size:14px;color:#ad5e3c;margin:17px 0 10px}
+.guest-orange .qr-menu-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.guest-orange .qr-menu-card,.guest-orange .qr-cart-card{background:#fff;border:1px solid #f0e7e3;border-radius:19px;padding:13px;box-shadow:0 4px 15px #38140707;min-width:0}
+.guest-orange .qr-menu-card{display:flex;flex-direction:column;gap:11px}
+.guest-orange .qr-menu-head{display:flex;align-items:center;gap:10px;min-width:0}
+.guest-orange .qr-food-art{width:54px;height:54px;border-radius:14px;background:#fff0e6;display:grid;place-items:center;font-size:25px;flex:0 0 54px}
+.guest-orange .qr-menu-card h3,.guest-orange .qr-cart-card h3{font-size:13px;line-height:1.35;color:#29201a;margin:0;overflow-wrap:anywhere}
+.guest-orange .qr-menu-card small,.guest-orange .qr-cart-card small{font-size:11px;color:#948179;display:block;margin-top:4px}
+.guest-orange .qr-menu-bottom{display:flex;align-items:center;justify-content:space-between;gap:7px;margin-top:auto}
+.guest-orange .qr-money{font-size:14px;font-weight:850;color:#28211e;white-space:nowrap}
+.guest-orange .qr-add{background:#fff0e9;color:#e84e1b;border:0;border-radius:10px;min-width:38px;height:36px;font-size:22px}
+.guest-orange .qr-stepper{display:flex;align-items:center;gap:3px;justify-content:center;background:#f8f5f2;border-radius:11px;padding:3px}
+.guest-orange .qr-stepper button{width:34px;height:34px;border:0;background:transparent;border-radius:8px;font-size:18px;color:#4e423b}
+.guest-orange .qr-stepper button:hover{background:white}
+.guest-orange .qr-stepper span{min-width:22px;text-align:center;font-size:13px;font-weight:800}
+.guest-orange .qr-cart-list{display:grid;gap:11px;margin:14px 0}
+.guest-orange .qr-cart-card{display:flex;align-items:center;gap:12px;animation:qrIn .22s ease-out both}
+.guest-orange .qr-cart-card .qr-food-art{width:64px;height:64px;flex-basis:64px}
+.guest-orange .qr-cart-info{flex:1;min-width:0}
+.guest-orange .qr-cart-info .qr-money{display:block;margin-top:6px}
+.guest-orange .qr-voucher{display:flex;align-items:center;gap:12px;background:#fff7ed;border:1px solid #ffebd5;border-radius:16px;padding:13px;margin-bottom:17px}
+.guest-orange .qr-voucher-icon{width:32px;height:32px;background:#e84e1b;color:white;border-radius:50%;display:grid;place-items:center;font-size:22px}
+.guest-orange .qr-voucher strong{font-size:13px;display:block}
+.guest-orange .qr-voucher small{font-size:11px;color:#897a72;display:block;margin-top:3px}
+.guest-orange .qr-note-label{font-size:13px;font-weight:750;display:block;margin:16px 0 8px}
+.guest-orange .qr-note-label span{font-size:11px;font-weight:450;color:#81746c}
+.guest-orange .qr-note{width:100%;resize:vertical;border:1px solid #eadfd9;border-radius:14px;padding:13px;font-size:13px;background:white;color:#30241f}
+.guest-orange .qr-empty{background:white;border:1px dashed #dccfc7;border-radius:17px;padding:35px 15px;text-align:center;font-size:13px;color:#887970}
+.guest-orange .qr-error,.guest-orange .qr-retryhint{font-size:12px;padding:12px;border-radius:12px;margin:12px 0}
+.guest-orange .qr-error{background:#fff0f1;border:1px solid #ffd7dc;color:#a92833}
+.guest-orange .qr-retryhint{background:#fffaed;border:1px solid #ffe2a4;color:#88611c}
+.guest-orange .qr-confirmation,.guest-orange .qr-order-status{margin:13px 0;border-radius:17px;padding:15px;background:#effbf4;border:1px solid #c2ead1;color:#205b3b}
+.guest-orange .qr-confirmation strong{font-size:15px}
+.guest-orange .qr-confirmation p,.guest-orange .qr-order-status{font-size:12px}
+.guest-orange .qr-confirmation small{display:block;color:#397553;font-size:11px}
+.guest-orange .qr-sticky-bottom{position:fixed;bottom:0;left:0;right:0;z-index:10;border:1px solid #f2e5df;background:#ffffffed;backdrop-filter:blur(16px);border-radius:23px 23px 0 0;padding:14px 16px max(14px,env(safe-area-inset-bottom));box-shadow:0 -8px 28px #3c160a12}
+.guest-orange .qr-sticky-inside{max-width:750px;margin:auto}
+.guest-orange .qr-totals>div{display:flex;justify-content:space-between;gap:12px;font-size:12px;color:#86766d;padding-bottom:6px}
+.guest-orange .qr-totals>div>span:last-child{color:#27211d;font-weight:600}
+.guest-orange .qr-totals .qr-totals-total{align-items:baseline;font-size:15px}
+.guest-orange .qr-totals-total strong:last-child{font-size:22px;font-weight:900}
+.guest-orange .qr-totals small{font-size:10px;color:#9e8c82;display:block;margin-bottom:10px}
+.guest-orange .qr-view-cart{width:100%;min-height:52px;border:0;border-radius:16px;background:#e84e1b;color:#fff;font-weight:750;display:flex;justify-content:center;align-items:center;gap:9px;box-shadow:0 6px 20px #e84e1b40}
+.guest-orange .qr-order-action{height:56px;display:flex;justify-content:center}
+.guest-orange .morph-order{width:100%;min-width:56px;height:56px;position:relative;overflow:hidden;border:0;border-radius:16px;background:#e84e1b;color:white;font-weight:750;white-space:nowrap;box-shadow:0 8px 24px #e84e1b55;transition:width 320ms cubic-bezier(.2,.8,.2,1),border-radius 320ms cubic-bezier(.2,.8,.2,1),background-color .2s}
+.guest-orange .morph-order.placing{width:56px;border-radius:28px;cursor:progress;opacity:1}
+.guest-orange .morph-order.success{background:#23825f;opacity:1}
+.guest-orange .morph-order-content{display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
+.guest-orange .morph-order.placing .morph-order-content{opacity:0}
+.guest-orange .morph-spinner{display:none;position:absolute;top:50%;left:50%;width:25px;height:25px;border:3px solid #ffffff66;border-top-color:white;border-radius:50%;transform:translate(-50%,-50%);animation:qrSpin .7s linear infinite}
+.guest-orange .morph-order.placing .morph-spinner{display:block}
+.guest-orange .qr-back-menu,.guest-orange .qr-more-order{border:0;border-radius:12px;padding:12px 16px;font-weight:750;margin-top:12px}
+.guest-orange .qr-back-menu{width:100%;background:#fff2eb;color:#b24921}
+.guest-orange .qr-more-order{background:#228360;color:white}
+.guest-orange .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@keyframes qrSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}
+@keyframes qrIn{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+@media(max-width:480px){.guest-orange .qr-menu-grid{grid-template-columns:1fr}.guest-orange .qr-menu-card{flex-direction:row;align-items:center}.guest-orange .qr-menu-head{flex:1}.guest-orange .qr-menu-bottom{flex-direction:column;align-items:flex-end;justify-content:center}.guest-orange .qr-cart-card{padding:11px}.guest-orange .qr-cart-card .qr-food-art{width:50px;height:50px;flex-basis:50px}.guest-orange .qr-cart-card .qr-stepper button{width:28px;height:31px}}
+@media(prefers-reduced-motion:reduce){.guest-orange .morph-order,.guest-orange .morph-order-content{transition:none}.guest-orange .morph-spinner{animation-duration:1.6s}.guest-orange .qr-cart-card{animation:none}}
