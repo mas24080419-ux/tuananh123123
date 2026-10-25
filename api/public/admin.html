@@ -65,6 +65,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 <aside><div class="brand"><div class="brand-icon">S</div>SalesHub</div>
 <p class="side-sub">Không gian quản trị dành riêng cho chủ cửa hàng.</p>
 <a class="side-link on" href="/admin">▦ Tổng quan kinh doanh</a>
+<a class="side-link" href="/admin/operations">▤ Thu–chi và tồn kho</a>
 <a class="side-link" href="/staff">⌁ Màn hình bếp và QR</a>
 <p class="side-foot">Neon PostgreSQL<br>Báo cáo dựa trên dữ liệu đã lưu<br>Giờ Việt Nam (UTC+7)</p></aside>
 <div>
@@ -95,6 +96,13 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 <div class="card"><small>ĐÃ THU – CHƯA RÕ PHƯƠNG THỨC</small><b id="paidUnknown">—</b><p>Dành cho dữ liệu lịch sử</p></div>
 <div class="card"><small>GIAO DỊCH XÁC NHẬN TRONG KỲ</small><b id="paidOrders">—</b><p>Số đơn được xác nhận thanh toán</p></div>
 </div>
+<div class="cards">
+<div class="card"><small>TỔNG TIỀN RA TRONG KỲ</small><b class="accent" id="adminExpenses">—</b><p>Chi vận hành và nhập nguyên liệu</p></div>
+<div class="card"><small>DÒNG TIỀN THUẦN TRONG KỲ</small><b id="adminNetCash">—</b><p>Tiền vào trừ tiền ra, không phải lãi ròng</p></div>
+<div class="card"><small>NGUYÊN LIỆU SẮP HẾT</small><b class="accent" id="adminLowStock">—</b><p>Theo ngưỡng cảnh báo được thiết lập</p></div>
+<div class="card"><small>GIÁ TRỊ HÀNG TỒN (ƯỚC TÍNH)</small><b id="adminInventoryValue">—</b><p>Đơn giá nhập bình quân × số lượng tồn</p></div>
+</div>
+<div class="notice"><a href="/admin/operations">Mở quản lý Thu–chi và tồn kho →</a> để ghi thu/chi, nhập nguyên liệu, kiểm kê kho và định mức cho từng món. Không có dữ liệu mẫu tự tạo.</div>
 <div class="two">
 <div class="panel"><div class="panel-head"><div><h2>Tiền đã thu theo ngày</h2><p class="muted">Ngày xác nhận thu tiền, không phải ngày tạo đơn</p></div></div><div id="dailyChart" class="chart"><div class="empty">Đang tải…</div></div></div>
 <div class="panel"><div class="panel-head"><div><h2>Món được gọi nhiều</h2><p class="muted">Số lượng món đặt trong kỳ (chưa bị hủy)</p></div></div><div id="topItems" class="bar-list"><div class="empty">Đang tải…</div></div></div>
@@ -178,11 +186,13 @@ async function reload(){
  loading=true;
  try{
  const params=new URLSearchParams({from:$('#from').value,to:$('#to').value});
- const data=await request('/api/admin/summary?'+params.toString());
+ const [data,operations]=await Promise.all([request('/api/admin/summary?'+params.toString()),request('/api/admin/operations?'+params.toString())]);
  latest=data;
  const s=data.summary||{};
  for(const [key,v] of [['#totalOrders',s.order_count],['#orderValue',cash(s.order_value)],['#collected',cash(s.collected)],['#outstanding',cash(s.outstanding)],['#unpaidOrders',s.unpaid_orders],['#paidCash',cash(s.paid_cash)],['#paidTransfer',cash(s.paid_transfer)],['#paidUnknown',cash(s.paid_unknown)],['#paidOrders',s.paid_orders]])text(key,v??'0');
  renderBarChart(data.daily||[]);renderTop(data.top_items||[]);renderOrders(data.orders||[]);
+ const f=operations.finance||{};
+ for(const [selector,v] of [['#adminExpenses',cash(f.total_out)],['#adminNetCash',cash(f.net_cashflow)],['#adminLowStock',f.low_stock_count||0],['#adminInventoryValue',cash(f.stock_value_estimate)]])text(selector,v);
  notice(data.mode==='pilot'?'Đang ở chế độ thử nghiệm: dữ liệu sẽ mất nếu khởi động lại máy chủ.':'Đã đồng bộ với dữ liệu PostgreSQL · '+new Date().toLocaleTimeString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}),'ok');
  }catch(e){notice(e.message,'error');if(e.status===401||e.status===403)screen(false)}
  finally{loading=false}
