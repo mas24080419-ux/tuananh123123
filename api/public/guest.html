@@ -61,6 +61,25 @@
       </div>
     </div>
   </div>
+  <div id="orderSuccessOverlay" class="qr-success-overlay hidden" role="status" aria-live="polite">
+    <div class="qr-success-sparkles" aria-hidden="true">
+      <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+    </div>
+    <div class="qr-success-card">
+      <div class="qr-success-emblem" aria-hidden="true">
+        <svg viewBox="0 0 80 80" width="80" height="80" fill="none">
+          <circle cx="40" cy="40" r="32" stroke="currentColor" stroke-width="3" opacity=".25"/>
+          <path d="M23 40L35 52L57 28" stroke="currentColor" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" class="qr-success-checkline"/>
+        </svg>
+      </div>
+      <span class="qr-success-eyebrow">SALESHUB · QR ORDER</span>
+      <h2 id="orderSuccessTitle">Gọi món thành công!</h2>
+      <p id="orderSuccessDescription">Đơn của bạn đã được hệ thống ghi nhận. Bạn có thể theo dõi từng món tại mục Đơn đã đặt.</p>
+      <div class="qr-success-reference"><span>Mã đơn hàng</span><strong id="successOrderId">#--------</strong></div>
+      <button id="viewNewOrder" type="button" class="qr-success-action">Xem chi tiết đơn hàng <span aria-hidden="true">→</span></button>
+      <small class="qr-success-hint">Tự động mở đơn đã đặt ngay sau thông báo</small>
+    </div>
+  </div>
 </div>
 <script>
 'use strict';
@@ -278,15 +297,44 @@ function showView(view) {
   window.scrollTo({top:0,behavior:'instant'});
 }
 function setOrderButton(state) {
-  submit.classList.toggle('placing', state === 'loading');
+  submit.classList.toggle('placing', state === 'loading' || state === 'check');
+  submit.classList.toggle('checked', state === 'check');
   submit.classList.toggle('success', state === 'success');
   submit.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
-  $('#submitContent').innerHTML = state === 'success' ? '✓ Đơn đã được ghi nhận' : '<span id="submitLabel">Xác nhận gọi món</span><span aria-hidden="true">🔒</span>';
-  $('#orderLive').textContent = state === 'loading' ? 'Đang gửi yêu cầu gọi món' : state === 'success' ? 'Đơn đã được ghi nhận' : '';
+  const check = '<svg class="qr-button-check" aria-hidden="true" viewBox="0 0 24 24" fill="none"><path d="M4 12.5L9 17L20 6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+  $('#submitContent').innerHTML = state === 'check' ? check :
+    state === 'success' ? '<span class="qr-button-success-text">✓ Gọi món thành công</span>' :
+    '<span id="submitLabel">Xác nhận gọi món</span><span aria-hidden="true">🔒</span>';
+  $('#orderLive').textContent = state === 'loading' ? 'Đang gửi yêu cầu gọi món' :
+    state === 'check' || state === 'success' ? 'Gọi món thành công. Đơn đã được máy chủ ghi nhận.' : '';
+  submit.setAttribute('aria-label', state === 'check' || state === 'success' ? 'Gọi món thành công' : 'Xác nhận gọi món');
   submit.disabled = state !== 'idle' || sending || !totalStats().count || !table || confirmed;
+}
+let successTimers = [];
+function finishSuccessAnimation() {
+  successTimers.forEach(clearTimeout);
+  successTimers = [];
+  hidden('#orderSuccessOverlay', true);
+  renderSavedOrders();
+  showView('orders');
+}
+function playOrderSuccessAnimation(orderId) {
+  const overlay = $('#orderSuccessOverlay');
+  $('#successOrderId').textContent = '#' + orderId.slice(0, 8);
+  overlay.classList.add('hidden');
+  setOrderButton('check');
+  successTimers.push(setTimeout(() => {
+    setOrderButton('success');
+  }, 470));
+  successTimers.push(setTimeout(() => {
+    overlay.classList.remove('hidden');
+    $('#viewNewOrder').focus({preventScroll:true});
+  }, 820));
+  successTimers.push(setTimeout(finishSuccessAnimation, 3550));
 }
 async function submitOrder() {
   if (sending || confirmed || !table || !totalStats().count) return;
+  const animationStart = Date.now();
   if (!pendingPayload) pendingPayload = {
     token: tableToken,
     items: [...cart].map(([id, qty]) => ({id, qty})),
@@ -304,8 +352,11 @@ async function submitOrder() {
     $('#confirmationText').textContent = `Mã đơn: #${order.id.slice(0,8)} · ${pendingPayload.items.reduce((n,it)=>n+it.qty,0)} món · ${table.name}.`;
     hidden('#confirmation', false);
     pendingPayload = null; savePending(); cart.clear(); note.value = '';
-    setOrderButton('success');
-    renderSavedOrders();showView('orders');
+    renderSavedOrders();
+    // Keep loading visible long enough to perceive the original button-to-spinner morph.
+    const remaining = Math.max(0, 500 - (Date.now() - animationStart));
+    if (remaining) await new Promise(resolve => setTimeout(resolve, remaining));
+    playOrderSuccessAnimation(order.id);
   } catch (error) {
     // 4xx rejects an invalid payload. A network/5xx error is ambiguous: never create a new idempotency key on retry.
     if (!error.ambiguous) { pendingPayload = null; savePending(); }
@@ -313,7 +364,7 @@ async function submitOrder() {
   } finally {
     sending = false;
     render();
-    setOrderButton(confirmed ? 'success' : 'idle');
+    if (!confirmed) { hidden('#orderSuccessOverlay', true); setOrderButton('idle'); }
   }
 }
 async function init() {
@@ -349,6 +400,7 @@ $('#orderMore').addEventListener('click',startNewOrder);
 $('#orderMoreFromReceipt').addEventListener('click',startNewOrder);
 $('#ordersTab').addEventListener('click',()=>showView('orders'));
 $('#refreshOrders').addEventListener('click',()=>{void refreshSavedOrders(true);});
+$('#viewNewOrder').addEventListener('click',finishSuccessAnimation);
 submit.addEventListener('click', submitOrder);
 setInterval(() => { if (!document.hidden && currentView === 'orders') void refreshSavedOrders(false); }, 12000);
 document.addEventListener('visibilitychange', () => { if (!document.hidden && currentView === 'orders') void refreshSavedOrders(false); });
