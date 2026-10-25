@@ -77,7 +77,7 @@
       <p id="orderSuccessDescription">Đơn của bạn đã được hệ thống ghi nhận. Bạn có thể theo dõi từng món tại mục Đơn đã đặt.</p>
       <div class="qr-success-reference"><span>Mã đơn hàng</span><strong id="successOrderId">#--------</strong></div>
       <button id="viewNewOrder" type="button" class="qr-success-action">Xem chi tiết đơn hàng <span aria-hidden="true">→</span></button>
-      <small class="qr-success-hint">Tự động mở đơn đã đặt ngay sau thông báo</small>
+      <small class="qr-success-hint">Thông báo sẽ không tự đóng. Bấm “Xem chi tiết đơn hàng” để tiếp tục.</small>
     </div>
   </div>
 </div>
@@ -330,7 +330,7 @@ function playOrderSuccessAnimation(orderId) {
     overlay.classList.remove('hidden');
     $('#viewNewOrder').focus({preventScroll:true});
   }, 820));
-  successTimers.push(setTimeout(finishSuccessAnimation, 3550));
+  // Chỉ khách bấm "Xem chi tiết đơn hàng" mới chuyển trang. Tuyệt đối không tự đóng thông báo.
 }
 async function submitOrder() {
   if (sending || confirmed || !table || !totalStats().count) return;
