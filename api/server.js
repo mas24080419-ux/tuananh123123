@@ -8,7 +8,7 @@ const QRCode = require('qrcode');
 const {Pool} = require('pg');
 const PORT = Number(process.env.PORT || 3000);
 const DATABASE_URL = process.env.DATABASE_URL || '';
-const PILOT_MODE = process.env.PILOT_MODE === 'true' || !process.env.DATABASE_URL;
+const PILOT_MODE = process.env.PILOT_MODE === 'true';
 const STAFF_PASSWORD = process.env.STAFF_PASSWORD || '';
 const SESSION_SECRET = process.env.SESSION_SECRET || '';
 if (!STAFF_PASSWORD || !SESSION_SECRET || (!DATABASE_URL && !PILOT_MODE)) {
@@ -16,6 +16,7 @@ if (!STAFF_PASSWORD || !SESSION_SECRET || (!DATABASE_URL && !PILOT_MODE)) {
 }
 const mode = DATABASE_URL ? 'postgres' : 'pilot';
 const pool = DATABASE_URL ? new Pool({connectionString:DATABASE_URL,ssl:process.env.PG_SSL === 'true' ? {rejectUnauthorized:true}:undefined,max:5,connectionTimeoutMillis:8000}) : null;
+if (pool) pool.on('error', () => console.error('PostgreSQL idle connection interrupted; new requests will reconnect.'));
 const menuSeed=[
 ['Phở bò đặc biệt','Món ăn',65000,'kitchen'],['Bún chả Hà Nội','Món ăn',55000,'kitchen'],
 ['Cơm gà xối mỡ','Món ăn',59000,'kitchen'],['Khoai tây chiên','Ăn nhẹ',35000,'kitchen'],

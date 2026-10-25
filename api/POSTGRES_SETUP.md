@@ -1,27 +1,25 @@
-# SalesHub – Persistent PostgreSQL setup
+# SalesHub — PostgreSQL trên Neon
 
-## Current state (25 October 2026)
-- Code supports PostgreSQL using `pg@8.16.3`; no database has been provisioned.
-- If `DATABASE_URL` is absent, the service remains **PILOT / RAM**.
-- Pilot orders are **not migrated automatically**. Restarting or deploying erases them.
-- Existing table QR values are derived from `SESSION_SECRET`; preserve this secret during migration.
+## Cấu hình ngày 26/10/2026
+- Neon project: SalesHub (`wild-mountain-49849449`), gói Free, Singapore, PostgreSQL 17.
+- Database: `saleshub`; nhánh ứng dụng: `production` (`br-wandering-frost-azle4x6u`).
+- Backend Render: `saleshub-qr-live-pilot` (`srv-dbf2jj8n74is73bata80`).
+- `DATABASE_URL` lưu riêng trong môi trường Render, dùng kết nối pooled với TLS xác minh chứng chỉ. Không đưa chuỗi kết nối vào mã nguồn.
+- `PILOT_MODE=false`. Thiếu database thì dừng khởi động, không tự quay về lưu RAM.
+- Giữ nguyên `SESSION_SECRET` và `STAFF_PASSWORD` để bảo toàn QR bàn và phiên nhân viên.
 
-## Activate persistent storage
-1. In Render, provision a **separate, non-expiring PostgreSQL** instance for SalesHub. The paid tier must be explicitly approved by the account owner. Do not alter EnergyGuard.
-2. Copy its **internal** PostgreSQL connection URI (same Render region as the SalesHub web service).
-3. Open Render web service `saleshub-qr-live-pilot` → Environment → set `DATABASE_URL` to that URI.
-4. Keep `STAFF_PASSWORD` and **do not rotate** `SESSION_SECRET` without a planned QR migration.
-5. The backend initializes tables and seeds six tables / seven menu items in one transaction at startup from `api/schema.sql`. On DB failure, startup fails rather than returning false order confirmations.
-6. Call `GET /api/health` and verify `database: "ready"`, `mode: "postgres"`, `pilot: false`. An HTTP 200 in pilot mode is *not* proof of persistence.
-7. Test on two devices: create order → bếp receives via `GET /api/kds` → change status → verify order in `GET /api/history` (staff authentication required).
-8. Restart/redeploy the web service and verify that the test order, statuses and history remain.
-9. Schedule periodic verified PostgreSQL backups and test a restore before operating commercially.
+## Khởi tạo và kiểm tra
+- `api/schema.sql` quản lý 5 bảng và chỉ mục; khởi tạo trong transaction khi ứng dụng chạy.
+- 6 bàn và 7 món chỉ được thêm khi bảng tương ứng chưa có dữ liệu.
+- Health hợp lệ: `/api/health` trả `mode: postgres`, `database: ready`, `pilot: false`.
+- Đặt đơn thử qua QR, kiểm tra bếp/bar, thay trạng thái, đối chiếu lịch sử và audit.
+- Redeploy và xác minh đơn cùng trạng thái vẫn tồn tại.
+- Nhánh `verify-postgres-20261026` dành riêng kiểm tra schema và chống gửi trùng, không dùng cho ứng dụng.
 
-## Safety and limitations
-- New orders and order lines are inserted as one PostgreSQL transaction.
-- `UNIQUE (table_id, request_id)` prevents duplicate orders from retrying.
-- Order items snapshot prices and record state transitions in `dining_audit`.
-- Payment status remains separate from preparation; payment capture has **not** been implemented.
-- The staff interface currently uses one shared password. Add account-level RBAC, audit attribution, and operational monitoring before actual restaurant use.
-- Rate limiting is currently in-process; move to shared / durable limits before operating at scale.
-- Printed QR are tied to the long-lived `SESSION_SECRET`; treat that secret as sensitive, rotate only with explicit plan and new QR deployment.
+## Giới hạn
+- Không lưu ảnh/PDF vào bảng đơn hàng. Theo dõi dung lượng, compute và băng thông trong Neon.
+- Gói Free có hạn mức; chính sách có thể thay đổi, không phải cam kết miễn phí vĩnh viễn.
+- Máy chủ Render Free có thể ngủ; lượt truy cập đầu tiên cần chờ khởi động.
+- Các đơn RAM trước đó không tự được chuyển sang PostgreSQL.
+- Cần bổ sung sao lưu định kỳ và kiểm tra phục hồi trước khi vận hành thương mại. Chưa có lịch sao lưu tự động.
+- Đăng nhập nhân viên hiện dùng mật khẩu chung, chưa có phân quyền tài khoản riêng. Thanh toán trực tuyến chưa được tích hợp.
