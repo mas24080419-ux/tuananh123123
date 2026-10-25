@@ -21,6 +21,7 @@
     <div class="qr-tabs" role="tablist" aria-label="Điều hướng đặt món">
       <button type="button" id="menuTab" role="tab" aria-selected="true" aria-controls="menuPane" class="active">Thực đơn</button>
       <button type="button" id="cartTab" role="tab" aria-selected="false" aria-controls="cartPane">Giỏ hàng <span id="cartCountBadge" class="cart-badge">0</span></button>
+      <button type="button" id="ordersTab" role="tab" aria-selected="false" aria-controls="ordersPane">Đơn đã đặt <span id="ordersCountBadge" class="cart-badge">0</span></button>
     </div>
     <section id="menuPane" role="tabpanel" aria-labelledby="menuTab">
       <div class="qr-section-head"><h2>Khám phá thực đơn</h2><p>Chọn món yêu thích và gửi yêu cầu tới bếp hoặc quầy bar.</p></div>
@@ -36,8 +37,14 @@
       <p id="retryHint" class="qr-retryhint hidden" role="status">Chưa xác định được đơn đã tới máy chủ hay chưa. Giỏ hàng tạm khóa để thử gửi lại cùng mã yêu cầu, tránh tạo đơn trùng.</p>
       <div id="confirmation" class="qr-confirmation hidden" role="status" aria-live="polite"><strong>✓ Đơn đã được ghi nhận</strong><p id="confirmationText"></p><small>Máy chủ đã ghi nhận đơn. Điều này không đồng nghĩa bếp đã bắt đầu chế biến.</small><button type="button" id="orderMore" class="qr-more-order">+ Gọi thêm món</button></div>
     </section>
+    <section id="ordersPane" class="hidden" role="tabpanel" aria-labelledby="ordersTab">
+      <div class="qr-section-head"><h2>Đơn hàng của tôi</h2><p>Thông tin và trạng thái lấy từ máy chủ. Danh sách chỉ gồm các đơn bạn đặt trên trình duyệt này cho đúng bàn QR.</p></div>
+      <div id="orderList" class="qr-receipt-list" aria-live="polite"><p class="qr-empty">Bạn chưa có đơn nào trên thiết bị này.</p></div>
+      <button type="button" id="refreshOrders" class="qr-back-menu">↻ Cập nhật trạng thái đơn</button>
+      <button type="button" id="orderMoreFromReceipt" class="qr-more-order">+ Gọi thêm món</button>
+    </section>
   </main>
-  <div class="qr-sticky-bottom">
+  <div id="stickyBottom" class="qr-sticky-bottom">
     <div class="qr-sticky-inside">
       <div class="qr-totals">
         <div><span>Tạm tính</span><span id="subtotal">0 đ</span></div>
@@ -73,6 +80,86 @@ const newUUID = () => crypto.randomUUID();
 const pendingKey = tableToken ? `saleshub:pending-order:${tableToken}` : null;
 const recentKey = tableToken ? `saleshub:recent-order:${tableToken}` : null;
 let recentOrderId = null;
+
+const savedOrdersKey = tableToken ? 'saleshub:orders:v1:' + tableToken : null;
+let savedOrderIds = [], savedOrderDetails = new Map(), receiptErrors = new Map();
+let refreshingOrders = false;
+const isUUID = value => typeof value === 'string' && /^[0-9a-f-]{36}$/i.test(value);
+function restoreSavedOrderIds() {
+  try {
+    const fromStore = savedOrdersKey ? JSON.parse(localStorage.getItem(savedOrdersKey)||'[]') : [];
+    savedOrderIds = Array.isArray(fromStore) ? fromStore.filter(isUUID).slice(0,8) : [];
+  } catch (_) { savedOrderIds = []; }
+  try {
+    const earlier = recentKey && sessionStorage.getItem(recentKey);
+    if (isUUID(earlier) && !savedOrderIds.includes(earlier)) savedOrderIds.unshift(earlier);
+  } catch (_) {}
+  savedOrderIds = [...new Set(savedOrderIds)].slice(0,8);
+  $('#ordersCountBadge').textContent = String(savedOrderIds.length);
+}
+function rememberOrderId(orderId) {
+  if (!isUUID(orderId)) return;
+  savedOrderIds = [orderId,...savedOrderIds.filter(id=>id!==orderId)].slice(0,8);
+  $('#ordersCountBadge').textContent = String(savedOrderIds.length);
+  try { if(savedOrdersKey) localStorage.setItem(savedOrdersKey,JSON.stringify(savedOrderIds)); } catch (_) {}
+  recentOrderId=orderId;
+  try { if(recentKey) sessionStorage.setItem(recentKey,orderId); } catch (_) {}
+}
+const lineState = {new:['Chờ bếp xử lý','pending'],preparing:['Đang chế biến','working'],
+ ready:['Món đã sẵn sàng','ready'],served:['Đã phục vụ','served'],cancelled:['Đã hủy','cancelled']};
+function receiptCard(d) {
+  const safe = escapeHTML, items = Array.isArray(d.items)?d.items:[];
+  const subtotal = items.reduce((s,item)=>s+(item.status==='cancelled'?0:Number(item.unit_price||0)*Number(item.quantity||0)),0);
+  const priceTotal = Number.isFinite(Number(d.total_vnd)) ? Number(d.total_vnd) : subtotal;
+  const date = d.created_at ? new Date(d.created_at).toLocaleString('vi-VN',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'}) : 'Chưa rõ thời gian';
+  const allServed = items.length>0&&items.every(i=>['ready','served'].includes(i.status));
+  const summary = allServed ? 'Các món đã sẵn sàng/đã phục vụ' : items.some(i=>i.status==='preparing') ? 'Bếp đang chế biến' : 'Đã ghi nhận, đang chờ xử lý';
+  return '<article class="qr-receipt-card"><div class="qr-receipt-header"><div><strong>Đơn #'+safe(d.id.slice(0,8))+'</strong><small>'+safe(date)+' · '+safe(d.table_name||'')+'</small></div><span class="qr-receipt-badge">'+safe(summary)+'</span></div>'+
+  '<p class="qr-receipt-id">Mã đơn đầy đủ: '+safe(d.id)+'</p>'+
+  '<div class="qr-receipt-items">'+items.map(i=>{
+    const state=lineState[i.status]||[i.status||'Không rõ','pending'];
+    const price=Number(i.unit_price||0),qty=Number(i.quantity||0);
+    return '<div class="qr-receipt-item"><div class="qr-receipt-item-title"><strong>'+safe(i.name)+'</strong><span class="qr-receipt-status '+safe(state[1])+'">'+safe(state[0])+'</span></div>'+
+      '<div class="qr-receipt-line"><span>'+qty+' × '+money(price)+'</span><strong>'+money(qty*price)+'</strong></div>'+
+      (i.note?'<small>Ghi chú: '+safe(i.note)+'</small>':'')+'</div>';
+  }).join('')+'</div>'+
+  (d.note?'<p class="qr-receipt-note">Ghi chú đơn: '+safe(d.note)+'</p>':'')+
+  '<div class="qr-receipt-total"><span>Tổng tiền món chưa hủy</span><strong>'+money(priceTotal)+'</strong></div>'+
+  '<p class="qr-receipt-payment">Thanh toán: '+safe(d.payment_status==='paid'?'Đã thanh toán':d.payment_status==='refunded'?'Đã hoàn tiền':'Chưa xác nhận thanh toán')+'</p>'+
+  '<small class="qr-receipt-footnote">Giá lấy từ đơn đã lưu trên máy chủ. Trạng thái “Chờ bếp xử lý” không có nghĩa bếp đã bắt đầu chế biến.</small></article>';
+}
+function renderSavedOrders() {
+  const target=$('#orderList'); if (!target) return;
+  $('#ordersCountBadge').textContent=String(savedOrderIds.length);
+  target.innerHTML = savedOrderIds.length ? savedOrderIds.map(id => {
+    const order=savedOrderDetails.get(id),error=receiptErrors.get(id);
+    if (order) return receiptCard(order);
+    if (error) return '<article class="qr-receipt-card"><strong>Đơn #'+escapeHTML(id.slice(0,8))+'</strong><p class="qr-error">'+escapeHTML(error)+'</p></article>';
+    return '<article class="qr-receipt-card"><strong>Đơn #'+escapeHTML(id.slice(0,8))+'</strong><p>Đang tải thông tin đơn từ máy chủ...</p></article>';
+  }).join('') : '<p class="qr-empty">Chưa có đơn nào trên thiết bị này. Bạn có thể chọn món từ thực đơn.</p>';
+}
+async function fetchSavedOrder(id) {
+  try {
+    const data=await api('/api/order-status/'+encodeURIComponent(id)+'?token='+encodeURIComponent(tableToken));
+    if(!data||data.id!==id||!Array.isArray(data.items))throw Error('Máy chủ chưa trả dữ liệu đơn đầy đủ.');
+    savedOrderDetails.set(id,data);receiptErrors.delete(id);
+  } catch (e) {
+    receiptErrors.set(id,'Chưa thể tải lại đơn từ máy chủ: '+e.message+'. Vui lòng hỏi nhân viên nếu cần.');
+  }
+  if(currentView==='orders') renderSavedOrders();
+}
+async function refreshSavedOrders(all=false) {
+  if(refreshingOrders||!tableToken||!savedOrderIds.length)return;
+  refreshingOrders=true;
+  try { await Promise.all((all?savedOrderIds:savedOrderIds.slice(0,1)).map(fetchSavedOrder)); }
+  finally {refreshingOrders=false;}
+}
+function startNewOrder() {
+  if(sending||pendingPayload)return;
+  confirmed=false;showError('');hidden('#confirmation',true);
+  cart.clear();note.value='';render();showView('menu');
+}
+
 async function verifyRecentOrder() {
   if (!recentOrderId || !tableToken) return;
   const target = $('#recentStatus');
@@ -181,9 +268,10 @@ function render() {
 }
 function showView(view) {
   currentView = view;
-  hidden('#menuPane', view !== 'menu'); hidden('#cartPane', view !== 'cart');
-  hidden('#viewCart', view === 'cart'); hidden('#orderAction', view !== 'cart');
-  for (const [tabId, value] of [['#menuTab','menu'],['#cartTab','cart']]) {
+  hidden('#menuPane', view !== 'menu'); hidden('#cartPane', view !== 'cart'); hidden('#ordersPane', view !== 'orders'); hidden('#stickyBottom', view === 'orders');
+  hidden('#viewCart', view !== 'menu'); hidden('#orderAction', view !== 'cart');
+  if(view==='orders'){renderSavedOrders();void refreshSavedOrders(true);}
+  for (const [tabId, value] of [['#menuTab','menu'],['#cartTab','cart'],['#ordersTab','orders']]) {
     $(tabId).classList.toggle('active', value === view);
     $(tabId).setAttribute('aria-selected', value === view ? 'true' : 'false');
   }
@@ -211,14 +299,13 @@ async function submitOrder() {
     const order = await api('/api/orders', {method:'POST',body:JSON.stringify(pendingPayload)});
     if (!order?.id) throw Object.assign(new Error('Máy chủ chưa trả mã đơn hợp lệ.'), {ambiguous:true});
     confirmed = true;
-    recentOrderId = order.id;
-    try { if (recentKey) sessionStorage.setItem(recentKey, recentOrderId); } catch (_) {}
+    rememberOrderId(order.id);
     void verifyRecentOrder();
     $('#confirmationText').textContent = `Mã đơn: #${order.id.slice(0,8)} · ${pendingPayload.items.reduce((n,it)=>n+it.qty,0)} món · ${table.name}.`;
     hidden('#confirmation', false);
     pendingPayload = null; savePending(); cart.clear(); note.value = '';
     setOrderButton('success');
-    $('#confirmation').scrollIntoView({behavior:'smooth',block:'center'});
+    renderSavedOrders();showView('orders');
   } catch (error) {
     // 4xx rejects an invalid payload. A network/5xx error is ambiguous: never create a new idempotency key on retry.
     if (!error.ambiguous) { pendingPayload = null; savePending(); }
@@ -244,13 +331,12 @@ async function init() {
       $('#notice').classList.add('is-online');
       $('#notice').textContent = 'Đã kết nối thực đơn. Đơn sẽ được lưu và hiển thị trên hệ thống bếp/bar sau khi xác nhận.';
     }
-    try {
-      const stored = recentKey ? sessionStorage.getItem(recentKey) : null;
-      if (stored && /^[0-9a-f-]{36}$/i.test(stored)) { recentOrderId = stored; void verifyRecentOrder(); }
-    } catch (_) {}
+    restoreSavedOrderIds();
+    if(savedOrderIds.length) {recentOrderId=savedOrderIds[0];void verifyRecentOrder();}
     const restored = restorePending();
     render();
     if (restored) { showError('Tìm thấy yêu cầu đặt món chưa rõ kết quả từ phiên trước. Hãy kiểm tra rồi nhấn xác nhận để thử lại với cùng mã đơn.', true); showView('cart'); }
+    else if(savedOrderIds.length) showView('orders');
   } catch (error) {
     $('#notice').textContent = `Không tải được thực đơn: ${error.message}`;
   }
@@ -259,14 +345,13 @@ $('#menuTab').addEventListener('click',()=>showView('menu'));
 $('#cartTab').addEventListener('click',()=>showView('cart'));
 $('#viewCart').addEventListener('click',()=>showView('cart'));
 $('#backToMenu').addEventListener('click',()=>showView('menu'));
-$('#orderMore').addEventListener('click',()=>{
-  if(sending || !confirmed)return;
-  confirmed=false;pendingPayload=null;savePending();showError('');hidden('#confirmation',true);
-  note.value='';cart.clear();render();showView('menu');
-});
+$('#orderMore').addEventListener('click',startNewOrder);
+$('#orderMoreFromReceipt').addEventListener('click',startNewOrder);
+$('#ordersTab').addEventListener('click',()=>showView('orders'));
+$('#refreshOrders').addEventListener('click',()=>{void refreshSavedOrders(true);});
 submit.addEventListener('click', submitOrder);
-setInterval(() => { if (!document.hidden) void verifyRecentOrder(); }, 12000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden) void verifyRecentOrder(); });
+setInterval(() => { if (!document.hidden && currentView === 'orders') void refreshSavedOrders(false); }, 12000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && currentView === 'orders') void refreshSavedOrders(false); });
 showView('menu');init();
 </script>
 </body>
