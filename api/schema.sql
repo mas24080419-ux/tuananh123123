@@ -36,3 +36,7 @@ CREATE TABLE IF NOT EXISTS dining_audit (
  created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_dining_audit_order ON dining_audit(order_id,created_at);
+
+-- Payment choice is separate from payment confirmation; existing orders remain unknown (NULL).
+ALTER TABLE dining_orders ADD COLUMN IF NOT EXISTS payment_method text
+ CHECK (payment_method IN ('cash','bank_transfer'));
