@@ -161,3 +161,22 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
 @keyframes sh-emblem-pop{from{opacity:.2;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
 @keyframes sh-confetti{0%{transform:translate(-50%,-50%) scale(.35);opacity:0}20%{opacity:1}100%{transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))) rotate(var(--rot));opacity:0}}
 @media(prefers-reduced-motion:reduce){.guest-orange .qr-success-overlay,.guest-orange .qr-success-card,.guest-orange .qr-success-emblem,.guest-orange .qr-success-checkline,.guest-orange .qr-success-sparkles i,.guest-orange .qr-button-check,.guest-orange .qr-button-check path,.guest-orange .qr-button-success-text{animation:none!important;stroke-dashoffset:0!important;opacity:1}.guest-orange .qr-success-sparkles{display:none}}
+
+
+/* SalesHub cash / bank transfer methods: QR guest only */
+.guest-orange .qr-payment-methods{border:0;margin:18px 0 14px;padding:0;min-width:0}
+.guest-orange .qr-payment-methods legend{color:#2d2723;font-weight:800;font-size:15px}
+.guest-orange .qr-payment-subtitle{font-size:12px;color:#8c7a70;margin:5px 0 12px}
+.guest-orange .qr-payment-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.guest-orange .qr-payment-option{display:flex;align-items:center;gap:9px;min-height:91px;border:1px solid #ecded7;border-radius:17px;padding:13px 11px;background:#fff;cursor:pointer;position:relative;box-shadow:0 3px 11px #3c12070a;min-width:0;transition:border-color .2s,background-color .2s,box-shadow .2s}
+.guest-orange .qr-payment-option:has(input:checked){border-color:#E84E1B;background:#fff8f4;box-shadow:0 0 0 1px #E84E1B12,0 5px 18px #e84e1b12}
+.guest-orange .qr-payment-option input{width:17px;height:17px;flex-shrink:0;accent-color:#E84E1B;margin:0}
+.guest-orange .qr-payment-option input:focus-visible{outline:2px solid #E84E1B;outline-offset:3px}
+.guest-orange .qr-payment-option:has(input:disabled){opacity:.65;cursor:not-allowed}
+.guest-orange .qr-payment-icon{font-size:23px;flex-shrink:0}
+.guest-orange .qr-payment-option strong{font-size:13px;color:#342a25;display:block}
+.guest-orange .qr-payment-option small{font-size:10px;color:#87776d;display:block;margin-top:5px;line-height:1.4}
+.guest-orange .qr-payment-hint{font-size:11px;color:#8b5b3d;line-height:1.55;background:#fff7f1;padding:10px 12px;border-radius:11px;margin:11px 0 0}
+.guest-orange .qr-success-payment{background:#fff7f0;border-radius:11px;padding:8px 12px;margin:-2px 0 15px!important;font-size:11px!important;color:#6f594b!important}
+@media(max-width:400px){.guest-orange .qr-payment-options{grid-template-columns:1fr}.guest-orange .qr-payment-option{min-height:66px}}
+@media(prefers-reduced-motion:reduce){.guest-orange .qr-payment-option{transition:none}}
