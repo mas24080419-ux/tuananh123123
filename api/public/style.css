@@ -114,3 +114,50 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
 .guest-orange .qr-receipt-footnote{display:block;font-size:11px;line-height:1.5;color:#8c7b70}
 .guest-orange #ordersPane .qr-more-order{width:100%}
 @media(max-width:380px){.guest-orange .qr-tabs button{font-size:11px}.guest-orange .qr-receipt-item-title{align-items:flex-start;flex-direction:column;gap:4px}}
+
+
+/* SalesHub success confirmation V8 – only QR guest, kitchen styles unchanged */
+.guest-orange .morph-order.placing.checked .morph-spinner{display:none}
+.guest-orange .morph-order.placing.checked .morph-order-content{opacity:1}
+.guest-orange .morph-order.checked{background:#21855d;box-shadow:0 7px 24px rgba(33,133,93,.33)}
+.guest-orange .morph-order.success{width:100%;border-radius:16px;background:#21855d;box-shadow:0 8px 26px rgba(33,133,93,.32);opacity:1}
+.guest-orange .morph-order.success .morph-order-content{opacity:1}
+.guest-orange .qr-button-check{height:29px;width:29px;color:#fff;animation:sh-check-pop .34s ease both}
+.guest-orange .qr-button-check path{stroke-dasharray:30;stroke-dashoffset:30;animation:sh-check-draw .43s ease-out .12s forwards}
+.guest-orange .qr-button-success-text{animation:sh-fade-in .32s ease-in .12s both;letter-spacing:.15px}
+.guest-orange .qr-success-overlay{position:fixed;inset:0;z-index:90;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(39,31,29,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);animation:sh-fade-in .24s ease-out both}
+.guest-orange .qr-success-card{position:relative;z-index:2;background:#fff;max-width:390px;width:100%;border-radius:28px;padding:30px 24px 26px;box-shadow:0 22px 75px rgba(25,21,18,.18);text-align:center;animation:sh-success-rise .54s cubic-bezier(.18,1.19,.34,1) both}
+.guest-orange .qr-success-emblem{height:106px;width:106px;margin:0 auto 14px;display:grid;place-items:center;border-radius:50%;background:#edf9f1;color:#1e9860;animation:sh-emblem-pop .68s cubic-bezier(.17,1.2,.3,1) .12s both}
+.guest-orange .qr-success-emblem svg{max-width:100%;height:auto}
+.guest-orange .qr-success-checkline{stroke-dasharray:55;stroke-dashoffset:55;animation:sh-check-draw .55s cubic-bezier(.25,.7,.2,1) .37s forwards}
+.guest-orange .qr-success-eyebrow{font-size:10px;letter-spacing:2px;font-weight:800;color:#c3663f}
+.guest-orange .qr-success-card h2{font-size:clamp(24px,6vw,29px);color:#1e2d23;line-height:1.18;letter-spacing:-.7px;margin:12px 0}
+.guest-orange .qr-success-card p{font-size:13px;line-height:1.6;color:#726e69;margin:0 0 19px}
+.guest-orange .qr-success-reference{display:flex;align-items:center;justify-content:space-between;gap:10px;background:#f7f7f5;border:1px solid #f1efea;border-radius:14px;padding:13px 15px;margin:0 0 16px;font-size:12px;color:#81756d}
+.guest-orange .qr-success-reference strong{font-size:15px;letter-spacing:.4px;color:#2a4032}
+.guest-orange .qr-success-action{display:flex;justify-content:center;align-items:center;gap:11px;width:100%;border:0;border-radius:15px;color:white;background:#E84E1B;min-height:52px;font-weight:750;box-shadow:0 5px 17px rgba(232,78,27,.22)}
+.guest-orange .qr-success-action:hover{background:#d84413}
+.guest-orange .qr-success-hint{font-size:10px;color:#98887c;display:block;margin-top:11px}
+.guest-orange .qr-success-sparkles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.guest-orange .qr-success-sparkles i{position:absolute;top:46%;left:50%;width:8px;height:14px;border-radius:3px;background:#fab361;transform:translate(-50%,-50%);opacity:0;animation:sh-confetti .85s ease-out .1s both}
+.guest-orange .qr-success-sparkles i:nth-child(2n){background:#52bd8a;width:7px;height:7px;border-radius:50%}
+.guest-orange .qr-success-sparkles i:nth-child(3n){background:#ff744d}
+.guest-orange .qr-success-sparkles i:nth-child(1){--tx:-144px;--ty:-190px;--rot:50deg}
+.guest-orange .qr-success-sparkles i:nth-child(2){--tx:-90px;--ty:-235px;--rot:-65deg}
+.guest-orange .qr-success-sparkles i:nth-child(3){--tx:0px;--ty:-250px;--rot:110deg}
+.guest-orange .qr-success-sparkles i:nth-child(4){--tx:115px;--ty:-210px;--rot:30deg}
+.guest-orange .qr-success-sparkles i:nth-child(5){--tx:150px;--ty:-130px;--rot:-92deg}
+.guest-orange .qr-success-sparkles i:nth-child(6){--tx:184px;--ty:0px;--rot:140deg}
+.guest-orange .qr-success-sparkles i:nth-child(7){--tx:147px;--ty:152px;--rot:-50deg}
+.guest-orange .qr-success-sparkles i:nth-child(8){--tx:45px;--ty:213px;--rot:80deg}
+.guest-orange .qr-success-sparkles i:nth-child(9){--tx:-58px;--ty:212px;--rot:-70deg}
+.guest-orange .qr-success-sparkles i:nth-child(10){--tx:-150px;--ty:136px;--rot:120deg}
+.guest-orange .qr-success-sparkles i:nth-child(11){--tx:-195px;--ty:7px;--rot:48deg}
+.guest-orange .qr-success-sparkles i:nth-child(12){--tx:-187px;--ty:-90px;--rot:-130deg}
+@keyframes sh-fade-in{from{opacity:0}to{opacity:1}}
+@keyframes sh-check-pop{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes sh-check-draw{to{stroke-dashoffset:0}}
+@keyframes sh-success-rise{from{opacity:0;transform:translateY(24px) scale(.87)}to{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes sh-emblem-pop{from{opacity:.2;transform:scale(.6)}to{opacity:1;transform:scale(1)}}
+@keyframes sh-confetti{0%{transform:translate(-50%,-50%) scale(.35);opacity:0}20%{opacity:1}100%{transform:translate(calc(-50% + var(--tx)),calc(-50% + var(--ty))) rotate(var(--rot));opacity:0}}
+@media(prefers-reduced-motion:reduce){.guest-orange .qr-success-overlay,.guest-orange .qr-success-card,.guest-orange .qr-success-emblem,.guest-orange .qr-success-checkline,.guest-orange .qr-success-sparkles i,.guest-orange .qr-button-check,.guest-orange .qr-button-check path,.guest-orange .qr-button-success-text{animation:none!important;stroke-dashoffset:0!important;opacity:1}.guest-orange .qr-success-sparkles{display:none}}
