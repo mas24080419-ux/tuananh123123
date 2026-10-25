@@ -56,10 +56,17 @@ async function updateLine(lineId,status){const allowed={new:['preparing','cancel
 
 async function orderStatus(orderId,qrToken){
  const t=await getTable(qrToken);if(!t)return null;
- if(!pool){const o=orders.find(x=>x.id===orderId&&x.table_id===t.id);if(!o)return null;return {id:o.id,table_name:t.name,created_at:o.created_at,persistent:false,items:lines.filter(x=>x.order_id===o.id).map(x=>({name:x.name,quantity:x.quantity,status:x.status,station:x.station}))}}
- const o=(await pool.query('SELECT id,created_at FROM dining_orders WHERE id=$1 AND table_id=$2',[orderId,t.id])).rows[0];if(!o)return null;
- const result=await pool.query('SELECT name,quantity,status,station FROM dining_order_lines WHERE order_id=$1 ORDER BY created_at,id',[o.id]);
- return {id:o.id,table_name:t.name,created_at:o.created_at,persistent:true,items:result.rows};
+ if(!pool){
+  const o=orders.find(x=>x.id===orderId&&x.table_id===t.id);
+  if(!o)return null;
+  const orderLines=lines.filter(x=>x.order_id===o.id).map(x=>({name:x.name,quantity:x.quantity,unit_price:x.unit_price,status:x.status,station:x.station,note:x.note||''}));
+  return {id:o.id,table_name:t.name,created_at:o.created_at,note:o.note||'',payment_status:'unpaid',total_vnd:orderLines.reduce((s,x)=>s+(x.status==='cancelled'?0:x.quantity*x.unit_price),0),persistent:false,items:orderLines};
+ }
+ const o=(await pool.query('SELECT id,created_at,note,payment_status FROM dining_orders WHERE id=$1 AND table_id=$2',[orderId,t.id])).rows[0];
+ if(!o)return null;
+ const result=await pool.query('SELECT name,quantity,unit_price,status,station,note FROM dining_order_lines WHERE order_id=$1 ORDER BY created_at,id',[o.id]);
+ const amount=result.rows.reduce((s,x)=>s+(x.status==='cancelled'?0:x.quantity*x.unit_price),0);
+ return {id:o.id,table_name:t.name,created_at:o.created_at,note:o.note||'',payment_status:o.payment_status,total_vnd:amount,persistent:true,items:result.rows};
 }
 async function history(limit,offset){
  if(!pool){const all=await getOrders();return all.slice(offset,offset+limit).map(x=>({...x,payment_status:'unpaid'}))}
