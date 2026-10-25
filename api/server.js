@@ -25,6 +25,7 @@ const menuSeed=[
 ];
 let tables=[], menu=[], orders=[], lines=[];
 const id=()=>crypto.randomUUID();
+const ops=require('./operations')({pool,id});
 const token=i=>crypto.createHmac('sha256',SESSION_SECRET).update('qr-table-'+i).digest('hex').slice(0,48);
 const authHash=s=>crypto.createHash('sha256').update(s).digest();
 const safeEq=(a,b)=>{const x=authHash(a),y=authHash(b);return crypto.timingSafeEqual(x,y)};
@@ -68,9 +69,9 @@ const paymentMethod=body.paymentMethod;
 if(!['cash','bank_transfer'].includes(paymentMethod))throw Object.assign(Error('Vui lòng chọn Tiền mặt hoặc Chuyển khoản.'),{status:400});
 const note=String(body.note||'').slice(0,160);const m=await getMenu(),lookup=new Map(m.map(x=>[x.id,x]));const items=body.items.map(it=>{const p=lookup.get(it.id);if(!p||!Number.isSafeInteger(it.qty)||it.qty<1||it.qty>20)throw Object.assign(Error('Món hoặc số lượng không hợp lệ.'),{status:400});return {...p,qty:it.qty,note:String(it.note||'').slice(0,160)}});if(items.reduce((s,x)=>s+x.qty,0)>60)throw Object.assign(Error('Quá số lượng một lần gửi.'),{status:400});
 if(!pool){const exists=orders.find(x=>x.table_id===t.id&&x.request_id===body.requestId);if(exists)return {id:exists.id,duplicate:true};const o={id:id(),table_id:t.id,request_id:body.requestId,note,payment_method:paymentMethod,payment_status:'unpaid',created_at:new Date().toISOString()};orders.push(o);for(const it of items)lines.push({id:id(),order_id:o.id,menu_item_id:it.id,name:it.name,quantity:it.qty,unit_price:it.price,station:it.station,note:it.note,status:'new',created_at:o.created_at});return {id:o.id,duplicate:false}}
-const c=await pool.connect();try{await c.query('BEGIN');const orderId=id();const o=await c.query('INSERT INTO dining_orders(id,table_id,request_id,note,payment_method) VALUES($1,$2,$3,$4,$5) ON CONFLICT(table_id,request_id) DO NOTHING RETURNING id',[orderId,t.id,body.requestId,note,paymentMethod]);if(!o.rowCount){const prev=await c.query('SELECT id FROM dining_orders WHERE table_id=$1 AND request_id=$2',[t.id,body.requestId]);await c.query('COMMIT');return {id:prev.rows[0].id,duplicate:true}}for(const it of items)await c.query('INSERT INTO dining_order_lines(id,order_id,menu_item_id,name,quantity,unit_price,station,note) VALUES($1,$2,$3,$4,$5,$6,$7,$8)',[id(),orderId,it.id,it.name,it.qty,it.price,it.station,it.note]);await c.query('INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,$2,$3,$4::jsonb)',[orderId,'guest','order_created',JSON.stringify({table:t.name,item_count:items.length,payment_method:paymentMethod})]);await c.query('COMMIT');console.log('ORDER_COMMITTED',orderId,t.name,items.length);return {id:orderId,duplicate:false}}catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}}
+const c=await pool.connect();try{await c.query('BEGIN');const orderId=id();const o=await c.query('INSERT INTO dining_orders(id,table_id,request_id,note,payment_method) VALUES($1,$2,$3,$4,$5) ON CONFLICT(table_id,request_id) DO NOTHING RETURNING id',[orderId,t.id,body.requestId,note,paymentMethod]);if(!o.rowCount){const prev=await c.query('SELECT id FROM dining_orders WHERE table_id=$1 AND request_id=$2',[t.id,body.requestId]);await c.query('COMMIT');return {id:prev.rows[0].id,duplicate:true}}for(const it of items)await c.query('INSERT INTO dining_order_lines(id,order_id,menu_item_id,name,quantity,unit_price,station,note) VALUES($1,$2,$3,$4,$5,$6,$7,$8)',[id(),orderId,it.id,it.name,it.qty,it.price,it.station,it.note]);await ops.consume(c,orderId);await c.query('INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,$2,$3,$4::jsonb)',[orderId,'guest','order_created',JSON.stringify({table:t.name,item_count:items.length,payment_method:paymentMethod})]);await c.query('COMMIT');console.log('ORDER_COMMITTED',orderId,t.name,items.length);return {id:orderId,duplicate:false}}catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}}
 async function getOrders(){if(!pool)return orders.map(o=>({...o,table_name:tables.find(t=>t.id===o.table_id)?.name,items:lines.filter(l=>l.order_id===o.id)})).reverse();const q=await pool.query('SELECT o.id,o.created_at,o.note,o.payment_method,o.payment_status,t.name AS table_name,li.id AS line_id,li.name AS item_name,li.quantity,li.unit_price,li.station,li.note AS item_note,li.status FROM dining_orders o JOIN dining_tables t ON o.table_id=t.id LEFT JOIN dining_order_lines li ON li.order_id=o.id WHERE o.created_at > now()- interval \'7 days\' OR EXISTS (SELECT 1 FROM dining_order_lines pending WHERE pending.order_id=o.id AND pending.status IN (\'new\',\'preparing\',\'ready\')) ORDER BY o.created_at DESC');const map=new Map();for(const x of q.rows){let o=map.get(x.id);if(!o){o={id:x.id,table_name:x.table_name,note:x.note,payment_method:x.payment_method,payment_status:x.payment_status,created_at:x.created_at,items:[]};map.set(x.id,o)}if(x.line_id)o.items.push({id:x.line_id,name:x.item_name,quantity:x.quantity,unit_price:x.unit_price,station:x.station,note:x.item_note,status:x.status})}return [...map.values()]}
-async function updateLine(lineId,status){const allowed={new:['preparing','cancelled'],preparing:['ready','cancelled'],ready:['served'],served:[],cancelled:[]};if(!Object.values(allowed).flat().includes(status))throw Object.assign(Error('Trạng thái không hợp lệ.'),{status:400});if(!pool){const line=lines.find(x=>x.id===lineId);if(!line)throw Object.assign(Error('Không tìm thấy món.'),{status:404});if(!allowed[line.status].includes(status))throw Object.assign(Error('Chuyển trạng thái không hợp lệ.'),{status:409});line.status=status;return line}const c=await pool.connect();try{await c.query('BEGIN');const x=(await c.query('SELECT status FROM dining_order_lines WHERE id=$1 FOR UPDATE',[lineId])).rows[0];if(!x)throw Object.assign(Error('Không tìm thấy món.'),{status:404});if(!allowed[x.status].includes(status))throw Object.assign(Error('Chuyển trạng thái không hợp lệ.'),{status:409});const row=(await c.query('UPDATE dining_order_lines SET status=$2, updated_at=now() WHERE id=$1 RETURNING id,status',[lineId,status])).rows[0];await c.query('INSERT INTO dining_audit(order_id,item_id,actor,action,detail) SELECT order_id,$1,$2,$3,$4::jsonb FROM dining_order_lines WHERE id=$1',[lineId,'staff','item_status_changed',JSON.stringify({from:x.status,to:status})]);await c.query('COMMIT');return row}catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}}
+async function updateLine(lineId,status){const allowed={new:['preparing','cancelled'],preparing:['ready','cancelled'],ready:['served'],served:[],cancelled:[]};if(!Object.values(allowed).flat().includes(status))throw Object.assign(Error('Trạng thái không hợp lệ.'),{status:400});if(!pool){const line=lines.find(x=>x.id===lineId);if(!line)throw Object.assign(Error('Không tìm thấy món.'),{status:404});if(!allowed[line.status].includes(status))throw Object.assign(Error('Chuyển trạng thái không hợp lệ.'),{status:409});line.status=status;return line}const c=await pool.connect();try{await c.query('BEGIN');const x=(await c.query('SELECT status FROM dining_order_lines WHERE id=$1 FOR UPDATE',[lineId])).rows[0];if(!x)throw Object.assign(Error('Không tìm thấy món.'),{status:404});if(!allowed[x.status].includes(status))throw Object.assign(Error('Chuyển trạng thái không hợp lệ.'),{status:409});const row=(await c.query('UPDATE dining_order_lines SET status=$2, updated_at=now() WHERE id=$1 RETURNING id,status',[lineId,status])).rows[0];if(status==='cancelled')await ops.restore(c,lineId,x.status);await c.query('INSERT INTO dining_audit(order_id,item_id,actor,action,detail) SELECT order_id,$1,$2,$3,$4::jsonb FROM dining_order_lines WHERE id=$1',[lineId,'staff','item_status_changed',JSON.stringify({from:x.status,to:status})]);await c.query('COMMIT');return row}catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}}
 
 async function orderStatus(orderId,qrToken){
  const t=await getTable(qrToken);if(!t)return null;
@@ -216,6 +217,32 @@ if(req.method==='GET'&&p==='/api/me')return send(res,200,{staff:session(req),rol
 if(req.method==='GET'&&p.startsWith('/api/menu/')){const t=await getTable(p.slice('/api/menu/'.length));if(!t)return err(res,404,'QR không hợp lệ.');return send(res,200,{table:{name:t.name,zone:t.zone},items:await getMenu(),mode})}
 if(req.method==='POST'&&p==='/api/orders'){if(!throttle(req,'orders',25))return err(res,429,'Gửi món quá nhanh.');const a=await placeOrder(await input(req));return send(res,a.duplicate?200:201,a)}
 
+
+if(req.method==='GET'&&p==='/api/admin/operations'){
+ if(!requireAdmin(req,res))return;
+ const range=adminDateRange(u.searchParams);
+ return send(res,200,{...await ops.overview(range.from,range.to),range});
+}
+if(req.method==='POST'&&p==='/api/admin/inventory/items'){
+ if(!requireAdmin(req,res))return;
+ if(!throttle(req,'inventory',40))return err(res,429,'Thao tác quá nhanh.');
+ return send(res,201,{item:await ops.createItem(await input(req))});
+}
+if(req.method==='PUT'&&p==='/api/admin/inventory/recipes'){
+ if(!requireAdmin(req,res))return;
+ if(!throttle(req,'recipe',40))return err(res,429,'Thao tác quá nhanh.');
+ return send(res,200,{recipe:await ops.setRecipe(await input(req))});
+}
+if(req.method==='POST'&&p==='/api/admin/inventory/movements'){
+ if(!requireAdmin(req,res))return;
+ if(!throttle(req,'movement',40))return err(res,429,'Thao tác quá nhanh.');
+ return send(res,201,{movement:await ops.move(await input(req))});
+}
+if(req.method==='POST'&&p==='/api/admin/finance/entries'){
+ if(!requireAdmin(req,res))return;
+ if(!throttle(req,'finance',40))return err(res,429,'Thao tác quá nhanh.');
+ return send(res,201,{entry:await ops.entry(await input(req))});
+}
 if(req.method==='GET'&&p==='/api/admin/summary'){
  if(!requireAdmin(req,res))return;
  const range=adminDateRange(u.searchParams);
@@ -237,6 +264,7 @@ if(req.method==='GET'&&p==='/api/kds'){if(!requireAuth(req,res))return;
 if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!requireAuth(req,res))return;const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status)})}
 if(req.method==='GET'&&/^\/qr\/[0-9a-f]{48}\.svg$/.test(p)){if(!requireAuth(req,res))return;const t=p.slice(4,-4);if(!(await getTable(t)))return err(res,404,'Không tìm thấy bàn.');const origin=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;const svg=await QRCode.toString(origin+'/t/'+t,{type:'svg',margin:2,width:320,errorCorrectionLevel:'M'});res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'no-store'});res.end(svg);return}
 if(req.method==='GET'&&p.startsWith('/t/'))return staticPage(req,res,'guest.html');
+if(req.method==='GET'&&p==='/admin/operations')return staticPage(req,res,'operations.html');
 if(req.method==='GET'&&p==='/admin')return staticPage(req,res,'admin.html');
 if(req.method==='GET'&&(p==='/'||p==='/staff'))return staticPage(req,res,'staff.html');
 if(req.method==='GET'&&p==='/style.css')return staticPage(req,res,'style.css');
