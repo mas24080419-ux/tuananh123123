@@ -10,6 +10,7 @@ const PORT = Number(process.env.PORT || 3000);
 const DATABASE_URL = process.env.DATABASE_URL || '';
 const PILOT_MODE = process.env.PILOT_MODE === 'true';
 const STAFF_PASSWORD = process.env.STAFF_PASSWORD || '';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || '';
 const SESSION_SECRET = process.env.SESSION_SECRET || '';
 if (!STAFF_PASSWORD || !SESSION_SECRET || (!DATABASE_URL && !PILOT_MODE)) {
   throw Error('Missing STAFF_PASSWORD / SESSION_SECRET / DATABASE_URL (or explicit PILOT_MODE=true).');
@@ -37,8 +38,23 @@ const send=(res,status,obj,extra={})=>{res.writeHead(status,{'Content-Type':'app
 const err=(res,status,msg)=>send(res,status,{error:msg});
 const securityHeaders={'X-Content-Type-Options':'nosniff','Referrer-Policy':'no-referrer','X-Frame-Options':'DENY','Permissions-Policy':'camera=(), microphone=(), geolocation=()'};
 function cookie(req){const m=(req.headers.cookie||'').match(/(?:^|;\s*)sh_session=([^;]+)/);return m?decodeURIComponent(m[1]):null}
-function session(req){const v=cookie(req);if(!v)return false;const [exp,mac]=v.split('.');if(!/^\d+$/.test(exp)||!mac||Number(exp)<Date.now())return false;const good=crypto.createHmac('sha256',SESSION_SECRET).update(exp).digest('hex');return safeEq(mac,good)}
+function sessionRole(req){
+ const v=cookie(req);if(!v)return null;
+ const parts=v.split('.');if(parts.length!==2&&parts.length!==3)return null;
+ const [exp,role,mac]=parts.length===3?parts:[parts[0],'staff',parts[1]];
+ if(!/^\d+$/.test(exp)||!['staff','admin'].includes(role)||!/^[0-9a-f]{64}$/.test(mac||'')||Number(exp)<Date.now())return null;
+ const value=parts.length===3?exp+'.'+role:exp;
+ const signature=crypto.createHmac('sha256',SESSION_SECRET).update(value).digest('hex');
+ return safeEq(mac,signature)?role:null;
+}
+function loginCookie(role){
+ const exp=String(Date.now()+8*60*60*1000);
+ const sig=crypto.createHmac('sha256',SESSION_SECRET).update(exp+'.'+role).digest('hex');
+ return 'sh_session='+exp+'.'+role+'.'+sig+'; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=28800';
+}
+const session=req=>Boolean(sessionRole(req));
 const requireAuth=(req,res)=>{if(!session(req)){err(res,401,'Cần đăng nhập nhân viên.');return false}return true};
+const requireAdmin=(req,res)=>{if(sessionRole(req)!=='admin'){err(res,403,'Chỉ tài khoản chủ cửa hàng được phép truy cập.');return false}return true};
 const input=async req=>{let s='';for await(const ch of req){s+=ch;if(s.length>18000)throw Object.assign(Error('Dữ liệu quá lớn'),{status:413})}try{return JSON.parse(s||'{}')}catch{throw Object.assign(Error('JSON không hợp lệ'),{status:400})}};
 const sameOrigin=(req,res)=>{if(!['POST','PATCH','PUT','DELETE'].includes(req.method))return true;const origin=req.headers.origin;if(!origin)return true;const host=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;if(origin!==host){err(res,403,'Nguồn yêu cầu không hợp lệ.');return false}return true};
 const clientIp=req=>(req.headers['x-forwarded-for']||req.socket.remoteAddress||'').split(',')[0].trim();
@@ -75,23 +91,147 @@ async function history(limit,offset){
  const q=await pool.query('SELECT o.id,o.created_at,o.note,o.payment_status,o.payment_method,t.name AS table_name,COALESCE(SUM(CASE WHEN li.status<>$3 THEN li.quantity*li.unit_price ELSE 0 END),0)::bigint AS total_vnd,COUNT(li.id)::integer AS line_count FROM dining_orders o JOIN dining_tables t ON o.table_id=t.id LEFT JOIN dining_order_lines li ON li.order_id=o.id GROUP BY o.id,t.name ORDER BY o.created_at DESC LIMIT $1 OFFSET $2',[limit,offset,'cancelled']);
  return q.rows;
 }
+
+const VI_ZONE = 'Asia/Ho_Chi_Minh';
+function adminDateRange(searchParams) {
+ const today = new Intl.DateTimeFormat('sv-SE',{timeZone:VI_ZONE,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
+ const from=searchParams.get('from')||today.slice(0,7)+'-01',to=searchParams.get('to')||today;
+ const valid=d=>/^\d{4}-\d{2}-\d{2}$/.test(d)&&!isNaN(Date.parse(d+'T00:00:00Z'))&&new Date(d+'T00:00:00Z').toISOString().slice(0,10)===d;
+ if(!valid(from)||!valid(to)||from>to||Date.parse(to+'T00:00:00Z')-Date.parse(from+'T00:00:00Z')>366*86400000)throw Object.assign(Error('Khoảng ngày không hợp lệ hoặc vượt 366 ngày.'),{status:400});
+ return {from,to};
+}
+function pilotMoney(orderId){return lines.filter(x=>x.order_id===orderId&&x.status!=='cancelled').reduce((v,l)=>v+l.quantity*l.unit_price,0)}
+function inAdminRange(date,from,to){
+ const d=new Intl.DateTimeFormat('sv-SE',{timeZone:VI_ZONE,year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date(date));
+ return d>=from&&d<=to;
+}
+async function adminReport(from,to){
+ if(!pool){
+  const selection=orders.filter(o=>inAdminRange(o.created_at,from,to));
+  const paid=orders.filter(o=>o.payment_status==='paid'&&o.paid_at&&inAdminRange(o.paid_at,from,to));
+  const total=arr=>arr.reduce((sum,o)=>sum+pilotMoney(o.id),0);
+  const collected=arr=>arr.reduce((sum,o)=>sum+Number(o.paid_amount||0),0);
+  const outstanding=selection.filter(o=>o.payment_status==='unpaid');
+  const top=new Map();
+  for(const l of lines.filter(l=>l.status!=='cancelled'&&selection.some(o=>o.id===l.order_id))){
+   const row=top.get(l.name)||{name:l.name,quantity:0,amount:0};row.quantity+=l.quantity;row.amount+=l.quantity*l.unit_price;top.set(l.name,row);
+  }
+  return {summary:{order_count:selection.length,order_value:total(selection),unpaid_orders:outstanding.length,outstanding:total(outstanding),paid_orders:paid.length,collected:collected(paid),paid_cash:collected(paid.filter(o=>o.payment_method==='cash')),paid_transfer:collected(paid.filter(o=>o.payment_method==='bank_transfer')),paid_unknown:collected(paid.filter(o=>!o.payment_method))},
+    orders:selection.slice().reverse().slice(0,100).map(o=>({id:o.id,created_at:o.created_at,table_name:tables.find(t=>t.id===o.table_id)?.name||'',payment_method:o.payment_method,payment_status:o.payment_status,paid_at:o.paid_at||null,paid_amount:o.paid_amount||null,total_vnd:pilotMoney(o.id),line_count:lines.filter(l=>l.order_id===o.id).length})),
+    top_items:[...top.values()].sort((a,b)=>b.quantity-a.quantity).slice(0,10),daily:[],mode};
+ }
+ const params=[from,to];
+ const volume=await pool.query(`
+ SELECT count(*)::int AS order_count,coalesce(sum(x.amount),0)::bigint AS order_value,
+ count(*) FILTER(WHERE x.payment_status='unpaid')::int AS unpaid_orders,
+ coalesce(sum(x.amount) FILTER(WHERE x.payment_status='unpaid'),0)::bigint AS outstanding
+ FROM (SELECT o.id,o.payment_status,
+ coalesce((SELECT sum(l.quantity*l.unit_price) FROM dining_order_lines l WHERE l.order_id=o.id AND l.status<>'cancelled'),0)::bigint AS amount
+ FROM dining_orders o WHERE (o.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN $1::date AND $2::date) x`,params);
+ const paid=await pool.query(`
+ SELECT count(*)::int AS paid_orders,
+ coalesce(sum(coalesce(o.paid_amount,(SELECT sum(l.quantity*l.unit_price) FROM dining_order_lines l WHERE l.order_id=o.id AND l.status<>'cancelled'),0)),0)::bigint AS collected,
+ coalesce(sum(coalesce(o.paid_amount,0)) FILTER(WHERE o.payment_method='cash'),0)::bigint AS paid_cash,
+ coalesce(sum(coalesce(o.paid_amount,0)) FILTER(WHERE o.payment_method='bank_transfer'),0)::bigint AS paid_transfer,
+ coalesce(sum(coalesce(o.paid_amount,0)) FILTER(WHERE o.payment_method IS NULL),0)::bigint AS paid_unknown
+ FROM dining_orders o WHERE o.payment_status='paid'
+ AND (o.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN $1::date AND $2::date`,params);
+ const recent=await pool.query(`
+ SELECT o.id,o.created_at,t.name AS table_name,o.payment_method,o.payment_status,o.paid_at,o.paid_amount,
+ coalesce((SELECT sum(l.quantity*l.unit_price) FROM dining_order_lines l WHERE l.order_id=o.id AND l.status<>'cancelled'),0)::bigint AS total_vnd,
+ (SELECT count(*)::int FROM dining_order_lines l WHERE l.order_id=o.id) AS line_count
+ FROM dining_orders o JOIN dining_tables t ON o.table_id=t.id
+ WHERE (o.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN $1::date AND $2::date
+ ORDER BY o.created_at DESC LIMIT 100`,params);
+ const best=await pool.query(`
+ SELECT l.name,sum(l.quantity)::int AS quantity,sum(l.quantity*l.unit_price)::bigint AS amount
+ FROM dining_order_lines l JOIN dining_orders o ON o.id=l.order_id
+ WHERE l.status<>'cancelled' AND (o.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN $1::date AND $2::date
+ GROUP BY l.name ORDER BY quantity DESC,l.name LIMIT 10`,params);
+ const created=await pool.query(`
+ SELECT to_char(o.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh','YYYY-MM-DD') AS day,count(*)::int AS orders
+ FROM dining_orders o WHERE (o.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN $1::date AND $2::date
+ GROUP BY day ORDER BY day`,params);
+ const received=await pool.query(`
+ SELECT to_char(o.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh','YYYY-MM-DD') AS day,
+ coalesce(sum(o.paid_amount),0)::bigint AS collected
+ FROM dining_orders o WHERE o.payment_status='paid'
+ AND (o.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN $1::date AND $2::date
+ GROUP BY day ORDER BY day`,params);
+ const dayMap=new Map();
+ for(const r of created.rows)dayMap.set(r.day,{day:r.day,orders:r.orders,collected:0});
+ for(const r of received.rows){const d=dayMap.get(r.day)||{day:r.day,orders:0,collected:0};d.collected=Number(r.collected);dayMap.set(r.day,d)}
+ return {summary:{...volume.rows[0],...paid.rows[0]},orders:recent.rows,top_items:best.rows,daily:[...dayMap.values()].sort((a,b)=>a.day.localeCompare(b.day)),mode};
+}
+async function confirmPayment(orderId){
+ if(!pool){
+  const o=orders.find(o=>o.id===orderId);
+  if(!o)throw Object.assign(Error('Không tìm thấy đơn hàng.'),{status:404});
+  if(o.payment_status==='paid')return {id:orderId,amount:o.paid_amount,already:true};
+  if(o.payment_status!=='unpaid')throw Object.assign(Error('Đơn không còn ở trạng thái chưa thanh toán.'),{status:409});
+  if(!['cash','bank_transfer'].includes(o.payment_method))throw Object.assign(Error('Đơn cũ chưa có phương thức thanh toán.'),{status:409});
+  const amount=pilotMoney(o.id);if(amount<=0)throw Object.assign(Error('Đơn có giá trị không hợp lệ.'),{status:409});
+  o.payment_status='paid';o.paid_amount=amount;o.paid_at=new Date().toISOString();
+  return {id:orderId,amount,already:false};
+ }
+ const c=await pool.connect();
+ try {
+  await c.query('BEGIN');
+  const o=(await c.query('SELECT id,payment_method,payment_status,paid_amount FROM dining_orders WHERE id=$1 FOR UPDATE',[orderId])).rows[0];
+  if(!o)throw Object.assign(Error('Không tìm thấy đơn hàng.'),{status:404});
+  if(o.payment_status==='paid'){await c.query('COMMIT');return {id:orderId,amount:o.paid_amount,already:true}}
+  if(o.payment_status!=='unpaid')throw Object.assign(Error('Đơn không còn ở trạng thái chưa thanh toán.'),{status:409});
+  if(!['cash','bank_transfer'].includes(o.payment_method))throw Object.assign(Error('Đơn cũ chưa có phương thức thanh toán; cần đối soát tại quầy.'),{status:409});
+  const q=await c.query("SELECT coalesce(sum(quantity*unit_price),0)::bigint AS amount FROM dining_order_lines WHERE order_id=$1 AND status<>'cancelled'",[orderId]);
+  const amount=Number(q.rows[0].amount);
+  if(!Number.isSafeInteger(amount)||amount<=0)throw Object.assign(Error('Giá trị đơn không hợp lệ.'),{status:409});
+  await c.query("UPDATE dining_orders SET payment_status='paid',paid_amount=$2,paid_at=now() WHERE id=$1",[orderId,amount]);
+  await c.query("INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,'staff','payment_confirmed',$2::jsonb)",[orderId,JSON.stringify({role:'admin',payment_method:o.payment_method,amount})]);
+  await c.query('COMMIT');
+  return {id:orderId,amount,already:false};
+ } catch(e) {await c.query('ROLLBACK');throw e} finally {c.release()}
+}
+
 const publicDir=path.join(__dirname,'public');const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml; charset=utf-8'};
 function staticPage(req,res,p){const file=path.join(publicDir,p);if(!file.startsWith(publicDir+path.sep))return err(res,404,'Không tìm thấy trang.');fs.readFile(file,(e,data)=>{if(e)return err(res,404,'Không tìm thấy trang.');res.writeHead(200,{'Content-Type':mime[path.extname(p)]||'text/plain','Cache-Control':'no-store'});res.end(data)})}
 async function route(req,res){for(const [k,v]of Object.entries(securityHeaders))res.setHeader(k,v);const u=new URL(req.url,'http://localhost');const p=u.pathname;
 if(!sameOrigin(req,res))return;
 if(req.method==='GET'&&p==='/api/health'){let db='pilot';if(pool){try{await pool.query('SELECT 1');db='ready'}catch{db='unavailable'}}return send(res,db==='unavailable'?503:200,{ok:db!=='unavailable',mode,database:db,pilot:mode==='pilot',notice:mode==='pilot'?'BẢN THỬ NGHIỆM: đơn hàng lưu RAM và bị xóa khi server khởi động lại. Không dùng vận hành thật.':'Dữ liệu được lưu trên PostgreSQL.'})}
-if(req.method==='POST'&&p==='/api/login'){if(!throttle(req,'login',8))return err(res,429,'Đăng nhập quá nhiều lần.');const b=await input(req);if(!safeEq(String(b.password||''),STAFF_PASSWORD))return err(res,401,'Mật khẩu không chính xác.');const exp=String(Date.now()+8*60*60*1000),sig=crypto.createHmac('sha256',SESSION_SECRET).update(exp).digest('hex');return send(res,200,{ok:true},{'Set-Cookie':`sh_session=${exp}.${sig}; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=28800`})}
+if(req.method==='POST'&&p==='/api/login'){if(!throttle(req,'login',8))return err(res,429,'Đăng nhập quá nhiều lần.');const b=await input(req);if(!safeEq(String(b.password||''),STAFF_PASSWORD))return err(res,401,'Mật khẩu không chính xác.');return send(res,200,{ok:true,role:'staff'},{'Set-Cookie':loginCookie('staff')})}
+if(req.method==='POST'&&p==='/api/admin/login'){
+ if(!throttle(req,'admin-login',6))return err(res,429,'Đăng nhập quá nhiều lần.');
+ if(!ADMIN_PASSWORD)return err(res,503,'Chưa cấu hình tài khoản quản trị.');
+ const b=await input(req);
+ if(!safeEq(String(b.password||''),ADMIN_PASSWORD))return err(res,401,'Mật khẩu quản trị không chính xác.');
+ return send(res,200,{ok:true,role:'admin'},{'Set-Cookie':loginCookie('admin')});
+}
 if(req.method==='POST'&&p==='/api/logout'){return send(res,200,{ok:true},{'Set-Cookie':'sh_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'})}
-if(req.method==='GET'&&p==='/api/me')return send(res,200,{staff:session(req)});
+if(req.method==='GET'&&p==='/api/me')return send(res,200,{staff:session(req),role:sessionRole(req)});
 if(req.method==='GET'&&p.startsWith('/api/menu/')){const t=await getTable(p.slice('/api/menu/'.length));if(!t)return err(res,404,'QR không hợp lệ.');return send(res,200,{table:{name:t.name,zone:t.zone},items:await getMenu(),mode})}
 if(req.method==='POST'&&p==='/api/orders'){if(!throttle(req,'orders',25))return err(res,429,'Gửi món quá nhanh.');const a=await placeOrder(await input(req));return send(res,a.duplicate?200:201,a)}
+
+if(req.method==='GET'&&p==='/api/admin/summary'){
+ if(!requireAdmin(req,res))return;
+ const range=adminDateRange(u.searchParams);
+ return send(res,200,{...await adminReport(range.from,range.to),range});
+}
+if(req.method==='POST'&&/^\/api\/admin\/orders\/[0-9a-f-]{36}\/confirm-payment$/.test(p)){
+ if(!requireAdmin(req,res))return;
+ if(!throttle(req,'admin-payment',40))return err(res,429,'Thao tác quá nhanh.');
+ const data=await input(req);
+ if(data.confirm!==true)return err(res,400,'Cần xác nhận đã thực sự nhận đủ tiền.');
+ return send(res,200,{payment:await confirmPayment(p.split('/')[4])});
+}
 if(req.method==='GET'&&p==='/api/tables'){if(!requireAuth(req,res))return;return send(res,200,{tables:await getTables()})}
 if(req.method==='GET'&&p==='/api/order-status'){return err(res,400,'Vui lòng cung cấp mã đơn.')}if(req.method==='GET'&&p.startsWith('/api/order-status/')){if(!throttle(req,'status',120))return err(res,429,'Quá nhiều lần kiểm tra');const oid=p.split('/').at(-1);if(!/^[0-9a-f-]{36}$/.test(oid))return err(res,400,'Mã đơn không hợp lệ');const data=await orderStatus(oid,u.searchParams.get('token'));return data?send(res,200,data):err(res,404,'Không tìm thấy đơn, hãy hỏi nhân viên trước khi gửi lại')}
-if(req.method==='GET'&&p==='/api/history'){if(!requireAuth(req,res))return;const limit=Math.min(100,Math.max(1,Number(u.searchParams.get('limit'))||50)),offset=Math.min(10000,Math.max(0,Number(u.searchParams.get('offset'))||0));return send(res,200,{orders:await history(limit,offset),persistent:!!pool})}
-if(req.method==='GET'&&p==='/api/kds'){if(!requireAuth(req,res))return;return send(res,200,{orders:await getOrders()})}
+if(req.method==='GET'&&p==='/api/history'){if(!requireAdmin(req,res))return;const limit=Math.min(100,Math.max(1,Number(u.searchParams.get('limit'))||50)),offset=Math.min(10000,Math.max(0,Number(u.searchParams.get('offset'))||0));return send(res,200,{orders:await history(limit,offset),persistent:!!pool})}
+if(req.method==='GET'&&p==='/api/kds'){if(!requireAuth(req,res))return;
+ const visible=(await getOrders()).map(o=>({...o,items:o.items.map(({unit_price,...line})=>line)}));
+ return send(res,200,{orders:visible})}
 if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!requireAuth(req,res))return;const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status)})}
 if(req.method==='GET'&&/^\/qr\/[0-9a-f]{48}\.svg$/.test(p)){if(!requireAuth(req,res))return;const t=p.slice(4,-4);if(!(await getTable(t)))return err(res,404,'Không tìm thấy bàn.');const origin=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;const svg=await QRCode.toString(origin+'/t/'+t,{type:'svg',margin:2,width:320,errorCorrectionLevel:'M'});res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'no-store'});res.end(svg);return}
 if(req.method==='GET'&&p.startsWith('/t/'))return staticPage(req,res,'guest.html');
+if(req.method==='GET'&&p==='/admin')return staticPage(req,res,'admin.html');
 if(req.method==='GET'&&(p==='/'||p==='/staff'))return staticPage(req,res,'staff.html');
 if(req.method==='GET'&&p==='/style.css')return staticPage(req,res,'style.css');
 err(res,404,'Không có tài nguyên.');}
