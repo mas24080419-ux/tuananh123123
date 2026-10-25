@@ -169,7 +169,7 @@ tbody tr:last-child td{border-bottom:none!important}
 <button type="submit" id="loginButton">Đăng nhập an toàn</button><p id="loginError" role="alert"></p></form>
 </section>
 <main id="dashboard" class="hidden">
-<div class="topbar"><div><h1>Tổng quan kinh doanh</h1><p class="muted">Đơn gọi món QR, tiền đã thu, công nợ và món bán chạy</p></div>
+<div class="topbar"><div><span class="sh-eyebrow">TRUNG TÂM ĐIỀU HÀNH / OWNER CONSOLE</span><h1>Tổng quan kinh doanh</h1><p class="sh-page-caption">Theo dõi tình hình quán từ một nơi — QR Order, khoản đã thu, công nợ, chi phí và hàng tồn kho.</p></div>
 <div style="display:flex;gap:8px;align-items:center"><span class="tag">● Chủ cửa hàng</span><button type="button" class="alt" id="logout">Đăng xuất</button></div></div>
 <div id="notice" class="notice hidden" role="status"></div>
 <form class="filters" id="filterForm">
@@ -200,8 +200,14 @@ tbody tr:last-child td{border-bottom:none!important}
 <div class="panel"><div class="panel-head"><div><h2>Món được gọi nhiều</h2><p class="muted">Số lượng món đặt trong kỳ (chưa bị hủy)</p></div></div><div id="topItems" class="bar-list"><div class="empty">Đang tải…</div></div></div>
 </div>
 <div class="panel" style="margin-bottom:28px">
-<div class="panel-head"><div><h2>Đơn hàng và xác nhận thu tiền</h2><p class="muted">Hiển thị tối đa 100 đơn mới nhất trong khoảng ngày đã chọn.</p></div>
+<div class="panel-head"><div><span class="sh-eyebrow">QUẢN LÝ GIAO DỊCH</span><h2>Đơn hàng và xác nhận thu tiền</h2><p class="muted">Tối đa 100 đơn mới nhất trong kỳ. Các khoản chưa đối soát không tính doanh thu thực thu.</p></div>
 <button id="refresh" type="button" class="alt">↻ Làm mới</button></div>
+<div class="sh-toolbar">
+<input type="search" id="adminOrderSearch" placeholder="Tìm mã đơn hoặc tên bàn..." aria-label="Tìm trong danh sách đơn đã tải">
+<select id="adminPaymentFilter" aria-label="Lọc theo trạng thái thanh toán"><option value="all">Mọi trạng thái</option><option value="unpaid">Chưa thu</option><option value="paid">Đã thanh toán</option><option value="refunded">Đã hoàn tiền</option></select>
+<select id="adminMethodFilter" aria-label="Lọc phương thức thanh toán"><option value="all">Mọi phương thức</option><option value="cash">Tiền mặt</option><option value="bank_transfer">Chuyển khoản</option><option value="unknown">Chưa xác định</option></select>
+<button type="button" class="alt" id="adminExportOrders">↓ Xuất CSV</button></div>
+<p class="sh-info" id="adminOrderCount">Đang tải dữ liệu...</p>
 <div class="notice">Chỉ bấm <strong>Đã nhận tiền</strong> sau khi nhận đủ tiền mặt hoặc kiểm tra giao dịch chuyển khoản thực tế. Chọn chuyển khoản không có nghĩa khách đã trả tiền.</div>
 <div class="table-scroll"><table class="data-table"><thead><tr><th>Đơn hàng</th><th>Bàn</th><th>Phương thức</th><th>Tiền hàng</th><th>Trạng thái</th><th>Xác nhận</th></tr></thead><tbody id="orders"><tr><td colspan="6" class="empty">Đang tải dữ liệu…</td></tr></tbody></table></div>
 </div>
@@ -246,6 +252,7 @@ function renderTop(rows){
 }
 function methodText(method){return method==='cash'?'Tiền mặt':method==='bank_transfer'?'Chuyển khoản':'Đơn cũ: chưa rõ'}
 function renderOrders(rows){
+ $('#adminOrderCount').textContent=rows.length+' đơn khớp bộ lọc (trong tối đa 100 đơn đã tải).';
  $('#orders').innerHTML=rows.length?rows.map(r=>{
  const amount=Number(r.total_vnd)||0;
  const status=r.payment_status==='paid'?'<span class="pill paid">Đã thu</span>':r.payment_status==='refunded'?'<span class="pill unknown">Đã hoàn tiền</span>':'<span class="pill">Chưa thu</span>';
@@ -273,6 +280,38 @@ async function markPaid(button){
   await reload();
  }catch(e){notice(e.message,'error');button.disabled=false}
 }
+
+function filteredOrders(){
+ if(!latest)return[];
+ const q=$('#adminOrderSearch').value.trim().toLocaleLowerCase('vi-VN');
+ const status=$('#adminPaymentFilter').value,method=$('#adminMethodFilter').value;
+ return (latest.orders||[]).filter(o=>
+  (!q||String(o.id||'').toLowerCase().includes(q)||String(o.table_name||'').toLocaleLowerCase('vi-VN').includes(q))&&
+  (status==='all'||o.payment_status===status)&&
+  (method==='all'||(method==='unknown'?!o.payment_method:o.payment_method===method)));
+}
+function applyOrderFilters(){renderOrders(filteredOrders())}
+function exportOrderRows(){
+ const rows=filteredOrders();
+ if(!rows.length){notice('Không có đơn hàng phù hợp để xuất.','error');return}
+ const columns=['Mã đơn','Thời gian','Bàn','Phương thức','Trạng thái','Tổng tiền','Tiền đã thu'];
+ const safe=v=>{
+  let text=String(v??'');
+  if(/^[=+\-@\t\r]/.test(text))text="'"+text;
+  return '"'+text.replace(/"/g,'""')+'"';
+ };
+ const records=rows.map(r=>[r.id,r.created_at,r.table_name,methodText(r.payment_method),r.payment_status,r.total_vnd,r.paid_amount||'']);
+ const csv='\ufeff'+[columns,...records].map(a=>a.map(safe).join(',')).join('\r\n');
+ const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+ const url=URL.createObjectURL(blob),link=document.createElement('a');
+ link.href=url;link.download='SalesHub_DonHang_'+$('#from').value+'_'+$('#to').value+'.csv';
+ document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+$('#adminOrderSearch').addEventListener('input',applyOrderFilters);
+$('#adminPaymentFilter').addEventListener('change',applyOrderFilters);
+$('#adminMethodFilter').addEventListener('change',applyOrderFilters);
+$('#adminExportOrders').addEventListener('click',exportOrderRows);
+
 async function reload(){
  if(loading)return;
  loading=true;
@@ -282,7 +321,7 @@ async function reload(){
  latest=data;
  const s=data.summary||{};
  for(const [key,v] of [['#totalOrders',s.order_count],['#orderValue',cash(s.order_value)],['#collected',cash(s.collected)],['#outstanding',cash(s.outstanding)],['#unpaidOrders',s.unpaid_orders],['#paidCash',cash(s.paid_cash)],['#paidTransfer',cash(s.paid_transfer)],['#paidUnknown',cash(s.paid_unknown)],['#paidOrders',s.paid_orders]])text(key,v??'0');
- renderBarChart(data.daily||[]);renderTop(data.top_items||[]);renderOrders(data.orders||[]);
+ renderBarChart(data.daily||[]);renderTop(data.top_items||[]);applyOrderFilters();
  const f=operations.finance||{};
  for(const [selector,v] of [['#adminExpenses',cash(f.total_out)],['#adminNetCash',cash(f.net_cashflow)],['#adminLowStock',f.low_stock_count||0],['#adminInventoryValue',cash(f.stock_value_estimate)]])text(selector,v);
  notice(data.mode==='pilot'?'Đang ở chế độ thử nghiệm: dữ liệu sẽ mất nếu khởi động lại máy chủ.':'Đã đồng bộ với dữ liệu PostgreSQL · '+new Date().toLocaleTimeString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}),'ok');
