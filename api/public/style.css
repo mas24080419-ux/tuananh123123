@@ -83,3 +83,34 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
 @keyframes qrIn{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
 @media(max-width:480px){.guest-orange .qr-menu-grid{grid-template-columns:1fr}.guest-orange .qr-menu-card{flex-direction:row;align-items:center}.guest-orange .qr-menu-head{flex:1}.guest-orange .qr-menu-bottom{flex-direction:column;align-items:flex-end;justify-content:center}.guest-orange .qr-cart-card{padding:11px}.guest-orange .qr-cart-card .qr-food-art{width:50px;height:50px;flex-basis:50px}.guest-orange .qr-cart-card .qr-stepper button{width:28px;height:31px}}
 @media(prefers-reduced-motion:reduce){.guest-orange .morph-order,.guest-orange .morph-order-content{transition:none}.guest-orange .morph-spinner{animation-duration:1.6s}.guest-orange .qr-cart-card{animation:none}}
+
+
+/* SalesHub order receipt V7 – isolated from employee kitchen dashboard */
+.guest-orange .qr-tabs{grid-template-columns:repeat(3,minmax(0,1fr))}
+.guest-orange .qr-tabs button{font-size:12px;padding:11px 3px;line-height:1.25;min-width:0}
+.guest-orange .qr-tabs .cart-badge{font-size:10px;padding:2px 5px}
+.guest-orange .qr-receipt-list{display:grid;gap:14px;margin:15px 0}
+.guest-orange .qr-receipt-card{border:1px solid #efe4df;border-radius:20px;padding:16px;background:#fff;box-shadow:0 3px 16px rgba(81,29,8,.06)}
+.guest-orange .qr-receipt-header{display:flex;justify-content:space-between;gap:11px;align-items:flex-start}
+.guest-orange .qr-receipt-header strong{font-size:16px;letter-spacing:-.25px}
+.guest-orange .qr-receipt-header small{display:block;font-size:11px;color:#8b7970;margin-top:5px}
+.guest-orange .qr-receipt-id{font-size:10px;word-break:break-all;color:#98877c;margin-top:10px}
+.guest-orange .qr-receipt-badge{background:#fff1e6;color:#9f4f22;border:1px solid #ffdfc3;font-size:11px;font-weight:700;border-radius:999px;padding:7px 9px;max-width:53%;text-align:center}
+.guest-orange .qr-receipt-items{border-top:1px solid #f5ebe6;border-bottom:1px solid #f5ebe6;margin:13px 0;padding:4px 0}
+.guest-orange .qr-receipt-item{padding:11px 0;border-top:1px solid #f9f2ee}
+.guest-orange .qr-receipt-item:first-child{border-top:0}
+.guest-orange .qr-receipt-item-title{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.guest-orange .qr-receipt-item-title strong{font-size:13px;line-height:1.5;overflow-wrap:anywhere}
+.guest-orange .qr-receipt-status{font-size:10px;white-space:nowrap;font-weight:700;padding:4px 7px;border-radius:999px;background:#fff3e8;color:#955222}
+.guest-orange .qr-receipt-status.working{background:#eff3ff;color:#395ab7}
+.guest-orange .qr-receipt-status.ready,.guest-orange .qr-receipt-status.served{background:#eaf8f0;color:#1b8251}
+.guest-orange .qr-receipt-status.cancelled{background:#fff0f1;color:#bd3b47}
+.guest-orange .qr-receipt-line{display:flex;justify-content:space-between;gap:12px;margin-top:7px;color:#796b64;font-size:12px}
+.guest-orange .qr-receipt-line strong{color:#27211d}
+.guest-orange .qr-receipt-item small,.guest-orange .qr-receipt-note{font-size:11px;color:#85766f;display:block;margin-top:6px}
+.guest-orange .qr-receipt-total{display:flex;align-items:center;justify-content:space-between;gap:15px;font-weight:750;font-size:13px}
+.guest-orange .qr-receipt-total strong{font-size:20px;font-weight:900}
+.guest-orange .qr-receipt-payment{font-size:12px;color:#776357;font-weight:700;margin:12px 0 5px}
+.guest-orange .qr-receipt-footnote{display:block;font-size:11px;line-height:1.5;color:#8c7b70}
+.guest-orange #ordersPane .qr-more-order{width:100%}
+@media(max-width:380px){.guest-orange .qr-tabs button{font-size:11px}.guest-orange .qr-receipt-item-title{align-items:flex-start;flex-direction:column;gap:4px}}
