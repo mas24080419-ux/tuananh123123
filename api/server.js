@@ -163,13 +163,17 @@ async function adminReport(from,to){
  for(const r of received.rows){const d=dayMap.get(r.day)||{day:r.day,orders:0,collected:0};d.collected=Number(r.collected);dayMap.set(r.day,d)}
  return {summary:{...volume.rows[0],...paid.rows[0]},orders:recent.rows,top_items:best.rows,daily:[...dayMap.values()].sort((a,b)=>a.day.localeCompare(b.day)),mode};
 }
-async function confirmPayment(orderId){
+async function confirmPayment(orderId,providedMethod){
+ if(providedMethod!==undefined&&!['cash','bank_transfer'].includes(providedMethod))throw Object.assign(Error('Phương thức thanh toán không hợp lệ.'),{status:400});
  if(!pool){
   const o=orders.find(o=>o.id===orderId);
   if(!o)throw Object.assign(Error('Không tìm thấy đơn hàng.'),{status:404});
   if(o.payment_status==='paid')return {id:orderId,amount:o.paid_amount,already:true};
   if(o.payment_status!=='unpaid')throw Object.assign(Error('Đơn không còn ở trạng thái chưa thanh toán.'),{status:409});
-  if(!['cash','bank_transfer'].includes(o.payment_method))throw Object.assign(Error('Đơn cũ chưa có phương thức thanh toán.'),{status:409});
+  const actualMethod=o.payment_method||providedMethod;
+  if(!['cash','bank_transfer'].includes(actualMethod))throw Object.assign(Error('Vui lòng xác định phương thức thanh toán cho đơn cũ.'),{status:409});
+  if(o.payment_method&&providedMethod&&o.payment_method!==providedMethod)throw Object.assign(Error('Không thể thay đổi phương thức thanh toán đã đặt.'),{status:409});
+  o.payment_method=actualMethod;
   const amount=pilotMoney(o.id);if(amount<=0)throw Object.assign(Error('Đơn có giá trị không hợp lệ.'),{status:409});
   o.payment_status='paid';o.paid_amount=amount;o.paid_at=new Date().toISOString();
   return {id:orderId,amount,already:false};
@@ -181,12 +185,14 @@ async function confirmPayment(orderId){
   if(!o)throw Object.assign(Error('Không tìm thấy đơn hàng.'),{status:404});
   if(o.payment_status==='paid'){await c.query('COMMIT');return {id:orderId,amount:o.paid_amount,already:true}}
   if(o.payment_status!=='unpaid')throw Object.assign(Error('Đơn không còn ở trạng thái chưa thanh toán.'),{status:409});
-  if(!['cash','bank_transfer'].includes(o.payment_method))throw Object.assign(Error('Đơn cũ chưa có phương thức thanh toán; cần đối soát tại quầy.'),{status:409});
+  const actualMethod=o.payment_method||providedMethod;
+  if(!['cash','bank_transfer'].includes(actualMethod))throw Object.assign(Error('Vui lòng xác định phương thức thu tiền cho đơn cũ.'),{status:409});
+  if(o.payment_method&&providedMethod&&o.payment_method!==providedMethod)throw Object.assign(Error('Phương thức thu tiền không khớp đơn hàng.'),{status:409});
   const q=await c.query("SELECT coalesce(sum(quantity*unit_price),0)::bigint AS amount FROM dining_order_lines WHERE order_id=$1 AND status<>'cancelled'",[orderId]);
   const amount=Number(q.rows[0].amount);
   if(!Number.isSafeInteger(amount)||amount<=0)throw Object.assign(Error('Giá trị đơn không hợp lệ.'),{status:409});
-  await c.query("UPDATE dining_orders SET payment_status='paid',paid_amount=$2,paid_at=now() WHERE id=$1",[orderId,amount]);
-  await c.query("INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,'staff','payment_confirmed',$2::jsonb)",[orderId,JSON.stringify({role:'admin',payment_method:o.payment_method,amount})]);
+  await c.query("UPDATE dining_orders SET payment_status='paid',paid_amount=$2,paid_at=now(),payment_method=$3 WHERE id=$1",[orderId,amount,actualMethod]);
+  await c.query("INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,'staff','payment_confirmed',$2::jsonb)",[orderId,JSON.stringify({role:'admin',payment_method:actualMethod,amount,method_filled_for_legacy_order:!o.payment_method})]);
   await c.query('COMMIT');
   return {id:orderId,amount,already:false};
  } catch(e) {await c.query('ROLLBACK');throw e} finally {c.release()}
@@ -220,7 +226,7 @@ if(req.method==='POST'&&/^\/api\/admin\/orders\/[0-9a-f-]{36}\/confirm-payment$/
  if(!throttle(req,'admin-payment',40))return err(res,429,'Thao tác quá nhanh.');
  const data=await input(req);
  if(data.confirm!==true)return err(res,400,'Cần xác nhận đã thực sự nhận đủ tiền.');
- return send(res,200,{payment:await confirmPayment(p.split('/')[4])});
+ return send(res,200,{payment:await confirmPayment(p.split('/')[4],data.paymentMethod)});
 }
 if(req.method==='GET'&&p==='/api/tables'){if(!requireAuth(req,res))return;return send(res,200,{tables:await getTables()})}
 if(req.method==='GET'&&p==='/api/order-status'){return err(res,400,'Vui lòng cung cấp mã đơn.')}if(req.method==='GET'&&p.startsWith('/api/order-status/')){if(!throttle(req,'status',120))return err(res,429,'Quá nhiều lần kiểm tra');const oid=p.split('/').at(-1);if(!/^[0-9a-f-]{36}$/.test(oid))return err(res,400,'Mã đơn không hợp lệ');const data=await orderStatus(oid,u.searchParams.get('token'));return data?send(res,200,data):err(res,404,'Không tìm thấy đơn, hãy hỏi nhân viên trước khi gửi lại')}
