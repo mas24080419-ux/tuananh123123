@@ -1,7 +1,273 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SalesHub | Thực đơn QR</title><link rel="stylesheet" href="/style.css"></head><body><div class="guest-head"><div class="wrap"><div style="font-weight:800;color:#a9e4d5;letter-spacing:3px">SALESHUB QR</div><h1>Chào mừng quý khách!</h1><p id="table">Đang mở thực đơn...</p></div></div><main class="wrap guest-main"><div id="storageNotice" class="banner" role="status">Đang mở kết nối nhận đơn...</div><div class="card"><h2>Thực đơn hôm nay</h2><p class="muted">Chọn món và số lượng, gửi đến bếp/bar.</p></div><div id="list"></div><div class="card"><h3>Ghi chú chung</h3><textarea id="note" maxlength="160" class="note" rows="2" placeholder="Ít đá, làm cay nhẹ..."></textarea></div><div id="sent" class="card hidden" style="margin-top:12px;color:#138466"><h2>✓ Đã gửi yêu cầu</h2><p id="receipt"></p><p id="deliveryState" aria-live="polite" class="muted">Đang xác minh máy chủ...</p></div></main><div class="fixed"><div class="wrap between"><div><b id="count">0 món</b><div class="price" id="total">0đ</div></div><button class="btn" id="submit" disabled>Gửi món đến bếp →</button></div></div><script>
-var products=[],cart={},pending=crypto.randomUUID(),token=location.pathname.split('/').pop(),sending=false,lastOrderId=null;function el(x){return document.getElementById(x)};function esc(x){return String(x==null?'':x).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}function money(x){return Number(x).toLocaleString('vi-VN')+'đ'}async function api(url,opts){var o=opts||{},r=await fetch(url,{method:o.method||'GET',headers:{'Content-Type':'application/json'},body:o.body?JSON.stringify(o.body):undefined}),j=await r.json();if(!r.ok)throw Error(j.error||'Mất kết nối');return j}
-function draw(){el('list').innerHTML=products.map(function(p){return '<div class="menu-item"><div><b>'+esc(p.name)+'</b><p class="muted">'+(p.station==='bar'?'Đồ uống · Bar':'Món ăn · Bếp')+'</p><div class="price">'+money(p.price)+'</div></div><div class="step"><button data-id="'+p.id+'" data-d="-1">−</button><b>'+(cart[p.id]||0)+'</b><button data-id="'+p.id+'" data-d="1">+</button></div></div>'}).join('');document.querySelectorAll('[data-id]').forEach(function(b){b.onclick=function(){var id=b.dataset.id;cart[id]=Math.min(20,Math.max(0,(cart[id]||0)+Number(b.dataset.d)));draw()}});var n=0,sum=0;products.forEach(function(p){n+=cart[p.id]||0;sum+=(cart[p.id]||0)*p.price});el('count').textContent=n+' món';el('total').textContent=money(sum);el('submit').disabled=!n||sending}
-api('/api/menu/'+token).then(function(d){el('storageNotice').textContent=d.mode==='postgres'?'Đơn hàng được lưu trên PostgreSQL. Vui lòng thanh toán với nhân viên.':'THỬ NGHIỆM: Đơn lưu tạm và có thể mất khi máy chủ khởi động lại.';products=d.items;el('table').textContent=d.table.name+' · '+d.table.zone;draw()}).catch(function(e){el('table').textContent='QR không hợp lệ: '+e.message});
-async function verifyOrder(){if(!lastOrderId)return;try{var d=await api('/api/order-status/'+lastOrderId+'?token='+encodeURIComponent(token));var waiting=d.items.filter(function(i){return i.status==='new'||i.status==='preparing'}).length;var done=d.items.filter(function(i){return i.status==='ready'||i.status==='served'}).length;el('deliveryState').textContent='✓ Máy chủ còn lưu đơn: '+d.items.length+' món, '+waiting+' chờ/chế biến, '+done+' đã xong. '+(d.persistent?'Đơn đã được lưu trên PostgreSQL.':'Bản thử nghiệm có thể mất đơn khi máy chủ khởi động lại.');el('deliveryState').style.color='#167451'}catch(e){el('deliveryState').textContent='⚠ Không thể xác nhận đơn: '+e.message+' Báo nhân viên trước khi gửi lại.';el('deliveryState').style.color='#a83838'}}setInterval(function(){if(lastOrderId&&!document.hidden)verifyOrder()},10000);
-el('submit').onclick=async function(){if(sending)return;sending=true;draw();try{var items=products.filter(function(p){return cart[p.id]>0}).map(function(p){return {id:p.id,qty:cart[p.id]}}),a=await api('/api/orders',{method:'POST',body:{token:token,requestId:pending,note:el('note').value,items:items}});el('sent').classList.remove('hidden');lastOrderId=a.id;el('receipt').textContent='Mã đơn #'+a.id.slice(0,8)+' · Máy chủ đã tiếp nhận. Bếp cần đăng nhập và mở tab Đơn Bếp/Bar.';verifyOrder();cart={};pending=crypto.randomUUID();el('note').value='';draw();window.scrollTo({top:document.body.scrollHeight,behavior:'smooth'})}catch(e){alert(e.message)}finally{sending=false;draw()}};
-</script></body></html>
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#FAF7F5">
+  <meta name="description" content="SalesHub — Quét QR, chọn món và gọi món ngay tại bàn.">
+  <title>SalesHub · Gọi món tại bàn</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body class="guest-orange">
+<div class="qr-app">
+  <header class="qr-header">
+    <div class="qr-brandline"><span class="qr-brandicon" aria-hidden="true">S</span><span class="qr-brandtext">SalesHub <small>· QR ORDER</small></span><span id="tableBadge" class="qr-table-pill">Đang xác nhận bàn…</span></div>
+    <h1>Hôm nay mình ăn gì?</h1>
+    <p id="tableName">Đang kết nối thực đơn tại bàn…</p>
+  </header>
+  <main class="qr-main" id="appRoot">
+    <div id="notice" class="qr-notice" role="status">Đang tải thực đơn…</div>
+    <div id="recentStatus" class="qr-order-status hidden" role="status" aria-live="polite"></div>
+    <div class="qr-tabs" role="tablist" aria-label="Điều hướng đặt món">
+      <button type="button" id="menuTab" role="tab" aria-selected="true" aria-controls="menuPane" class="active">Thực đơn</button>
+      <button type="button" id="cartTab" role="tab" aria-selected="false" aria-controls="cartPane">Giỏ hàng <span id="cartCountBadge" class="cart-badge">0</span></button>
+    </div>
+    <section id="menuPane" role="tabpanel" aria-labelledby="menuTab">
+      <div class="qr-section-head"><h2>Khám phá thực đơn</h2><p>Chọn món yêu thích và gửi yêu cầu tới bếp hoặc quầy bar.</p></div>
+      <div id="menuList"><p class="qr-empty">Đang tải thực đơn…</p></div>
+    </section>
+    <section id="cartPane" class="hidden" role="tabpanel" aria-labelledby="cartTab">
+      <div class="qr-section-head"><h2>Giỏ hàng <span id="cartTitleCount" class="qr-count">0 món</span></h2><p>Kiểm tra lại món trước khi đặt cho <strong id="cartTable">bàn của bạn</strong>.</p></div>
+      <div class="qr-voucher" aria-label="Thông tin ưu đãi"><span class="qr-voucher-icon" aria-hidden="true">⌑</span><span><strong>Ưu đãi & voucher</strong><small>Chưa hỗ trợ áp dụng mã giảm giá tại bàn</small></span></div>
+      <div id="cartList" class="qr-cart-list"></div><button type="button" id="backToMenu" class="qr-back-menu">← Quay lại thực đơn</button>
+      <label class="qr-note-label" for="note">Ghi chú chung cho bếp <span>(không bắt buộc)</span></label>
+      <textarea class="qr-note" id="note" maxlength="160" rows="2" placeholder="Ví dụ: Món ít cay, đồ uống mang sau…"></textarea>
+      <p id="submitError" class="qr-error hidden" role="alert"></p>
+      <p id="retryHint" class="qr-retryhint hidden" role="status">Chưa xác định được đơn đã tới máy chủ hay chưa. Giỏ hàng tạm khóa để thử gửi lại cùng mã yêu cầu, tránh tạo đơn trùng.</p>
+      <div id="confirmation" class="qr-confirmation hidden" role="status" aria-live="polite"><strong>✓ Đơn đã được ghi nhận</strong><p id="confirmationText"></p><small>Máy chủ đã ghi nhận đơn. Điều này không đồng nghĩa bếp đã bắt đầu chế biến.</small><button type="button" id="orderMore" class="qr-more-order">+ Gọi thêm món</button></div>
+    </section>
+  </main>
+  <div class="qr-sticky-bottom">
+    <div class="qr-sticky-inside">
+      <div class="qr-totals">
+        <div><span>Tạm tính</span><span id="subtotal">0 đ</span></div>
+        <div class="qr-totals-total"><strong>Tổng cộng</strong><strong id="total">0 đ</strong></div>
+        <small>Giá tạm tính — máy chủ sẽ kiểm tra giá khi đặt món.</small>
+      </div>
+      <button type="button" id="viewCart" class="qr-view-cart"><span id="viewCartLabel">Xem giỏ hàng</span><span aria-hidden="true">→</span></button>
+      <div id="orderAction" class="qr-order-action hidden">
+        <button type="button" id="submit" class="morph-order" disabled aria-busy="false" aria-label="Xác nhận gọi món">
+          <span id="submitContent" class="morph-order-content"><span id="submitLabel">Xác nhận gọi món</span><span aria-hidden="true">🔒</span></span>
+          <span class="morph-spinner" aria-hidden="true"></span>
+        </button>
+        <span id="orderLive" class="sr-only" aria-live="polite"></span>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+'use strict';
+// Companion to React components: zero-build guest implementation for the existing Render/Node.js host.
+// The public API and KDS contract are intentionally unchanged.
+const $ = (q) => document.querySelector(q);
+const money = (v) => new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND', maximumFractionDigits: 0 }).format(v);
+const escapeHTML = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const tableToken = location.pathname.match(/^\/t\/([0-9a-f]{48})$/)?.[1] || null;
+const cart = new Map();
+let products = [], table = null, mode = 'pilot', sending = false, confirmed = false;
+let pendingPayload = null; // keep snapshot and requestId on ambiguous errors
+let currentView = 'menu';
+const note = $('#note');
+const submit = $('#submit');
+const newUUID = () => crypto.randomUUID();
+const pendingKey = tableToken ? `saleshub:pending-order:${tableToken}` : null;
+const recentKey = tableToken ? `saleshub:recent-order:${tableToken}` : null;
+let recentOrderId = null;
+async function verifyRecentOrder() {
+  if (!recentOrderId || !tableToken) return;
+  const target = $('#recentStatus');
+  hidden('#recentStatus', false);
+  try {
+    const data = await api('/api/order-status/' + encodeURIComponent(recentOrderId) + '?token=' + encodeURIComponent(tableToken));
+    const waiting = data.items.filter(i => i.status === 'new').length;
+    const preparing = data.items.filter(i => i.status === 'preparing').length;
+    const ready = data.items.filter(i => i.status === 'ready' || i.status === 'served').length;
+    target.textContent = 'Đơn gần nhất #' + recentOrderId.slice(0,8) + ' · ' +
+      waiting + ' món chờ bếp · ' + preparing + ' đang làm · ' + ready + ' sẵn sàng/đã phục vụ. ' +
+      (data.persistent ? 'Đã xác minh dữ liệu PostgreSQL.' : 'Dữ liệu thử nghiệm RAM.');
+  } catch (error) {
+    target.textContent = 'Chưa xác minh được trạng thái đơn gần nhất #' + recentOrderId.slice(0,8) +
+      '. Không tạo đơn mới để thay thế; hãy nhờ nhân viên kiểm tra. ' + error.message;
+  }
+}
+
+function savePending() {
+  if (!pendingKey) return;
+  try { if (pendingPayload) sessionStorage.setItem(pendingKey, JSON.stringify(pendingPayload));
+        else sessionStorage.removeItem(pendingKey); } catch (_) { /* session storage may be blocked */ }
+}
+function restorePending() {
+  if (!pendingKey) return false;
+  try {
+    const raw = sessionStorage.getItem(pendingKey); if (!raw) return false;
+    const snapshot = JSON.parse(raw);
+    if (snapshot.token !== tableToken || !Array.isArray(snapshot.items) || !snapshot.items.length ||
+        !/^[0-9a-f-]{36}$/i.test(snapshot.requestId) ||
+        snapshot.items.some(it => !products.some(p => p.id === it.id) || !Number.isInteger(it.qty) || it.qty < 1 || it.qty > 20)) {
+      sessionStorage.removeItem(pendingKey); return false;
+    }
+    pendingPayload = snapshot;
+    cart.clear(); snapshot.items.forEach(it => cart.set(it.id, it.qty));
+    note.value = snapshot.note || '';
+    return true;
+  } catch (_) { return false; }
+}
+function art(p) { return p.station === 'bar' ? '🥤' : /phở|bún/i.test(p.name) ? '🍜' : /cơm/i.test(p.name) ? '🍚' : /khoai/i.test(p.name) ? '🍟' : '🍽️'; }
+function hidden(sel, isHidden) { $(sel).classList.toggle('hidden', isHidden); }
+function showError(message, retry = false) {
+  $('#submitError').textContent = message;
+  hidden('#submitError', !message);
+  hidden('#retryHint', !retry);
+}
+async function api(url, options = {}) {
+  let response;
+  try {
+    response = await fetch(url, {
+      credentials: 'same-origin', ...options,
+      headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+    });
+  } catch (_) { throw Object.assign(new Error('Không kết nối được máy chủ. Thử gửi lại để kiểm tra đơn.'), { ambiguous: true }); }
+  let data;
+  try { data = await response.json(); } catch (_) { throw Object.assign(new Error('Máy chủ trả lời không hợp lệ.'), { ambiguous: true }); }
+  if (!response.ok) throw Object.assign(new Error(data.error || 'Không thể thực hiện yêu cầu.'), { status: response.status, ambiguous: response.status >= 500 });
+  return data;
+}
+function totalStats() {
+  const byId = new Map(products.map(p => [p.id, p]));
+  let count = 0, subtotal = 0;
+  for (const [id, qty] of cart) { const p = byId.get(id); if (p) { count += qty; subtotal += p.price * qty; } }
+  return {count, subtotal};
+}
+function changeQuantity(id, delta) {
+  if (sending || pendingPayload || confirmed) return;
+  const qty = cart.get(id) || 0;
+  const next = Math.max(0, Math.min(20, qty + delta));
+  if (next) cart.set(id, next); else cart.delete(id);
+  showError(''); render();
+}
+function quantityUI(p, qty) {
+  if (!qty) return `<button class="qr-add" data-item="${p.id}" data-delta="1" type="button" aria-label="Thêm ${escapeHTML(p.name)}">+</button>`;
+  return `<div class="qr-stepper"><button type="button" data-item="${p.id}" data-delta="-1" aria-label="${qty === 1 ? 'Xóa' : 'Giảm'} ${escapeHTML(p.name)}">${qty === 1 ? '×' : '−'}</button><span>${qty}</span><button type="button" data-item="${p.id}" data-delta="1" aria-label="Thêm ${escapeHTML(p.name)}">+</button></div>`;
+}
+function wireSteppers() {
+  document.querySelectorAll('[data-item][data-delta]').forEach(button => {
+    button.disabled = sending || Boolean(pendingPayload) || confirmed;
+    button.addEventListener('click', () => changeQuantity(button.dataset.item, Number(button.dataset.delta)));
+  });
+}
+function render() {
+  const {count, subtotal} = totalStats();
+  const groups = {};
+  for (const p of products) (groups[p.category] ??= []).push(p);
+  $('#menuList').innerHTML = Object.entries(groups).map(([category, list]) => `
+    <h3 class="qr-category">${escapeHTML(category)}</h3>
+    <div class="qr-menu-grid">${list.map(p => `<article class="qr-menu-card">
+      <div class="qr-menu-head"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div><h3>${escapeHTML(p.name)}</h3><small>${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small></div></div>
+      <div class="qr-menu-bottom"><span class="qr-money">${money(p.price)}</span>${quantityUI(p, cart.get(p.id)||0)}</div>
+    </article>`).join('')}</div>`).join('') || '<p class="qr-empty">Chưa có món trong thực đơn.</p>';
+  $('#cartList').innerHTML = [...cart.entries()].map(([id, qty]) => {
+    const p = products.find(x => x.id === id);
+    return p ? `<article class="qr-cart-card"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div class="qr-cart-info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category)} · ${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small><span class="qr-money">${money(qty*p.price)}</span></div>${quantityUI(p, qty)}</article>` : '';
+  }).join('') || '<p class="qr-empty">Giỏ hàng trống. Quay lại thực đơn để chọn món.</p>';
+  $('#cartCountBadge').textContent = count;
+  $('#cartTitleCount').textContent = `${count} món`;
+  $('#subtotal').textContent = money(subtotal);
+  $('#total').textContent = money(subtotal);
+  $('#viewCartLabel').textContent = `Xem giỏ hàng · ${count} món`;
+  submit.disabled = sending || !count || !table || confirmed;
+  note.disabled = sending || Boolean(pendingPayload) || confirmed;
+  if (!sending && !confirmed) setOrderButton('idle');
+  wireSteppers();
+}
+function showView(view) {
+  currentView = view;
+  hidden('#menuPane', view !== 'menu'); hidden('#cartPane', view !== 'cart');
+  hidden('#viewCart', view === 'cart'); hidden('#orderAction', view !== 'cart');
+  for (const [tabId, value] of [['#menuTab','menu'],['#cartTab','cart']]) {
+    $(tabId).classList.toggle('active', value === view);
+    $(tabId).setAttribute('aria-selected', value === view ? 'true' : 'false');
+  }
+  window.scrollTo({top:0,behavior:'instant'});
+}
+function setOrderButton(state) {
+  submit.classList.toggle('placing', state === 'loading');
+  submit.classList.toggle('success', state === 'success');
+  submit.setAttribute('aria-busy', state === 'loading' ? 'true' : 'false');
+  $('#submitContent').innerHTML = state === 'success' ? '✓ Đơn đã được ghi nhận' : '<span id="submitLabel">Xác nhận gọi món</span><span aria-hidden="true">🔒</span>';
+  $('#orderLive').textContent = state === 'loading' ? 'Đang gửi yêu cầu gọi món' : state === 'success' ? 'Đơn đã được ghi nhận' : '';
+  submit.disabled = state !== 'idle' || sending || !totalStats().count || !table || confirmed;
+}
+async function submitOrder() {
+  if (sending || confirmed || !table || !totalStats().count) return;
+  if (!pendingPayload) pendingPayload = {
+    token: tableToken,
+    items: [...cart].map(([id, qty]) => ({id, qty})),
+    requestId: newUUID(),
+    note: note.value.trim().slice(0,160),
+  };
+  savePending();
+  sending = true; showError(''); setOrderButton('loading'); render(); setOrderButton('loading');
+  try {
+    const order = await api('/api/orders', {method:'POST',body:JSON.stringify(pendingPayload)});
+    if (!order?.id) throw Object.assign(new Error('Máy chủ chưa trả mã đơn hợp lệ.'), {ambiguous:true});
+    confirmed = true;
+    recentOrderId = order.id;
+    try { if (recentKey) sessionStorage.setItem(recentKey, recentOrderId); } catch (_) {}
+    void verifyRecentOrder();
+    $('#confirmationText').textContent = `Mã đơn: #${order.id.slice(0,8)} · ${pendingPayload.items.reduce((n,it)=>n+it.qty,0)} món · ${table.name}.`;
+    hidden('#confirmation', false);
+    pendingPayload = null; savePending(); cart.clear(); note.value = '';
+    setOrderButton('success');
+    $('#confirmation').scrollIntoView({behavior:'smooth',block:'center'});
+  } catch (error) {
+    // 4xx rejects an invalid payload. A network/5xx error is ambiguous: never create a new idempotency key on retry.
+    if (!error.ambiguous) { pendingPayload = null; savePending(); }
+    showError(error.message || 'Chưa thể gửi đơn.', Boolean(pendingPayload));
+  } finally {
+    sending = false;
+    render();
+    setOrderButton(confirmed ? 'success' : 'idle');
+  }
+}
+async function init() {
+  if (!tableToken) { $('#notice').textContent = 'QR không hợp lệ. Vui lòng quét lại mã QR được dán tại bàn.'; render(); return; }
+  try {
+    const data = await api(`/api/menu/${tableToken}`);
+    if (!data?.table || !Array.isArray(data.items)) throw Error('Phản hồi thực đơn không hợp lệ.');
+    table = data.table; products = data.items.filter(p=>p.active!==false); mode = data.mode;
+    $('#tableName').textContent = `${table.name} · ${table.zone}`;
+    $('#tableBadge').textContent = table.name;
+    $('#cartTable').textContent = table.name;
+    if (mode === 'pilot') {
+      $('#notice').textContent = 'BẢN THỬ NGHIỆM: Đơn được lưu RAM và có thể mất khi máy chủ khởi động lại. Không dùng vận hành thực tế.';
+    } else {
+      $('#notice').classList.add('is-online');
+      $('#notice').textContent = 'Đã kết nối thực đơn. Đơn sẽ được lưu và hiển thị trên hệ thống bếp/bar sau khi xác nhận.';
+    }
+    try {
+      const stored = recentKey ? sessionStorage.getItem(recentKey) : null;
+      if (stored && /^[0-9a-f-]{36}$/i.test(stored)) { recentOrderId = stored; void verifyRecentOrder(); }
+    } catch (_) {}
+    const restored = restorePending();
+    render();
+    if (restored) { showError('Tìm thấy yêu cầu đặt món chưa rõ kết quả từ phiên trước. Hãy kiểm tra rồi nhấn xác nhận để thử lại với cùng mã đơn.', true); showView('cart'); }
+  } catch (error) {
+    $('#notice').textContent = `Không tải được thực đơn: ${error.message}`;
+  }
+}
+$('#menuTab').addEventListener('click',()=>showView('menu'));
+$('#cartTab').addEventListener('click',()=>showView('cart'));
+$('#viewCart').addEventListener('click',()=>showView('cart'));
+$('#backToMenu').addEventListener('click',()=>showView('menu'));
+$('#orderMore').addEventListener('click',()=>{
+  if(sending || !confirmed)return;
+  confirmed=false;pendingPayload=null;savePending();showError('');hidden('#confirmation',true);
+  note.value='';cart.clear();render();showView('menu');
+});
+submit.addEventListener('click', submitOrder);
+setInterval(() => { if (!document.hidden) void verifyRecentOrder(); }, 12000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden) void verifyRecentOrder(); });
+showView('menu');init();
+</script>
+</body>
+</html>
