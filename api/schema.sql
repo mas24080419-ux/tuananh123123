@@ -40,3 +40,10 @@ CREATE INDEX IF NOT EXISTS idx_dining_audit_order ON dining_audit(order_id,creat
 -- Payment choice is separate from payment confirmation; existing orders remain unknown (NULL).
 ALTER TABLE dining_orders ADD COLUMN IF NOT EXISTS payment_method text
  CHECK (payment_method IN ('cash','bank_transfer'));
+
+-- Administrative payment confirmation. Historical rows remain unchanged.
+ALTER TABLE dining_orders ADD COLUMN IF NOT EXISTS paid_amount bigint
+ CHECK (paid_amount >= 0);
+ALTER TABLE dining_orders ADD COLUMN IF NOT EXISTS paid_at timestamptz;
+CREATE INDEX IF NOT EXISTS ix_dining_orders_paid_at ON dining_orders(paid_at DESC)
+ WHERE payment_status = 'paid';
