@@ -182,3 +182,201 @@ body:has(.tt6-sidebar) .tt6-payment-content>header nav{display:none}
  .tt6-payment-shell>.tt6-payment-content{padding:17px 13px 42px}
 }
 @media(prefers-reduced-motion:reduce){.tt6-sidebar,.tt6-icon,.tt6-side-link{transition:none!important}}
+
+
+/* V12 unified POS shell: override all legacy page-specific sidebar/mobile rules. */
+html{max-width:100%;overflow-x:clip}
+body:has(.tt6-sidebar){width:100%;max-width:100%;overflow-x:clip}
+.shell:has(>aside.tt6-sidebar)>:not(aside){
+ min-width:0!important;max-width:100%;box-sizing:border-box
+}
+.shell:has(>aside.tt6-sidebar)>main,
+.shell:has(>aside.tt6-sidebar)>div>main{
+ width:100%;min-width:0;max-width:1450px
+}
+.shell>aside.tt6-sidebar:not(.tt6-ready) .tt6-fallback-nav{
+ display:grid!important;gap:6px;padding:20px 12px
+}
+.shell>aside.tt6-sidebar:not(.tt6-ready) .tt6-fallback-nav a{
+ color:#37666c!important;font-size:12px;text-decoration:none!important;padding:10px 12px;border-radius:10px;
+ background:#f3f9f7
+}
+.tt6-sidebar .tt6-side-nav{height:auto!important}
+.tt6-sidebar .tt6-side-nav .tt6-side-link{white-space:nowrap!important}
+body:has(.tt6-sidebar) .panel,
+body:has(.tt6-sidebar) .card,
+body:has(.tt6-sidebar) .stat{
+ max-width:100%;min-width:0
+}
+body:has(.tt6-sidebar) .scroll,
+body:has(.tt6-sidebar) .table-scroll{
+ overflow-x:auto!important;max-width:100%;min-width:0;-webkit-overflow-scrolling:touch;
+ overscroll-behavior-x:contain
+}
+body:has(.tt6-sidebar) .scroll table,
+body:has(.tt6-sidebar) .table-scroll table{width:100%;max-width:none}
+body:has(.tt6-sidebar) img,body:has(.tt6-sidebar) svg{max-width:100%}
+body:has(.tt6-sidebar) .top,
+body:has(.tt6-sidebar) .topbar,
+body:has(.tt6-sidebar) .panel-head,
+body:has(.tt6-sidebar) .ui-action-row{
+ min-width:0;max-width:100%;gap:10px;flex-wrap:wrap
+}
+body:has(.tt6-sidebar) input,
+body:has(.tt6-sidebar) select,
+body:has(.tt6-sidebar) textarea{
+ max-width:100%;min-width:0;box-sizing:border-box
+}
+body:has(.tt6-sidebar) h1,body:has(.tt6-sidebar) h2{overflow-wrap:normal;word-break:normal}
+body:has(.tt6-sidebar) #finance,
+body:has(.tt6-sidebar) #inventory,
+body:has(.tt6-sidebar) #recipes{min-width:0;max-width:100%}
+.tt6-payment-shell>.tt6-payment-content{width:100%;max-width:980px;min-width:0;margin-inline:auto}
+.tt6-payment-content>header.top{display:none!important}
+/* Owner login has its own focused layout. No admin nav before authentication. */
+body.tt6-owner-login .shell:has(>aside.tt6-sidebar){grid-template-columns:minmax(0,1fr)!important}
+body.tt6-owner-login .shell>aside.tt6-sidebar,
+body.tt6-owner-login .tt6-mobile-header,
+body.tt6-owner-login .tt6-mobile-bottom{display:none!important}
+body.tt6-owner-login #login{max-width:480px!important;margin:8vh auto!important;padding:clamp(20px,4vw,34px)!important}
+.tt6-mobile-bottom{display:none!important}
+/* One app-style header and one fixed, predictable bottom navigation on phones. */
+@media(max-width:760px){
+ html{overflow-x:clip}
+ body:has(.tt6-sidebar){-webkit-text-size-adjust:100%}
+ body:has(.tt6-sidebar):not(.tt6-owner-login){
+  padding:0 0 calc(76px + env(safe-area-inset-bottom,0px))!important
+ }
+ body:has(.tt6-sidebar) .shell:has(>aside.tt6-sidebar){
+  display:block!important;width:100%!important;min-width:0!important;max-width:100%!important;
+  grid-template-columns:none!important;margin:0!important;padding:0!important
+ }
+ body:has(.tt6-sidebar) .shell:has(>aside.tt6-sidebar)>:not(aside){
+  width:100%!important;max-width:100%!important;min-width:0!important
+ }
+ .tt6-mobile-header{
+  display:flex!important;min-height:57px;height:auto!important;
+  padding:9px 13px!important;padding-top:calc(9px + env(safe-area-inset-top,0px))!important;
+  box-sizing:content-box;max-width:100%;width:auto;gap:9px!important;
+  position:sticky;top:0;z-index:41;background:#fff!important;
+ }
+ .tt6-mobile-header .tt6-mobile-open{flex:none}
+ .tt6-mobile-header span{font-size:15px!important;min-width:0;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+ .tt6-mobile-header small{font-size:9px!important;white-space:nowrap}
+ body:has(.tt6-sidebar) main,
+ body:has(.tt6-sidebar) .tt6-payment-content{
+  padding:18px 14px 26px!important;
+  width:100%!important;min-width:0!important;max-width:100%!important;margin:0!important
+ }
+ body:has(.tt6-sidebar) #dashboard{padding:18px 14px 26px!important}
+ body:has(.tt6-sidebar) .cards,body:has(.tt6-sidebar) .stats{
+  display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important
+ }
+ body:has(.tt6-sidebar) .panel,
+ body:has(.tt6-sidebar) .card,
+ body:has(.tt6-sidebar) .stat{padding:14px!important;border-radius:13px!important;min-width:0!important}
+ body:has(.tt6-sidebar) .card b,body:has(.tt6-sidebar) .stat strong{
+  font-size:clamp(17px,4.3vw,23px)!important;line-height:1.25!important;
+  overflow-wrap:anywhere
+ }
+ body:has(.tt6-sidebar) .panel-head{display:flex;gap:8px;flex-wrap:wrap!important}
+ body:has(.tt6-sidebar) .filters{
+  width:100%;max-width:100%;display:flex;flex-wrap:wrap;gap:8px!important;padding:12px!important
+ }
+ body:has(.tt6-sidebar) .filters label{flex:1 1 125px;min-width:0}
+ body:has(.tt6-sidebar) .filters input{width:100%!important}
+ body:has(.tt6-sidebar) .tabs{
+  max-width:100%!important;width:100%!important;display:flex!important;
+  flex-wrap:wrap!important;gap:5px!important
+ }
+ body:has(.tt6-sidebar) .tabs button{flex:0 1 auto;min-height:39px!important;padding:9px 11px!important}
+ body:has(.tt6-sidebar) .cols,body:has(.tt6-sidebar) .split,
+ body:has(.tt6-sidebar) .two,body:has(.tt6-sidebar) .columns{
+  display:flex!important;flex-direction:column!important;min-width:0!important;
+  width:100%!important;gap:12px!important
+ }
+ body:has(.tt6-sidebar) .columns:has(.ui-hide-by-default):not(:has(.is-open)){display:none!important}
+ body:has(.tt6-sidebar) .pair,body:has(.tt6-sidebar) .row{
+  grid-template-columns:minmax(0,1fr)!important
+ }
+ body:has(.tt6-sidebar) input:not([type="checkbox"]),body:has(.tt6-sidebar) select,
+ body:has(.tt6-sidebar) textarea{font-size:16px!important;max-width:100%!important}
+ body:has(.tt6-sidebar) .sh-toolbar{
+  width:100%;display:flex;flex-wrap:wrap!important;gap:8px!important;align-items:stretch!important
+ }
+ body:has(.tt6-sidebar) .sh-toolbar input[type="search"]{flex:1 1 175px!important;max-width:100%}
+ body:has(.tt6-sidebar) .ui-toolbar{display:flex;flex-wrap:wrap;gap:8px!important;justify-content:flex-start!important}
+ body:has(.tt6-sidebar) .tt6-side-overlay:not([hidden]){position:fixed;inset:0}
+ body:has(.tt6-sidebar) .tt6-mobile-bottom{
+  display:grid!important;position:fixed;bottom:0;left:0;right:0;width:100%;
+  grid-template-columns:repeat(5,minmax(0,1fr));gap:0;
+  padding:6px 5px calc(6px + env(safe-area-inset-bottom,0px));
+  background:rgba(255,255,255,.98);border-top:1px solid #e3eeec;
+  box-shadow:0 -5px 18px rgba(25,66,70,.055);z-index:42;
+  box-sizing:border-box
+ }
+ .tt6-mobile-bottom>a,.tt6-mobile-bottom>button{
+  display:flex!important;align-items:center!important;justify-content:center!important;
+  flex-direction:column!important;gap:3px!important;min-width:0;width:100%;height:55px;
+  padding:6px 2px!important;margin:0!important;min-height:55px!important;
+  border:0!important;border-radius:11px!important;box-shadow:none!important;
+  background:transparent!important;color:#748b92!important;text-decoration:none!important;
+  font-family:inherit;font-size:10px!important;font-weight:750!important;line-height:1.1!important
+ }
+ .tt6-mobile-bottom .tt6-icon{width:19px;height:19px}
+ .tt6-mobile-bottom>a span,.tt6-mobile-bottom>button span{
+  white-space:nowrap;overflow:hidden;max-width:100%;text-overflow:ellipsis
+ }
+ .tt6-mobile-bottom>a.is-active{color:#0c857f!important;background:#edf8f4!important}
+ .tt6-mobile-bottom>a:focus-visible,.tt6-mobile-bottom>button:focus-visible{
+  outline:2px solid #e96a3b!important;outline-offset:1px
+ }
+ body.tt6-menu-open .tt6-mobile-bottom{z-index:20!important}
+ .tt6-payment-shell>.tt6-payment-content .row,
+ .tt6-payment-shell>.tt6-payment-content .preview{grid-template-columns:1fr!important}
+ body.tt6-owner-login #login{max-width:460px!important;padding:24px 16px!important;margin:6vh auto!important}
+ body.tt6-owner-login .tt6-mobile-bottom{display:none!important}
+}
+@media(max-width:355px){
+ body:has(.tt6-sidebar) .cards,body:has(.tt6-sidebar) .stats{grid-template-columns:1fr!important}
+ body:has(.tt6-sidebar) main,body:has(.tt6-sidebar) #dashboard{padding-inline:11px!important}
+ .tt6-mobile-header{padding-inline:11px!important}
+ .tt6-mobile-header small{display:none}
+ .tt6-mobile-bottom>a,.tt6-mobile-bottom>button{font-size:9px!important}
+}
+
+
+/* KDS has its own workflow and role security. Visually match the POS brand,
+   but DO NOT expose administrative sidebar links to kitchen/bar staff. */
+body.tt6-staff{background:#f5f8f9!important;color:#173743!important;font-family:Inter,system-ui,sans-serif}
+body.tt6-staff>main{max-width:1440px;margin:0 auto;padding:22px clamp(14px,3vw,32px)!important;box-sizing:border-box}
+body.tt6-staff .top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:11px;padding:12px 16px!important;margin:0 0 14px;background:#fff;border:1px solid #e6eeef;border-radius:16px}
+body.tt6-staff .brand{font-size:clamp(17px,2.2vw,23px)!important;color:#173f45!important;display:flex;align-items:center;gap:10px}
+body.tt6-staff .brand .sh-brand-logo{width:42px;height:42px;object-fit:cover;border-radius:12px;flex:none}
+body.tt6-staff .card{border-radius:15px;border-color:#e2ebeb;background:white;box-shadow:0 6px 20px rgba(20,63,70,.04)}
+body.tt6-staff .btn{background:#0c817c;color:white;border-radius:11px;min-height:41px}
+body.tt6-staff .btn.secondary{background:#edf8f5;color:#08796e}
+body.tt6-staff .tab{background:#eaf4f1;color:#42776e;border-radius:11px;min-height:42px}
+body.tt6-staff .tab.on{background:#0b837c;color:white}
+body.tt6-staff .grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:13px}
+body.tt6-staff #kds,body.tt6-staff #qr,body.tt6-staff #app{min-width:0}
+body.tt6-staff #storageNotice{border-radius:12px}
+@media(max-width:760px){
+ body.tt6-staff>main{padding:9px 12px calc(20px + env(safe-area-inset-bottom,0px))!important}
+ body.tt6-staff .top{position:sticky;top:0;z-index:6;padding:10px 11px!important;border-radius:0 0 13px 13px;margin-bottom:12px}
+ body.tt6-staff .brand{font-size:17px!important}
+ body.tt6-staff .brand .sh-brand-logo{width:37px;height:37px}
+ body.tt6-staff #storageMode{font-size:10px;white-space:nowrap}
+ body.tt6-staff .between{display:flex;flex-wrap:wrap!important;gap:10px;align-items:center;min-width:0}
+ body.tt6-staff #app>.between>.row{display:flex;flex:1 1 auto;flex-wrap:wrap;gap:6px}
+ body.tt6-staff #app>.between>.row .tab{flex:1 1 auto;min-height:44px;padding:10px 12px}
+ body.tt6-staff .btn{min-height:44px}
+ body.tt6-staff #station{width:100%!important;max-width:100%;font-size:16px}
+ body.tt6-staff .grid{grid-template-columns:minmax(0,1fr)!important}
+ body.tt6-staff .card{padding:15px!important}
+ body.tt6-staff .row{flex-wrap:wrap}
+ body.tt6-staff input{font-size:16px}
+}
+@media print{
+ body.tt6-staff .top{position:static;box-shadow:none}
+}

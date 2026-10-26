@@ -49,7 +49,7 @@ function setup(){
   side=document.createElement('aside');
   shell.prepend(side);
  }
- side.className='tt6-sidebar';
+ side.className='tt6-sidebar tt6-ready';
  side.id='tt6-sidebar';
  side.setAttribute('aria-label','Thanh điều hướng quản trị Tắm Tráng 6');
  const advancedOpen=PATH==='/admin/core'&&!!window.location.hash&&['#suppliers','#customers','#reservations','#shifts','#audit'].includes(window.location.hash);
@@ -92,7 +92,20 @@ function setup(){
  mobile.innerHTML='<button type="button" class="tt6-mobile-open" id="tt6-mobile-open" aria-controls="tt6-sidebar" aria-expanded="false" aria-label="Mở menu">'+svg('menu')+'</button>'+
  '<img src="/tam-trang-6-logo.svg" width="34" height="34" alt=""><span>Tắm Tráng 6</span><small>QUẢN TRỊ</small>';
  document.body.insertBefore(mobile,shell);
+ // Bottom navigation and drawer share the desktop sidebar route definitions.
+ const bottom=document.createElement('nav');
+ bottom.id='tt6-mobile-bottom';
+ bottom.className='tt6-mobile-bottom';
+ bottom.setAttribute('aria-label','Điều hướng nhanh');
+ const mobileLink=(href,label,iconName)=>'<a href="'+href+'" class="tt6-mobile-bottom-link'+(PATH===href?' is-active':'')+'"'+(PATH===href?' aria-current="page"':'')+'>'+svg(iconName)+'<span>'+label+'</span></a>';
+ bottom.innerHTML=mobileLink('/admin','Tổng quan','home')+
+   mobileLink('/admin/core','Món & bàn','table')+
+   mobileLink('/admin/operations','Thu–chi','wallet')+
+   mobileLink('/admin/users','Nhân viên','users')+
+   '<button type="button" id="tt6-bottom-more" aria-label="Mở toàn bộ chức năng">'+svg('menu')+'<span>Thêm</span></button>';
+ document.body.appendChild(bottom);
  const btn=mobile.querySelector('#tt6-mobile-open');
+ const more=bottom.querySelector('#tt6-bottom-more');
  const collapse=side.querySelector('#tt6-collapse');
  const closeButton=side.querySelector('#tt6-side-mobile-close');
  let lastFocus=null;
@@ -116,6 +129,7 @@ function setup(){
   side.querySelector('.tt6-side-brand')?.focus();
  };
  btn.addEventListener('click',()=>document.body.classList.contains('tt6-menu-open')?close():open());
+ more.addEventListener('click',open);
  overlay.addEventListener('click',close);
  closeButton.addEventListener('click',close);
  document.addEventListener('keydown',e=>{
@@ -135,7 +149,14 @@ function setup(){
   if(url.pathname===PATH&&url.hash){
    const token=url.hash.slice(1);
    const tab=document.querySelector('[data-tab="'+token+'"],[data-section="'+token+'"]');
-   if(tab){e.preventDefault();history.replaceState(null,'',url.href);tab.click();}
+   if(tab){
+     e.preventDefault();history.replaceState(null,'',url.href);tab.click();
+     side.querySelectorAll('a.tt6-side-sub-link').forEach(a=>{
+       const selected=a.getAttribute('href')===url.pathname+url.hash;
+       a.classList.toggle('is-active',selected);
+       if(selected)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');
+     });
+   }
   }
   if(isMobile())close();
  });

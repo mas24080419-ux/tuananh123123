@@ -155,17 +155,9 @@ tbody tr:last-child td{border-bottom:none!important}
 <link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css">
 <script defer src="/pos-sidebar.js"></script>
 </head>
-<body>
+<body class="tt6-owner-login">
 <div class="shell">
-<aside><div class="brand"><img class="brand-icon sh-brand-logo" src="/tam-trang-6-logo.svg" width="40" height="40" alt="">Tắm Tráng 6</div>
-<p class="side-sub">Không gian quản trị dành riêng cho chủ cửa hàng.</p>
-<a class="side-link on" href="/admin">▦ Tổng quan</a>
-<a class="side-link" href="/admin/payment">▣ QR chuyển khoản</a>
-<a class="side-link" href="/admin/operations">▤ Thu–chi & kho</a>
-<a class="side-link" href="/admin/core">▦ Món & bàn</a>
-<a class="side-link" href="/admin/users">♙ Nhân viên</a>
-<a class="side-link" href="/staff">⌁ Bếp & QR</a>
-<p class="side-foot">Neon PostgreSQL<br>Báo cáo dựa trên dữ liệu đã lưu<br>Giờ Việt Nam (UTC+7)</p></aside>
+<aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside>
 <div>
 <section id="login">
 <div class="brand" style="color:#112637"><img class="brand-icon sh-brand-logo" src="/tam-trang-6-logo.svg" width="40" height="40" alt="">Tắm Tráng 6</div>
@@ -225,7 +217,7 @@ const zoneDate=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Ho_Chi_Minh',year
 const esc=v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 let latest=null,loading=false;
 function notice(message,kind='ok'){const n=$('#notice');n.textContent=message;n.className='notice '+kind+(message?'':' hidden')}
-function screen(auth){$('#login').classList.toggle('hidden',auth);$('#dashboard').classList.toggle('hidden',!auth)}
+function screen(auth){document.body.classList.toggle('tt6-owner-login',!auth);$('#login').classList.toggle('hidden',auth);$('#dashboard').classList.toggle('hidden',!auth)}
 async function request(url,options={}){
  let response;
  try{response=await fetch(url,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}})}
