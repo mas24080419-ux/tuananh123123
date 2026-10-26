@@ -162,34 +162,58 @@ tbody tr:last-child td{border-bottom:none!important}
 @media(max-width:760px){.tt6-finance-entry{margin:14px 0 19px;scroll-margin-top:76px}.tt6-finance-switch{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px}.tt6-finance-switch .tt6-finance-action{width:100%;padding:11px 4px!important;min-width:0;min-height:48px!important;font-size:12px!important}.tt6-finance-entry .tt6-quick-finance-panel{padding:15px!important}.tt6-quick-finance-header{gap:8px}.tt6-quick-finance-mark{display:none}.tt6-finance-entry #financeForm{grid-template-columns:minmax(0,1fr);gap:11px}.tt6-finance-entry #financeForm>.pair{display:grid!important;grid-template-columns:minmax(0,1fr)!important;gap:11px}.tt6-finance-entry #financeForm>label:has(textarea){grid-column:1}.tt6-finance-entry #financeSubmit{justify-self:stretch;width:100%!important;min-height:48px!important}}
 </style><link rel="stylesheet" href="/admin-minimal.css"><link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
-<link rel="stylesheet" href="/finance-charts.css?v=tt6-finance-v1"><script src="/finance-charts.js?v=tt6-finance-v1"></script></head><body>
+<link rel="stylesheet" href="/finance-charts.css?v=tt6-finance-v1"><script src="/finance-charts.js?v=tt6-finance-v1"></script><link rel="stylesheet" href="/finance-app.css?v=tt6-money-v2-20261026"></head><body class="tt6-money-app">
 <div class="shell"><aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside>
 <main>
-<div class="top"><div><span class="sh-eyebrow">TẮM TRÁNG 6 / VẬN HÀNH CỬA HÀNG</span><h1>Thu–chi & kho</h1><p class="sh-page-caption">Sổ tiền và số lượng nguyên liệu thực tế. Chọn nghiệp vụ khi cần ghi nhận.</p></div><span class="tag"><span class="sh-dot"></span> Dữ liệu Neon</span></div>
+<div class="top"><div><span class="sh-eyebrow">TẮM TRÁNG 6 / VẬN HÀNH CỬA HÀNG</span><h1>Sổ tiền & giao dịch</h1><p class="sh-page-caption">Theo dõi dòng tiền, ghi thu chi và quản lý nguyên liệu tại một nơi.</p></div><span class="tag"><span class="sh-dot"></span> Dữ liệu Neon</span></div>
 <div id="notice" class="notice hidden" role="status"></div>
-<section id="quick-entry" class="tt6-finance-entry" aria-labelledby="financeEntryHeading">
-<div class="tt6-finance-switch" role="group" aria-label="Chọn giao dịch thu hoặc chi">
-<button type="button" id="quickExpense" class="tt6-finance-action is-selected" aria-pressed="true"><span aria-hidden="true">−</span> Ghi khoản chi</button>
-<button type="button" id="quickIncome" class="tt6-finance-action" aria-pressed="false"><span aria-hidden="true">+</span> Ghi khoản thu</button>
-</div>
-<div class="panel tt6-quick-finance-panel"><div class="tt6-quick-finance-header"><div><span class="tt6-mini-eyebrow">NHẬP GIAO DỊCH</span><h2 id="financeEntryHeading">Ghi khoản chi</h2><p class="muted" id="financeEntryHelp">Ví dụ: điện nước, lương nhân viên, sửa chữa. Nhập nguyên liệu qua mục Tồn kho để không ghi chi phí hai lần.</p></div><span class="tt6-quick-finance-mark" aria-hidden="true">₫</span></div>
-<form class="field" id="financeForm">
-<div class="pair"><label>Loại giao dịch<select name="direction" required><option value="expense">Chi tiền</option><option value="income">Thu khác</option></select></label>
-<label>Phương thức<select name="paymentMethod" required><option value="cash">Tiền mặt</option><option value="bank_transfer">Chuyển khoản</option></select></label></div>
-<label>Danh mục<input name="category" autocomplete="off" placeholder="Ví dụ: Điện nước, Lương, Mua vật tư..." maxlength="60" required></label>
-<label>Số tiền (VND)<input name="amount" type="number" step="1" min="1" max="999999999999" required></label>
-<label>Diễn giải<textarea name="note" rows="2" maxlength="250" placeholder="Ghi rõ nội dung khoản thu/chi"></textarea></label>
-<button type="submit" id="financeSubmit">Lưu khoản chi vào sổ</button></form>
-<p class="helper">Dữ liệu được lưu trên Neon PostgreSQL và cập nhật biểu đồ. Khoản thu từ đơn QR đã xác nhận thanh toán không nhập lại tại đây.</p></div>
-</section>
-<form id="dateFilter" class="filters"><label>Từ ngày<input type="date" id="dateFrom" required></label><label>Đến ngày<input type="date" id="dateTo" required></label>
-<button type="submit">Áp dụng</button><button class="alt" type="button" id="refresh">↻ Tải lại</button><p class="muted">Theo thời điểm ghi nhận (UTC+7). Tồn kho luôn là số dư hiện tại.</p></form>
+<section class="tt6-wallet-hero" aria-label="Tổng quan thu chi">
+<div class="tt6-wallet-eyebrow"><span class="tt6-wallet-dot" aria-hidden="true"></span> SỔ TIỀN CỬA HÀNG</div>
 <div class="stats">
 <div class="stat"><small>TỔNG TIỀN VÀO</small><strong class="green" id="totalIn">—</strong><p>Đơn đã thanh toán + thu khác</p></div>
 <div class="stat"><small>TỔNG TIỀN RA</small><strong class="orange" id="totalOut">—</strong><p>Chi hoạt động + nhập nguyên liệu</p></div>
 <div class="stat"><small>CHÊNH LỆCH DÒNG TIỀN</small><strong id="netCash">—</strong><p>Không đồng nghĩa lợi nhuận kế toán</p></div>
 <div class="stat"><small>NGUYÊN LIỆU CẦN NHẬP</small><strong class="orange" id="lowStock">—</strong><p>Theo ngưỡng tối thiểu đã cấu hình</p></div>
 </div>
+</section>
+<div class="tt6-app-actions" aria-label="Thao tác tài chính">
+<button type="button" id="quickIncome" class="tt6-finance-action is-income" aria-pressed="false"><span class="tt6-action-icon" aria-hidden="true">↓</span><span><b>Ghi khoản thu</b><small>Tiền vào</small></span></button>
+<button type="button" id="quickExpense" class="tt6-finance-action is-expense" aria-pressed="true"><span class="tt6-action-icon" aria-hidden="true">↑</span><span><b>Ghi khoản chi</b><small>Tiền ra</small></span></button>
+</div>
+<section id="quick-entry" class="tt6-finance-entry" aria-labelledby="financeEntryHeading">
+<div id="financeBackdrop" class="tt6-finance-backdrop" aria-hidden="true"></div>
+<div class="panel tt6-quick-finance-panel" id="tt6-money-dialog" role="dialog" aria-labelledby="financeEntryHeading">
+<div class="tt6-money-handle" aria-hidden="true"></div>
+<button type="button" id="closeFinanceSheet" class="tt6-money-close" aria-label="Đóng biểu mẫu thu chi">✕</button><div class="tt6-quick-finance-header"><div><span class="tt6-mini-eyebrow">NHẬP GIAO DỊCH</span><h2 id="financeEntryHeading">Ghi khoản chi</h2><p class="muted" id="financeEntryHelp">Ví dụ: điện nước, lương nhân viên, sửa chữa. Nhập nguyên liệu qua mục Tồn kho để không ghi chi phí hai lần.</p></div><span class="tt6-quick-finance-mark" aria-hidden="true">₫</span></div>
+<form class="field" id="financeForm">
+<div class="pair"><label>Loại giao dịch<select name="direction" required><option value="expense">Chi tiền</option><option value="income">Thu khác</option></select></label>
+<label>Phương thức<select name="paymentMethod" required><option value="cash">Tiền mặt</option><option value="bank_transfer">Chuyển khoản</option></select></label></div>
+<label>Danh mục<input name="category" autocomplete="off" placeholder="Ví dụ: Điện nước, Lương, Mua vật tư..." maxlength="60" required></label>
+<label>Số tiền (VND)<input name="amount" type="number" step="1" min="1" max="999999999999" required></label>
+<label>Diễn giải<textarea name="note" rows="2" maxlength="250" placeholder="Ghi rõ nội dung khoản thu/chi"></textarea></label>
+<p class="tt6-form-feedback" id="financeFormNotice" role="alert" aria-live="assertive"></p>
+<button type="submit" id="financeSubmit">Lưu khoản chi vào sổ</button></form>
+<p class="helper">Dữ liệu được lưu trên Neon PostgreSQL và cập nhật biểu đồ. Khoản thu từ đơn QR đã xác nhận thanh toán không nhập lại tại đây.</p></div>
+</section>
+<button type="button" id="financeFab" class="tt6-finance-fab" aria-label="Ghi giao dịch mới">+</button>
+<div class="tt6-finance-toast" role="status" aria-live="polite" id="financeToast"></div>
+<details class="tt6-date-fold" id="tt6DateFold">
+<summary><span class="tt6-calendar-icon" aria-hidden="true">▦</span><span>Khoảng thời gian <small id="financePeriodCaption">Tháng hiện tại</small></span><span class="tt6-filter-chevron" aria-hidden="true">⌄</span></summary>
+<form id="dateFilter" class="filters"><label>Từ ngày<input type="date" id="dateFrom" required></label><label>Đến ngày<input type="date" id="dateTo" required></label>
+<button type="submit">Áp dụng</button><button class="alt" type="button" id="refresh">↻ Tải lại</button><p class="muted">Theo thời điểm ghi nhận (UTC+7). Tồn kho luôn là số dư hiện tại.</p></form>
+</details>
+<div class="sh-section-heading"><div><span class="sh-eyebrow">NGHIỆP VỤ QUẢN LÝ</span><span class="sh-headingline">Làm việc theo từng phân hệ</span></div><a class="sh-quicklink" href="/admin">← Về tổng quan</a></div>
+<div class="tabs" role="tablist"><button type="button" class="active" data-section="finance" role="tab" aria-selected="true">Thu–chi</button><button type="button" data-section="inventory" role="tab" aria-selected="false">Tồn kho</button><button type="button" data-section="recipes" role="tab" aria-selected="false">Định mức món</button><button type="button" data-section="history" role="tab" aria-selected="false">Lịch sử</button></div>
+<section id="finance" class="section active">
+<div class="columns">
+<div class="panel"><h2>Phân tích dòng tiền</h2><p class="muted">Màu xanh: tiền vào; màu cam: tiền ra. Theo ngày phát sinh.</p><div id="cashChart" class="bars"><div class="empty">Đang tải…</div></div>
+<div class="pair" style="margin-top:13px"><div><span class="muted">Tiền thu từ đơn QR đã xác nhận</span><h2 id="salesReceived">—</h2></div><div><span class="muted">Chi nhập nguyên liệu trong kỳ</span><h2 id="purchases">—</h2></div></div></div></div>
+<div class="panel"><h2>Sổ thu–chi</h2><p class="muted">200 khoản gần nhất trong khoảng ngày. Chi nhập hàng được ghi tự động.</p>
+<div class="sh-toolbar"><input id="opsLedgerSearch" type="search" placeholder="Tìm danh mục, diễn giải..." aria-label="Tìm khoản thu chi"><select id="opsLedgerDirection"><option value="all">Tất cả thu–chi</option><option value="income">Chỉ khoản thu</option><option value="expense">Chỉ khoản chi</option></select><button id="opsLedgerExport" class="alt" type="button">↓ Xuất CSV</button></div>
+<div id="opsLedgerCount" class="sh-info"></div><div id="opsLedgerMobile" class="tt6-ledger-mobile" aria-label="Giao dịch gần đây"></div>
+<button type="button" id="opsLedgerMore" class="tt6-ledger-more" hidden>Xem thêm giao dịch</button><div class="scroll tt6-ledger-table"><table><thead><tr><th>Thời gian</th><th>Thu/chi</th><th>Danh mục</th><th>Thanh toán</th><th>Số tiền</th><th>Ghi chú</th></tr></thead><tbody id="financeRows"></tbody></table></div></div>
+<details id="financeAnalyticsFold" class="tt6-analytics-fold">
+<summary><span class="tt6-fold-chart-icon" aria-hidden="true">◉</span><span><b>Phân tích tài chính</b><small>Biểu đồ tròn chi tiêu, cơ cấu thanh toán và dòng tiền</small></span><span aria-hidden="true" class="tt6-fold-chevron">⌄</span></summary>
 <section class="tt6-analytics" aria-labelledby="opsAnalyticsTitle">
  <div class="tt6-analytics-head"><div><span class="tt6-analytics-subhead">THU – CHI · BÁO CÁO THỰC TẾ</span><h2 id="opsAnalyticsTitle">Phân tích tài chính</h2><p>Thống kê theo khoảng ngày đang lọc; xem sổ giao dịch ở phần Thu–chi phía dưới.</p></div></div>
  <div class="tt6-analytics-panels">
@@ -200,15 +224,7 @@ tbody tr:last-child td{border-bottom:none!important}
  <div id="opsCashBars"><p class="tt6-chart-empty">Đang tải số liệu…</p></div></article>
  </div><p class="tt6-analytics-foot">Không tính đơn chưa thu tiền. Chi mua nguyên liệu chỉ ghi một lần trong sổ. Dòng tiền thuần không phải lợi nhuận kế toán.</p>
 </section>
-<div class="sh-section-heading"><div><span class="sh-eyebrow">NGHIỆP VỤ QUẢN LÝ</span><span class="sh-headingline">Làm việc theo từng phân hệ</span></div><a class="sh-quicklink" href="/admin">← Về tổng quan</a></div>
-<div class="tabs" role="tablist"><button type="button" class="active" data-section="finance" role="tab" aria-selected="true">Thu–chi</button><button type="button" data-section="inventory" role="tab" aria-selected="false">Tồn kho</button><button type="button" data-section="recipes" role="tab" aria-selected="false">Định mức món</button><button type="button" data-section="history" role="tab" aria-selected="false">Lịch sử</button></div>
-<section id="finance" class="section active">
-<div class="columns">
-<div class="panel"><h2>Phân tích dòng tiền</h2><p class="muted">Màu xanh: tiền vào; màu cam: tiền ra. Theo ngày phát sinh.</p><div id="cashChart" class="bars"><div class="empty">Đang tải…</div></div>
-<div class="pair" style="margin-top:13px"><div><span class="muted">Tiền thu từ đơn QR đã xác nhận</span><h2 id="salesReceived">—</h2></div><div><span class="muted">Chi nhập nguyên liệu trong kỳ</span><h2 id="purchases">—</h2></div></div></div></div>
-<div class="panel"><h2>Sổ thu–chi</h2><p class="muted">200 khoản gần nhất trong khoảng ngày. Chi nhập hàng được ghi tự động.</p>
-<div class="sh-toolbar"><input id="opsLedgerSearch" type="search" placeholder="Tìm danh mục, diễn giải..." aria-label="Tìm khoản thu chi"><select id="opsLedgerDirection"><option value="all">Tất cả thu–chi</option><option value="income">Chỉ khoản thu</option><option value="expense">Chỉ khoản chi</option></select><button id="opsLedgerExport" class="alt" type="button">↓ Xuất CSV</button></div>
-<div id="opsLedgerCount" class="sh-info"></div><div class="scroll"><table><thead><tr><th>Thời gian</th><th>Thu/chi</th><th>Danh mục</th><th>Thanh toán</th><th>Số tiền</th><th>Ghi chú</th></tr></thead><tbody id="financeRows"></tbody></table></div></div>
+</details>
 </section>
 <section id="inventory" class="section">
 <div class="columns">
@@ -258,7 +274,7 @@ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const dtime=x=>new Date(x).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 $('#dateFrom').value=today.slice(0,7)+'-01';$('#dateTo').value=today;
-let data=null,busy=false;const pending=new Map();
+let data=null,busy=false,ledgerExpanded=false;const pending=new Map();
 function notice(s,mode='ok'){$('#notice').textContent=s;$('#notice').className='notice '+mode+(s?'':' hidden')}
 async function api(url,options={}){
  let r;try{r=await fetch(url,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}})}catch{const e=Error('Mất kết nối. Thử lại để kiểm tra giao dịch.');e.ambiguous=true;throw e}
@@ -289,6 +305,7 @@ $('#opsLedgerSearch').addEventListener('input',redrawViews);
 $('#opsLedgerDirection').addEventListener('change',redrawViews);
 $('#opsStockSearch').addEventListener('input',redrawViews);
 $('#opsLowOnly').addEventListener('change',redrawViews);
+$('#opsLedgerMore').addEventListener('click',()=>{ledgerExpanded=true;redrawViews()});
 $('#opsLedgerExport').addEventListener('click',()=>downloadCsv('TamTrang6_ThuChi_'+$('#dateFrom').value+'_'+$('#dateTo').value+'.csv',
  ['Mã','Ngày','Loại','Danh mục','Số tiền VND','Phương thức','Nguồn','Diễn giải'],
  filteredLedger().map(x=>[x.id,x.created_at,x.direction,x.category,x.amount,x.payment_method,x.source,x.note])));
@@ -306,6 +323,21 @@ function render(){
  $('#opsStockCount').textContent=filteredStock().length+' nguyên liệu khớp bộ lọc · trong '+data.inventory.length+' nguyên liệu.';
  $('#opsMissingRecipe').textContent=data.menu.filter(m=>!data.recipes.some(r=>r.menu_item_id===m.id)).length+' / '+data.menu.length+' món chưa khai báo định mức nguyên liệu.';
  $('#financeRows').innerHTML=filteredLedger().map(x=>'<tr><td>'+esc(dtime(x.created_at))+'</td><td><span class="pill '+(x.direction==='expense'?'danger':'')+'">'+(x.direction==='expense'?'Chi':'Thu')+'</span></td><td>'+esc(x.category)+(x.source==='stock_purchase'?'<div class="muted">Tự ghi khi nhập kho</div>':'')+'</td><td>'+esc(methods[x.payment_method]||'—')+'</td><td><b>'+fmt(x.amount)+'</b></td><td>'+esc(x.note)+'</td></tr>').join('')||empty(6,'Chưa có khoản thu–chi phát sinh.');
+ const entries=filteredLedger();
+ const recent=ledgerExpanded?entries:entries.slice(0,15);
+ $('#opsLedgerMobile').innerHTML=recent.length?recent.map(x=>{
+  const expense=x.direction==='expense',method=methods[x.payment_method]||'Không rõ';
+  const label=x.source==='stock_purchase'?x.category+' · Nhập kho':x.category;
+  const mark=expense?'↑':'↓';
+  const note=x.note?'<small>'+esc(x.note)+'</small>':'';
+  return '<article class="tt6-transaction '+(expense?'expense':'income')+'">'+
+    '<span class="tt6-transaction-icon" aria-hidden="true">'+mark+'</span>'+
+    '<div class="tt6-transaction-info"><strong>'+esc(label)+'</strong>'+note+
+    '<span class="tt6-transaction-meta">'+esc(dtime(x.created_at))+' · '+esc(method)+'</span></div>'+
+    '<b class="tt6-transaction-amount">'+(expense?'−':'+')+fmt(x.amount)+'</b></article>';
+ }).join(''):'<p class="tt6-transactions-empty">Chưa có giao dịch trong kỳ này. Chọn “Ghi khoản thu” hoặc “Ghi khoản chi” để bắt đầu.</p>';
+ $('#opsLedgerMore').hidden=entries.length<=15||ledgerExpanded;
+ $('#opsLedgerMore').textContent='Xem tất cả '+entries.length+' giao dịch';
  $('#inventoryRows').innerHTML=filteredStock().map(x=>'<tr><td><b>'+esc(x.name)+'</b><div class="muted">'+esc(x.unit)+'</div></td><td>'+dec(x.quantity)+'</td><td>'+dec(x.reorder_level)+'</td><td>'+fmt(x.avg_unit_cost)+'</td><td><span class="pill '+(x.low_stock?'danger':'')+'">'+(x.low_stock?'Cần nhập':'Đủ hàng')+'</span></td></tr>').join('')||empty(5,'Chưa tạo nguyên liệu. Bắt đầu ở biểu mẫu phía trên.');
  $('#recipeRows').innerHTML=data.recipes.map(r=>'<tr><td>'+esc(r.menu_name)+'</td><td>'+esc(r.ingredient_name)+'</td><td><b>'+dec(r.quantity_per_unit)+'</b> '+esc(r.unit)+'</td></tr>').join('')||empty(3,'Chưa có định mức. Các món chưa tự trừ kho.');
  const kinds={purchase:'Nhập mua',opening:'Tồn đầu kỳ',adjustment_in:'Điều chỉnh tăng',adjustment_out:'Hao hụt/giảm',consume:'Đơn QR',restore:'Hủy món chưa làm'};
@@ -336,7 +368,7 @@ async function load(){
   const [operations,finance]=await Promise.all([api('/api/admin/operations?'+params),
     api('/api/admin/analytics?'+params).catch(e=>({error:e.message}))]);
   data=operations;render();drawFinancialCharts(finance);
-  notice('Đã đồng bộ dữ liệu thu–chi và kho từ Neon PostgreSQL.');
+  notice('');
  }catch(e){notice(e.message,'error');if(e.status===403||e.status===401)location.assign('/admin')}
  finally{busy=false}
 }
@@ -361,35 +393,96 @@ async function submit(form,path,transform){
  try{
   await api(path,{method:form.id==='recipeForm'?'PUT':'POST',body:JSON.stringify(body)});
   pending.delete(key);form.reset();kindFields();
-  notice('Đã lưu nghiệp vụ vào Neon.');await load();
- }catch(e){if(!e.ambiguous)pending.delete(key);notice(e.message+(e.ambiguous?' Mã giao dịch được giữ nguyên để thử lại.':''),'error')}
+  await load();
+  if(form.id==='financeForm'){
+   closeFinanceSheet();
+   showFinanceToast('Giao dịch đã được lưu vào sổ thu–chi.');
+  }else notice('Đã lưu nghiệp vụ vào Neon.');
+ }catch(e){
+  if(!e.ambiguous)pending.delete(key);
+  const message=e.message+(e.ambiguous?' Kiểm tra sổ giao dịch trước khi thử lại để tránh trùng khoản thu/chi.':'');
+  notice(message,'error');
+  if(form.id==='financeForm')$('#financeFormNotice').textContent=message;
+ }
  finally{button.disabled=false}
 }
-/* Finance entry is always visible above reports; two clear tabs choose transaction type. */
-function selectFinanceDirection(direction,{focus=false}={}){
- const form=$('#financeForm'),field=form.elements.namedItem('direction'),type=direction==='income'?'income':'expense';
- field.value=type;
+/* App-like transaction editor. The existing Neon POST and requestId guard stay unchanged. */
+let financeLastFocus=null,financeToastTimer=null;
+function showFinanceToast(message){
+ const target=$('#financeToast');
+ target.textContent=message;
+ target.classList.add('is-visible');
+ clearTimeout(financeToastTimer);
+ financeToastTimer=setTimeout(()=>target.classList.remove('is-visible'),4500);
+}
+function selectFinanceDirection(direction){
+ const form=$('#financeForm'),type=direction==='income'?'income':'expense';
+ form.elements.namedItem('direction').value=type;
  $('#quickExpense').classList.toggle('is-selected',type==='expense');
  $('#quickIncome').classList.toggle('is-selected',type==='income');
  $('#quickExpense').setAttribute('aria-pressed',String(type==='expense'));
  $('#quickIncome').setAttribute('aria-pressed',String(type==='income'));
  $('#financeEntryHeading').textContent=type==='income'?'Ghi khoản thu khác':'Ghi khoản chi';
  $('#financeEntryHelp').textContent=type==='income'?
-   'Chỉ ghi khoản thu ngoài đơn QR, ví dụ: thu dịch vụ khác hoặc hoàn ứng. Doanh thu món đã xác nhận không nhập lại.':
-   'Ví dụ: điện nước, lương nhân viên, sửa chữa. Nhập nguyên liệu tại mục Tồn kho để tránh ghi chi phí hai lần.';
- $('#financeSubmit').textContent=type==='income'?'Lưu khoản thu vào sổ':'Lưu khoản chi vào sổ';
+  'Chỉ ghi khoản thu ngoài đơn QR, ví dụ: hoàn ứng hoặc dịch vụ khác. Không ghi lại món đã thanh toán.':
+  'Ghi chi phí vận hành. Nhập nguyên liệu tại mục Tồn kho để chi phí không bị ghi hai lần.';
+ $('#financeSubmit').textContent=type==='income'?'Lưu khoản thu':'Lưu khoản chi';
  $('#quick-entry').dataset.direction=type;
- if(focus){
-  $('#quick-entry').scrollIntoView({behavior:'smooth',block:'start'});
-  const category=form.elements.namedItem('category');category.focus({preventScroll:true});
- }
 }
-$('#quickExpense').addEventListener('click',()=>selectFinanceDirection('expense',{focus:true}));
-$('#quickIncome').addEventListener('click',()=>selectFinanceDirection('income',{focus:true}));
+function openFinanceSheet(direction,launcher){
+ selectFinanceDirection(direction);
+ financeLastFocus=launcher||document.activeElement;
+ $('#financeFormNotice').textContent='';
+ document.body.classList.add('tt6-sheet-open');
+ $('#tt6-money-dialog').setAttribute('aria-modal','true');
+ $('#closeFinanceSheet').setAttribute('aria-expanded','true');
+ const input=$('#financeForm').elements.namedItem('amount');
+ input.focus({preventScroll:true});
+}
+function closeFinanceSheet(){
+ if(!document.body.classList.contains('tt6-sheet-open'))return;
+ document.body.classList.remove('tt6-sheet-open');
+ $('#tt6-money-dialog').removeAttribute('aria-modal');
+ $('#closeFinanceSheet').setAttribute('aria-expanded','false');
+ if(financeLastFocus&&typeof financeLastFocus.focus==='function')financeLastFocus.focus({preventScroll:true});
+ financeLastFocus=null;
+}
+$('#quickExpense').addEventListener('click',function(){openFinanceSheet('expense',this)});
+$('#quickIncome').addEventListener('click',function(){openFinanceSheet('income',this)});
+$('#financeFab').addEventListener('click',function(){openFinanceSheet('expense',this)});
+$('#closeFinanceSheet').addEventListener('click',closeFinanceSheet);
+$('#financeBackdrop').addEventListener('click',closeFinanceSheet);
 $('#financeForm').elements.namedItem('direction').addEventListener('change',e=>selectFinanceDirection(e.target.value));
 $('#financeForm').addEventListener('reset',()=>setTimeout(()=>selectFinanceDirection('expense'),0));
+document.addEventListener('keydown',e=>{
+ if(!document.body.classList.contains('tt6-sheet-open'))return;
+ if(e.key==='Escape'){e.preventDefault();closeFinanceSheet();return}
+ if(e.key!=='Tab')return;
+ const focusables=[...$('#tt6-money-dialog').querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled])')].filter(x=>x.getClientRects().length>0);
+ if(!focusables.length)return;
+ const first=focusables[0],last=focusables[focusables.length-1];
+ if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+ else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+});
+function updateFinancePeriod(){
+ const from=$('#dateFrom').value,to=$('#dateTo').value;
+ const month=from.slice(0,7)===to.slice(0,7);
+ $('#financePeriodCaption').textContent=month?'Tháng '+from.slice(5,7)+'/'+from.slice(0,4):from.split('-').reverse().join('/')+' – '+to.split('-').reverse().join('/');
+}
+updateFinancePeriod();
+$('#dateFilter').addEventListener('submit',()=>{
+ updateFinancePeriod();
+ if(window.matchMedia('(max-width: 760px)').matches)$('#tt6DateFold').open=false;
+});
 const financeMode=new URLSearchParams(location.search).get('type');
 selectFinanceDirection(financeMode==='income'?'income':'expense');
+// Deep links from dashboard open the real editor; ordinary visits show the wallet overview.
+document.body.classList.add('tt6-finance-enhanced');
+if(financeMode==='income'||financeMode==='expense'){
+ openFinanceSheet(financeMode,$('#quick'+(financeMode==='income'?'Income':'Expense')));
+}
+const analyticsFold=$('#financeAnalyticsFold');
+if(window.matchMedia('(min-width: 900px)').matches)analyticsFold.open=true;
 $('#financeForm').addEventListener('submit',e=>{e.preventDefault();submit(e.currentTarget,'/api/admin/finance/entries',x=>({...x,amount:Number(x.amount)}))});
 $('#createItemForm').addEventListener('submit',e=>{e.preventDefault();submit(e.currentTarget,'/api/admin/inventory/items',x=>({...x,reorderLevel:Number(x.reorderLevel)}))});
 $('#stockForm').addEventListener('submit',e=>{e.preventDefault();submit(e.currentTarget,'/api/admin/inventory/movements',x=>({...x,quantity:Number(x.quantity),unitCost:x.kind==='purchase'?Number(x.unitCost):0}))});
