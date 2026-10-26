@@ -138,7 +138,7 @@ tbody tr:last-child td{border-bottom:none!important}
 
 </style><link rel="stylesheet" href="/admin-minimal.css"><link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
-</head><body>
+<link rel="stylesheet" href="/finance-charts.css?v=tt6-finance-v1"><script src="/finance-charts.js?v=tt6-finance-v1"></script></head><body>
 <div class="shell"><aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside>
 <main>
 <div class="top"><div><span class="sh-eyebrow">TẮM TRÁNG 6 / VẬN HÀNH CỬA HÀNG</span><h1>Thu–chi & kho</h1><p class="sh-page-caption">Sổ tiền và số lượng nguyên liệu thực tế. Chọn nghiệp vụ khi cần ghi nhận.</p></div><span class="tag"><span class="sh-dot"></span> Dữ liệu Neon</span></div>
@@ -151,6 +151,16 @@ tbody tr:last-child td{border-bottom:none!important}
 <div class="stat"><small>CHÊNH LỆCH DÒNG TIỀN</small><strong id="netCash">—</strong><p>Không đồng nghĩa lợi nhuận kế toán</p></div>
 <div class="stat"><small>NGUYÊN LIỆU CẦN NHẬP</small><strong class="orange" id="lowStock">—</strong><p>Theo ngưỡng tối thiểu đã cấu hình</p></div>
 </div>
+<section class="tt6-analytics" aria-labelledby="opsAnalyticsTitle">
+ <div class="tt6-analytics-head"><div><span class="tt6-analytics-subhead">THU – CHI · BÁO CÁO THỰC TẾ</span><h2 id="opsAnalyticsTitle">Phân tích tài chính</h2><p>Thống kê theo khoảng ngày đang lọc; xem sổ giao dịch ở phần Thu–chi phía dưới.</p></div></div>
+ <div class="tt6-analytics-panels">
+ <article class="tt6-analytics-card"><h3>Chi phí theo danh mục</h3><p class="tt6-chart-desc">Tỷ trọng chi tiêu. Chạm từng danh mục để xem các giao dịch.</p><div id="opsExpensePie"><p class="tt6-chart-empty">Đang tải số liệu…</p></div></article>
+ <article class="tt6-analytics-card"><h3>Tiền nhận theo phương thức</h3><p class="tt6-chart-desc">Chỉ các khoản đã thanh toán và thu khác ghi sổ.</p><div id="opsPaymentPie"><p class="tt6-chart-empty">Đang tải số liệu…</p></div></article>
+ <article class="tt6-analytics-card wide"><h3>So sánh tiền vào và tiền ra</h3><p class="tt6-chart-desc">Biểu đồ cột theo ngày hoặc theo tháng.</p>
+ <div class="tt6-trend-legend"><span><i></i>Tiền vào</span><span><i class="expense-key"></i>Tiền ra</span></div>
+ <div id="opsCashBars"><p class="tt6-chart-empty">Đang tải số liệu…</p></div></article>
+ </div><p class="tt6-analytics-foot">Không tính đơn chưa thu tiền. Chi mua nguyên liệu chỉ ghi một lần trong sổ. Dòng tiền thuần không phải lợi nhuận kế toán.</p>
+</section>
 <div class="sh-section-heading"><div><span class="sh-eyebrow">NGHIỆP VỤ QUẢN LÝ</span><span class="sh-headingline">Làm việc theo từng phân hệ</span></div><a class="sh-quicklink" href="/admin">← Về tổng quan</a></div>
 <div class="tabs" role="tablist"><button type="button" class="active" data-section="finance" role="tab" aria-selected="true">Thu–chi</button><button type="button" data-section="inventory" role="tab" aria-selected="false">Tồn kho</button><button type="button" data-section="recipes" role="tab" aria-selected="false">Định mức món</button><button type="button" data-section="history" role="tab" aria-selected="false">Lịch sử</button></div>
 <section id="finance" class="section active">
@@ -281,11 +291,22 @@ function render(){
  const rows=data.daily.slice(-20),max=Math.max(...rows.flatMap(r=>[Number(r.inflow)||0,Number(r.outflow)||0]),1);
  $('#cashChart').innerHTML=rows.length?rows.map(r=>'<div class="bar-group" title="'+esc(r.day)+' | Thu '+fmt(r.inflow)+' | Chi '+fmt(r.outflow)+'"><div style="display:flex;align-items:end;gap:2px;height:132px;width:100%;justify-content:center"><div class="bar-pos" style="height:'+Math.max(2,Math.round(Number(r.inflow)/max*120))+'px"></div><div class="bar-neg" style="height:'+Math.max(2,Math.round(Number(r.outflow)/max*120))+'px"></div></div><span>'+esc(String(r.day).slice(5))+'</span></div>').join(''):'<div class="empty">Chưa có dòng tiền trong thời gian đã chọn.</div>';
 }
+function drawFinancialCharts(report){
+ const ids=['#opsExpensePie','#opsPaymentPie','#opsCashBars'];
+ if(!report||report.error||!window.TT6FinanceCharts){ids.forEach(x=>$(x).textContent='Không tải được biểu đồ: '+(report?.error||'Thiếu thư viện biểu đồ'));return}
+ const ui=window.TT6FinanceCharts;
+ ui.donut($('#opsExpensePie'),report.expense_categories.map(x=>({name:x.name,amount:x.amount})),
+   {title:'Danh mục chi tiêu',totalLabel:'TỔNG CHI',drilldown:true,transactions:report.expense_transactions});
+ ui.donut($('#opsPaymentPie'),report.payment_methods,{title:'Cơ cấu thanh toán',totalLabel:'ĐÃ NHẬN'});
+ ui.trend($('#opsCashBars'),report.series,report.range.granularity);
+}
 async function load(){
  if(busy)return;busy=true;
  try{const params=new URLSearchParams({from:$('#dateFrom').value,to:$('#dateTo').value});
-  data=await api('/api/admin/operations?'+params);
-  render();notice('Đã đồng bộ dữ liệu thu–chi và kho từ Neon PostgreSQL.');
+  const [operations,finance]=await Promise.all([api('/api/admin/operations?'+params),
+    api('/api/admin/analytics?'+params).catch(e=>({error:e.message}))]);
+  data=operations;render();drawFinancialCharts(finance);
+  notice('Đã đồng bộ dữ liệu thu–chi và kho từ Neon PostgreSQL.');
  }catch(e){notice(e.message,'error');if(e.status===403||e.status===401)location.assign('/admin')}
  finally{busy=false}
 }
