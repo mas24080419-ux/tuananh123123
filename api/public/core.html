@@ -1,0 +1,156 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>SalesHub · Quản trị vận hành V10</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f6f9;color:#20323e;font:14px Inter,system-ui,-apple-system,"Segoe UI",sans-serif}button,input,select,textarea{font:inherit}
+a{color:#ce542c;text-decoration:none}button{border:0;border-radius:10px;padding:10px 14px;background:#e85c32;color:white;font-weight:750;cursor:pointer}button.secondary{background:#e9eff2;color:#374c5a}button:disabled{opacity:.5}
+input,select,textarea{background:white;border:1px solid #d9e2e8;border-radius:10px;padding:10px 12px;max-width:100%;min-width:0;width:100%}
+label{display:grid;gap:6px;font-size:12px;font-weight:700;color:#60727e}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid #fab19b;outline-offset:2px}
+.shell{display:grid;grid-template-columns:218px minmax(0,1fr);min-height:100dvh}
+aside{background:#152b3b;color:white;padding:24px 16px;position:sticky;top:0;height:100dvh;display:flex;flex-direction:column}
+.brand{font-size:22px;font-weight:900;margin-bottom:22px}.brand span{background:#ed5a2e;padding:6px 12px;border-radius:12px;margin-right:10px}
+aside a{display:block;padding:12px 13px;border-radius:11px;color:#bcd1dd;font-weight:700;font-size:12px}
+aside a.active{background:#304c5e;color:white}.foot{margin-top:auto;color:#91a9b8;font-size:11px;line-height:1.7}
+main{padding:30px clamp(15px,3vw,40px);max-width:1600px;width:100%;min-width:0}
+h1{font-size:clamp(24px,2.8vw,32px);letter-spacing:-.9px;margin:3px 0 8px}h2{margin:0 0 12px;font-size:18px}
+.muted{font-size:12px;color:#82919d;line-height:1.6}.eyebrow{letter-spacing:2px;color:#e65f37;font-size:10px;font-weight:900}
+.toolbar,.tabs{display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin:15px 0 20px}
+.tabs{padding:5px;background:#e9eef2;border-radius:14px;max-width:100%}
+.tabs button{color:#5c7180;background:transparent;box-shadow:none}.tabs button.active{background:white;color:#163446;box-shadow:0 3px 10px #344f5e10}
+.panel{border:1px solid #e4ebef;border-radius:18px;background:white;padding:20px;box-shadow:0 5px 20px #12283b08;margin:15px 0}
+.split{display:grid;grid-template-columns:minmax(260px,.8fr) minmax(0,1.2fr);gap:16px;align-items:start}
+.fields{display:grid;gap:13px}.pair{display:grid;grid-template-columns:1fr 1fr;gap:11px}
+.scroll{max-width:100%;overflow:auto}table{width:100%;min-width:600px;border-collapse:collapse;font-size:12px}
+th{text-align:left;background:#f7f9fb;font-size:10px;color:#8a9eac;letter-spacing:.6px;text-transform:uppercase;padding:12px}
+td{padding:12px;border-bottom:1px solid #edf0f3;vertical-align:middle}
+td button{font-size:11px;padding:7px 9px;margin:2px}
+.pill{display:inline-block;padding:5px 8px;border-radius:99px;background:#edf8f1;color:#1b8154;font-weight:700;font-size:10px}
+.pill.warn{background:#fff0e8;color:#bd592a}.section{display:none}.section.active{display:block}
+.notice{border:1px solid #d4ecdd;background:#f0fbf4;padding:12px 15px;border-radius:12px;margin:15px 0;color:#277d53}
+.notice.error{background:#fff0f0;border-color:#f4cbd0;color:#b02a3c}
+.quick{color:#6c8090;font-size:12px}
+.empty{text-align:center;padding:30px;color:#8c9ca7}.small{font-size:11px}
+@media(max-width:1020px){.split{grid-template-columns:1fr}}
+@media(max-width:760px){.shell{display:block}aside{position:static;height:auto;padding:14px}.brand{margin-bottom:7px;font-size:17px}aside nav{display:flex;overflow:auto;gap:5px}aside a{white-space:nowrap;font-size:11px;padding:10px}.foot{display:none}main{padding:17px 13px}.pair{grid-template-columns:1fr}.panel{padding:14px}}
+</style></head><body>
+<div class="shell"><aside><div class="brand"><span>S</span>SalesHub</div><nav><a href="/admin">▦ Tổng quan</a><a class="active" href="/admin/core">▤ Vận hành POS</a><a href="/admin/operations">▥ Thu–chi & kho</a><a href="/staff">⌁ Màn hình bếp</a></nav><div class="foot">PostgreSQL trên Neon<br>Thay đổi được ghi audit<br>Chỉ tài khoản quản trị</div></aside>
+<main><span class="eyebrow">SALESHUB / BACKOFFICE V10</span><h1>Quản trị vận hành cửa hàng</h1><p class="muted">Quản lý dữ liệu thật cho bán hàng — thực đơn, bàn, nhà cung cấp, khách hàng, đặt bàn và ca thu ngân.</p>
+<div id="notice" class="notice" role="status">Đang xác minh quyền và tải dữ liệu từ Neon...</div>
+<div class="tabs" role="tablist">
+<button class="active" data-tab="menu">Thực đơn</button><button data-tab="tables">Bàn & QR</button><button data-tab="suppliers">Nhà cung cấp</button><button data-tab="customers">Khách hàng</button><button data-tab="reservations">Đặt bàn</button><button data-tab="shifts">Ca thu ngân</button><button data-tab="audit">Nhật ký</button></div>
+<section class="section active" id="menu"><div class="split">
+<div class="panel"><h2>Tạo hoặc sửa món</h2><form id="menuForm" class="fields">
+<input type="hidden" name="id"><label>Tên món<input name="name" required maxlength="100"></label>
+<div class="pair"><label>Nhóm món<input name="category" required maxlength="60" placeholder="Món chính, đồ uống..."></label><label>Khu vực chế biến<select name="station"><option value="kitchen">Bếp</option><option value="bar">Bar</option></select></label></div>
+<div class="pair"><label>Giá bán (VND)<input name="price" type="number" min="0" step="1" required></label><label>SKU / Mã nội bộ<input name="sku" maxlength="40"></label></div>
+<label>Mô tả<textarea name="description" maxlength="400" rows="2"></textarea></label><button type="submit">Lưu món lên Neon</button><button class="secondary" type="reset">Hủy chỉnh sửa</button></form>
+<p class="muted">Giá mới áp dụng cho đơn mới; đơn cũ vẫn giữ đơn giá chụp tại lúc đặt.</p></div>
+<div class="panel"><h2>Danh mục món</h2><div class="scroll"><table><thead><tr><th>Tên</th><th>Nhóm & bếp</th><th>Giá</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="menuRows"></tbody></table></div></div></div></section>
+<section class="section" id="tables"><div class="split">
+<div class="panel"><h2>Thêm bàn mới</h2><form id="tableForm" class="fields"><label>Tên bàn<input name="name" required maxlength="50" placeholder="Bàn 07"></label><div class="pair"><label>Khu vực<input name="zone" maxlength="50" value="Tầng 1"></label><label>Sức chứa<input type="number" name="capacity" min="1" max="30" value="4" required></label></div><button type="submit">Tạo bàn + QR bảo mật</button></form>
+<p class="muted">Mã QR mới sử dụng token ngẫu nhiên. Đổi QR sẽ vô hiệu hóa mã cũ; chỉ làm khi đã thay tem QR tại bàn.</p></div>
+<div class="panel"><h2>Trạng thái bàn / QR</h2><div class="scroll"><table><thead><tr><th>Bàn</th><th>Khu vực</th><th>Sức chứa</th><th>Tình trạng</th><th>QR</th><th>Thao tác</th></tr></thead><tbody id="tableRows"></tbody></table></div></div></div></section>
+<section class="section" id="suppliers"><div class="split">
+<div class="panel"><h2>Hồ sơ nhà cung cấp</h2><form id="supplierForm" class="fields">
+<input name="id" type="hidden"><label>Tên nhà cung cấp<input name="name" required maxlength="120"></label>
+<div class="pair"><label>Số điện thoại<input name="phone" maxlength="32"></label><label>Email<input name="email" type="email" maxlength="120"></label></div>
+<label>Địa chỉ<input name="address" maxlength="200"></label><label>Ghi chú<textarea name="note" rows="2" maxlength="250"></textarea></label>
+<button type="submit">Lưu nhà cung cấp</button><button type="reset" class="secondary">Hủy chỉnh sửa</button></form></div>
+<div class="panel"><h2>Danh sách nhà cung cấp</h2><div class="scroll"><table><thead><tr><th>Tên</th><th>Liên hệ</th><th>Địa chỉ</th><th>Thao tác</th></tr></thead><tbody id="supplierRows"></tbody></table></div></div></div></section>
+<section class="section" id="customers"><div class="split">
+<div class="panel"><h2>Hồ sơ khách hàng</h2><form id="customerForm" class="fields"><input name="id" type="hidden">
+<label>Tên khách<input name="name" required maxlength="100"></label>
+<div class="pair"><label>Số điện thoại<input name="phone" maxlength="25"></label><label>Email<input name="email" type="email" maxlength="120"></label></div>
+<label>Ghi chú<textarea name="note" maxlength="250" rows="2"></textarea></label>
+<button type="submit">Lưu khách hàng</button><button type="reset" class="secondary">Hủy chỉnh sửa</button></form><p class="muted">Thông tin khách hàng chỉ hiển thị cho quản trị viên, không cung cấp qua API QR công khai.</p></div>
+<div class="panel"><h2>Danh sách khách hàng</h2><div class="scroll"><table><thead><tr><th>Tên</th><th>Số điện thoại</th><th>Email</th><th>Thao tác</th></tr></thead><tbody id="customerRows"></tbody></table></div></div></div></section>
+<section class="section" id="reservations"><div class="split">
+<div class="panel"><h2>Tạo đặt bàn</h2><form id="reservationForm" class="fields">
+<label>Bàn<select id="reservationTable" name="tableId" required></select></label>
+<div class="pair"><label>Tên người đặt<input name="customerName" required maxlength="100"></label><label>Điện thoại<input name="customerPhone" maxlength="25"></label></div>
+<div class="pair"><label>Thời điểm<input type="datetime-local" name="reservedAt" required></label><label>Số khách<input type="number" name="guests" min="1" max="30" value="2" required></label></div>
+<label>Thời lượng (phút)<select name="durationMinutes"><option value="60">60</option><option value="90">90</option><option value="120" selected>120</option><option value="180">180</option><option value="240">240</option></select></label>
+<label>Ghi chú<textarea name="note" maxlength="250" rows="2"></textarea></label>
+<button type="submit">Xác nhận đặt bàn</button></form>
+<p class="muted">Backend kiểm tra sức chứa và chồng lấn thời gian, khóa bàn trong giao dịch khi tạo lịch.</p></div>
+<div class="panel"><h2>Đặt bàn sắp tới và gần đây</h2><div class="scroll"><table><thead><tr><th>Thời điểm</th><th>Bàn</th><th>Khách</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="reservationRows"></tbody></table></div></div></div></section>
+<section class="section" id="shifts"><div class="split">
+<div class="panel"><h2>Mở / đóng ca thu ngân</h2><div id="shiftStatus" class="notice">Đang tải ca...</div>
+<form id="openShiftForm" class="fields"><label>Tiền đầu ca kiểm đếm (VND)<input name="openingCash" type="number" min="0" step="1" value="0" required></label><button type="submit">Mở ca</button></form>
+<form id="closeShiftForm" class="fields" style="margin-top:15px"><label>Tiền mặt đếm thực tế cuối ca (VND)<input name="countedCash" type="number" min="0" step="1" required></label><label>Ghi chú chênh lệch<textarea name="note" maxlength="250" rows="2"></textarea></label><button type="submit">Chốt ca và lưu chênh lệch</button></form></div>
+<div class="panel"><h2>Quy tắc đối soát ca</h2><p class="muted">Tiền dự kiến = Tiền đầu ca + doanh thu tiền mặt đã xác nhận trong ca + thu tiền mặt khác − chi tiền mặt khác.</p>
+<p class="muted">Chỉ một ca được mở tại mỗi thời điểm. Đây là chốt sổ tiền mặt nội bộ, không thay thế báo cáo kế toán và đối chiếu giao dịch ngân hàng.</p></div></div></section>
+<section class="section" id="audit"><div class="panel"><h2>Nhật ký thay đổi Backoffice</h2>
+<div class="scroll"><table><thead><tr><th>Thời điểm</th><th>Vai trò</th><th>Đối tượng</th><th>Hành động</th><th>ID</th></tr></thead><tbody id="auditRows"></tbody></table></div></div></section>
+</main></div>
+<script>
+'use strict';
+const $=x=>document.querySelector(x),esc=x=>String(x??'').replace(/[&<>"']/g,a=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[a]));
+const vnd=x=>new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0}).format(Number(x)||0);
+const stamp=x=>new Date(x).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'});
+const base='/api/admin/core/';
+let data={},busy=false;
+function note(text,error=false){const el=$('#notice');el.textContent=text;el.className='notice'+(error?' error':'')}
+async function api(path,options={}){
+ const res=await fetch(base+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
+ let d;try{d=await res.json()}catch{throw Error('Phản hồi không hợp lệ')}
+ if(!res.ok)throw Error(d.error||'Có lỗi khi cập nhật');return d;
+}
+const put=(path,obj,method='POST')=>api(path,{method,body:JSON.stringify(obj)});
+const formData=f=>Object.fromEntries(new FormData(f));
+const empty=(cols,msg)=>'<tr><td colspan="'+cols+'" class="empty">'+esc(msg)+'</td></tr>';
+async function refresh(){
+ if(busy)return;busy=true;
+ try{
+  const [catalog,tables,suppliers,customers,reservations,shift,audit]=await Promise.all([
+   api('catalog'),api('tables'),api('suppliers'),api('customers?limit=150'),
+   api('reservations?from='+encodeURIComponent(new Date(Date.now()-7*86400000).toISOString())+'&to='+encodeURIComponent(new Date(Date.now()+90*86400000).toISOString())),
+   api('shift'),api('audit?limit=100')
+  ]);
+  data={catalog:catalog.items,tables:tables.tables,suppliers:suppliers.suppliers,customers:customers.customers,reservations:reservations.reservations,shift:shift.shift,audit:audit.events};
+  render();note('Đã đồng bộ dữ liệu quản trị từ PostgreSQL.');
+ }catch(e){note(e.message,true)}finally{busy=false}
+}
+function render(){
+ $('#menuRows').innerHTML=data.catalog.map(x=>'<tr><td><b>'+esc(x.name)+'</b><div class="muted">'+esc(x.sku||'')+'</div></td><td>'+esc(x.category)+'<div class="muted">'+(x.station==='bar'?'Bar':'Bếp')+'</div></td><td>'+vnd(x.price)+'</td><td><span class="pill '+(!x.active?'warn':'')+'">'+(x.active?'Đang bán':'Tạm ẩn')+'</span></td><td><button class="secondary" data-edit="menu" data-id="'+esc(x.id)+'">Sửa</button><button class="secondary" data-toggle="'+esc(x.id)+'">'+(x.active?'Ngừng bán':'Mở bán')+'</button></td></tr>').join('')||empty(5,'Chưa có món nào.');
+ $('#tableRows').innerHTML=data.tables.map(t=>'<tr><td><b>'+esc(t.name)+'</b></td><td>'+esc(t.zone)+'</td><td>'+t.capacity+'</td><td><select data-table-status="'+esc(t.id)+'"><option value="available" '+(t.service_status==='available'?'selected':'')+'>Trống</option><option value="occupied" '+(t.service_status==='occupied'?'selected':'')+'>Có khách</option><option value="reserved" '+(t.service_status==='reserved'?'selected':'')+'>Đã đặt</option><option value="cleaning" '+(t.service_status==='cleaning'?'selected':'')+'>Đang dọn</option></select></td><td><a href="/t/'+esc(t.token)+'" target="_blank" rel="noopener">Mở QR</a><div class="muted">'+(t.active?'QR hoạt động':'QR đang khóa')+'</div></td><td><button data-table-active="'+esc(t.id)+'" class="secondary">'+(t.active?'Khóa QR':'Mở QR')+'</button><button data-table-rotate="'+esc(t.id)+'" class="secondary">Đổi QR</button></td></tr>').join('')||empty(6,'Chưa có bàn.');
+ const setRows=(id,rows,cols)=>{$(id).innerHTML=rows||empty(cols,'Chưa có dữ liệu.')};
+ setRows('#supplierRows',data.suppliers.map(s=>'<tr><td><b>'+esc(s.name)+'</b></td><td>'+esc(s.phone)+'<div class="muted">'+esc(s.email)+'</div></td><td>'+esc(s.address)+'</td><td><button data-edit="supplier" data-id="'+esc(s.id)+'" class="secondary">Sửa</button></td></tr>').join(''),4);
+ setRows('#customerRows',data.customers.map(x=>'<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.phone)+'</td><td>'+esc(x.email)+'</td><td><button data-edit="customer" data-id="'+esc(x.id)+'" class="secondary">Sửa</button></td></tr>').join(''),4);
+ setRows('#reservationRows',data.reservations.map(r=>'<tr><td>'+esc(stamp(r.reserved_at))+'</td><td>'+esc(r.table_name)+'</td><td><b>'+esc(r.customer_name)+'</b><div class="muted">'+r.guests+' khách</div></td><td><span class="pill">'+esc(r.status)+'</span></td><td>'+(r.status==='confirmed'?'<button class="secondary" data-res="'+esc(r.id)+'" data-status="arrived">Khách đến</button><button class="secondary" data-res="'+esc(r.id)+'" data-status="cancelled">Hủy</button>':r.status==='arrived'?'<button class="secondary" data-res="'+esc(r.id)+'" data-status="completed">Hoàn tất</button>':'—')+'</td></tr>').join(''),5);
+ setRows('#auditRows',data.audit.map(a=>'<tr><td>'+esc(stamp(a.created_at))+'</td><td>'+esc(a.actor)+'</td><td>'+esc(a.entity)+'</td><td>'+esc(a.action)+'</td><td>'+esc(a.entity_id||'')+'</td></tr>').join(''),5);
+ $('#reservationTable').innerHTML='<option value="">Chọn bàn</option>'+data.tables.filter(t=>t.active).map(t=>'<option value="'+esc(t.id)+'">'+esc(t.name)+' · '+esc(t.zone)+' · '+t.capacity+' chỗ</option>').join('');
+ const shift=data.shift;
+ $('#shiftStatus').textContent=!shift?'Chưa có ca nào.':shift.status==='open'?'Ca đang mở từ '+stamp(shift.opened_at)+' · Tiền đầu ca '+vnd(shift.opening_cash):
+  'Ca gần nhất đã chốt. Tiền thực đếm '+vnd(shift.counted_cash)+' · Chênh lệch '+vnd(shift.variance);
+ $('#openShiftForm').classList.toggle('hidden',Boolean(shift&&shift.status==='open'));
+ $('#closeShiftForm').classList.toggle('hidden',!shift||shift.status!=='open');
+ document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{
+  const kind=b.dataset.edit,item=(kind==='menu'?data.catalog:kind==='supplier'?data.suppliers:data.customers).find(x=>x.id===b.dataset.id);
+  const form=$('#'+(kind==='menu'?'menuForm':kind==='supplier'?'supplierForm':'customerForm'));
+  for(const [name,v]of Object.entries(item)){const control=form.elements.namedItem(name);if(control)control.value=v??''}
+  form.scrollIntoView({behavior:'smooth',block:'center'});
+ });
+ document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>mutation(async()=>put('catalog/'+b.dataset.toggle+'/availability',{active:!data.catalog.find(x=>x.id===b.dataset.toggle)?.active},'PATCH')));
+ document.querySelectorAll('[data-table-active]').forEach(b=>b.onclick=()=>mutation(async()=>put('tables/'+b.dataset.tableActive,{active:!data.tables.find(t=>t.id===b.dataset.tableActive)?.active},'PATCH')));
+ document.querySelectorAll('[data-table-status]').forEach(s=>s.onchange=()=>mutation(async()=>put('tables/'+s.dataset.tableStatus,{serviceStatus:s.value},'PATCH')));
+ document.querySelectorAll('[data-table-rotate]').forEach(b=>b.onclick=async()=>{if(!window.confirm('Đổi mã QR sẽ vô hiệu hóa tem đang dán. Xác nhận đổi QR cho bàn này?'))return;await mutation(async()=>put('tables/'+b.dataset.tableRotate+'/rotate-qr',{confirm:true}))});
+ document.querySelectorAll('[data-res]').forEach(b=>b.onclick=()=>mutation(async()=>put('reservations/'+b.dataset.res+'/status',{status:b.dataset.status},'PATCH')));
+}
+async function mutation(fn){try{await fn();await refresh()}catch(e){note(e.message,true)}}
+async function saveForm(form,path,method,convert=x=>x){
+ const button=form.querySelector('[type=submit]');button.disabled=true;
+ try{const b=convert(formData(form));await put(path,b,method);form.reset();await refresh()}catch(e){note(e.message,true)}finally{button.disabled=false}
+}
+$('#menuForm').onsubmit=e=>{e.preventDefault();const b=formData(e.target);const path=b.id?'catalog/'+b.id:'catalog';saveForm(e.target,path,b.id?'PATCH':'POST',x=>({...x,price:Number(x.price)}))};
+$('#tableForm').onsubmit=e=>{e.preventDefault();saveForm(e.target,'tables','POST',x=>({...x,capacity:Number(x.capacity)}))};
+$('#supplierForm').onsubmit=e=>{e.preventDefault();const b=formData(e.target);saveForm(e.target,b.id?'suppliers/'+b.id:'suppliers',b.id?'PATCH':'POST')};
+$('#customerForm').onsubmit=e=>{e.preventDefault();const b=formData(e.target);saveForm(e.target,b.id?'customers/'+b.id:'customers',b.id?'PATCH':'POST')};
+$('#reservationForm').onsubmit=e=>{e.preventDefault();saveForm(e.target,'reservations','POST',x=>({...x,reservedAt:new Date(x.reservedAt).toISOString(),guests:Number(x.guests),durationMinutes:Number(x.durationMinutes)}))};
+$('#openShiftForm').onsubmit=e=>{e.preventDefault();saveForm(e.target,'shift','POST',x=>({action:'open',openingCash:Number(x.openingCash)}))};
+$('#closeShiftForm').onsubmit=e=>{e.preventDefault();if(!window.confirm('Bạn đã đếm tiền mặt thực tế và muốn chốt ca?'))return;saveForm(e.target,'shift','POST',x=>({action:'close',countedCash:Number(x.countedCash),note:x.note,confirm:true}))};
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{
+ document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el===b));
+ document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===b.dataset.tab));
+}));
+(async()=>{try{const r=await fetch('/api/me',{credentials:'same-origin'});const me=await r.json();if(me.role!=='admin'){location.replace('/admin');return}await refresh()}catch(e){note('Không xác minh được quyền: '+e.message,true)}})();
+</script></body></html>
