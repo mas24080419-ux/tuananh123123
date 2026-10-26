@@ -293,6 +293,12 @@ function wireSteppers() {
     button.disabled = sending || Boolean(pendingPayload) || confirmed;
     button.addEventListener('click', () => changeQuantity(button.dataset.item, Number(button.dataset.delta)));
   });
+  // The entire menu tile is a real, keyboard-accessible button. The +/- controls
+  // are separate siblings, so clicking them never increments twice.
+  document.querySelectorAll('#menuList [data-select-item]').forEach(button => {
+    button.disabled = sending || Boolean(pendingPayload) || confirmed;
+    button.addEventListener('click', () => changeQuantity(button.dataset.selectItem, 1));
+  });
 }
 function render() {
   const {count, subtotal} = totalStats();
@@ -300,7 +306,8 @@ function render() {
   for (const p of products) (groups[p.category] ??= []).push(p);
   $('#menuList').innerHTML = Object.entries(groups).map(([category, list]) => `
     <h3 class="qr-category">${escapeHTML(category)}</h3>
-    <div class="qr-menu-grid">${list.map(p => `<article class="qr-menu-card">
+    <div class="qr-menu-grid">${list.map(p => `<article class="qr-menu-card${cart.get(p.id) ? ' is-selected' : ''}">
+      <button type="button" class="qr-card-hit" data-select-item="${p.id}" aria-label="Chọn ${escapeHTML(p.name)}, thêm một phần vào giỏ hàng" aria-controls="cartList"></button>
       <div class="qr-menu-head"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div><h3>${escapeHTML(p.name)}</h3><small>${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small></div></div>
       <div class="qr-menu-bottom"><span class="qr-money">${money(p.price)}</span>${quantityUI(p, cart.get(p.id)||0)}</div>
     </article>`).join('')}</div>`).join('') || '<p class="qr-empty">Chưa có món trong thực đơn.</p>';
