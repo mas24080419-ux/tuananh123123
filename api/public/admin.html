@@ -150,6 +150,13 @@ tbody tr:last-child td{border-bottom:none!important}
 @media(max-width:370px){.cards,.stats{grid-template-columns:1fr!important}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 
+
+.tt6-home-money-actions{display:flex;flex-wrap:wrap;gap:9px;align-items:center;min-width:0;margin:12px 0 16px}
+.tt6-home-money-actions .tt6-money-action{display:inline-flex;gap:9px;align-items:center;justify-content:center;min-height:45px;padding:10px 15px;background:#087e79;color:#fff!important;border-radius:11px;font-size:13px;font-weight:850;text-decoration:none!important;box-shadow:0 4px 15px rgba(14,92,83,.11)}
+.tt6-home-money-actions .tt6-money-action.expense{background:#bf6544}
+.tt6-home-money-actions .tt6-money-action span:first-child{display:grid;place-items:center;width:22px;height:22px;border-radius:7px;background:rgba(255,255,255,.2);font-size:20px;line-height:1}
+.tt6-home-money-actions small{font-size:11px;color:#758994;line-height:1.45}
+@media(max-width:760px){.tt6-home-money-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.tt6-home-money-actions .tt6-money-action{padding:10px 6px;font-size:12px}.tt6-home-money-actions small{grid-column:1/-1}}
 </style>
 <link rel="stylesheet" href="/admin-minimal.css">
 <link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
@@ -222,6 +229,12 @@ body.tt6-owner-login{background:linear-gradient(145deg,#ecf8f6,#fefaf3)!importan
 <div class="topbar"><div><span class="sh-eyebrow">TRUNG TÂM ĐIỀU HÀNH / OWNER CONSOLE</span><h1>Tổng quan</h1><p class="sh-page-caption">Các số liệu quan trọng của cửa hàng, cập nhật từ đơn hàng và dòng tiền đã xác nhận.</p></div>
 <div style="display:flex;gap:8px;align-items:center"><span class="tag">● Chủ cửa hàng</span><button type="button" class="alt" id="changePassBtn">Đổi mật khẩu</button><button type="button" class="alt" id="logout">Đăng xuất</button></div></div>
 <div id="notice" class="notice hidden" role="status"></div>
+<div class="tt6-home-money-actions" aria-label="Thao tác ghi thu và chi">
+<a href="/admin/operations?type=expense#quick-entry" class="tt6-money-action expense"><span aria-hidden="true">−</span><span>Ghi khoản chi</span></a>
+<a href="/admin/operations?type=income#quick-entry" class="tt6-money-action income"><span aria-hidden="true">+</span><span>Ghi khoản thu</span></a>
+<small>Ghi trực tiếp vào sổ thu–chi và cập nhật biểu đồ tài chính.</small>
+</div>
+
 <form class="filters" id="filterForm">
 <label>Từ ngày<input type="date" id="from" required></label>
 <label>Đến ngày<input type="date" id="to" required></label>
