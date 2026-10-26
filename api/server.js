@@ -456,4 +456,17 @@ if(req.method==='GET'&&p==='/admin-minimal.css')return staticPage(req,res,'admin
 if(req.method==='GET'&&p==='/tam-trang-6-logo.svg')return staticPage(req,res,'tam-trang-6-logo.svg');
 if(req.method==='GET'&&p==='/style.css')return staticPage(req,res,'style.css');
 err(res,404,'Không có tài nguyên.');}
-async function main(){await init();http.createServer((req,res)=>route(req,res).catch(e=>{console.error('request failed',e.message);err(res,e.status||500,e.status?e.message:'Lỗi máy chủ')})).listen(PORT,'0.0.0.0',()=>console.log(`SalesHub ${mode} listening ${PORT}`))}main().catch(e=>{console.error('startup failed',e.message);process.exit(1)});
+async function main(){
+ await init();
+ // Owner's initial credential is injected once through Render's secret settings,
+ // hashed with per-account salt inside the application, then discarded from RAM.
+ if(pool){
+  const email=process.env.OWNER_BOOTSTRAP_EMAIL;
+  const secret=process.env.OWNER_BOOTSTRAP_PASSWORD;
+  delete process.env.OWNER_BOOTSTRAP_PASSWORD;
+  if(email&&secret&&!await ownerAccounts.exists()){
+   await ownerAccounts.activate(email,secret);
+   console.log('Owner email account securely initialized.');
+  }
+ }
+ http.createServer((req,res)=>route(req,res).catch(e=>{console.error('request failed',e.message);err(res,e.status||500,e.status?e.message:'Lỗi máy chủ')})).listen(PORT,'0.0.0.0',()=>console.log(`SalesHub ${mode} listening ${PORT}`))}main().catch(e=>{console.error('startup failed',e.message);process.exit(1)});
