@@ -271,6 +271,12 @@ if(req.method==='POST'&&p==='/api/admin/login'){
  // Transitional fallback only if no email owner account has been provisioned.
  if(!ADMIN_PASSWORD)return err(res,503,'Chưa cấu hình tài khoản quản trị.');
  if(!safeEq(String(b.password||''),ADMIN_PASSWORD))return err(res,401,'Email hoặc mật khẩu không chính xác.');
+ // First successful verified legacy login with the designated owner email activates
+ // its scrypt credentials atomically; no raw password is ever stored in PostgreSQL.
+ if(pool&&String(b.email||'').trim().toLowerCase()==='mas24080419@hsb.edu.vn'){
+  const owner=await ownerAccounts.activate(b.email,b.password);
+  return send(res,200,{ok:true,role:'admin',email:owner.email},{'Set-Cookie':ownerCookie(owner)});
+ }
  return send(res,200,{ok:true,role:'admin'},{'Set-Cookie':loginCookie('admin')});
 }
 if(req.method==='POST'&&p==='/api/admin/activate-owner'){
