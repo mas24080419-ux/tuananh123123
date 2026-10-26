@@ -40,6 +40,17 @@
         </div>
         <p id="paymentMethodHint" class="qr-payment-hint">Bạn sẽ thanh toán tiền mặt với nhân viên. Đơn sẽ được ghi nhận trước khi thanh toán.</p>
       </fieldset>
+      <section id="transferPreview" class="qr-transfer-preview hidden" aria-live="polite">
+        <h3>QR chuyển khoản theo số tiền giỏ hàng</h3>
+        <p id="transferPreviewStatus" class="qr-transfer-message">Đang kiểm tra cấu hình tài khoản...</p>
+        <div id="transferPreviewContent" class="hidden">
+          <img id="transferPreviewQr" alt="Mã VietQR chuyển khoản theo số tiền giỏ hàng" loading="lazy" referrerpolicy="no-referrer">
+          <strong id="transferPreviewAmount"></strong>
+          <small id="transferPreviewRecipient"></small>
+          <small id="transferPreviewAccount"></small>
+        </div>
+        <p class="qr-transfer-disclaimer">Đây là số tiền tạm tính. Vui lòng <b>xác nhận gọi món trước khi chuyển khoản</b>. QR hóa đơn chính thức sẽ xuất hiện trong chi tiết đơn đã đặt.</p>
+      </section>
       <label class="qr-note-label" for="note">Ghi chú chung cho bếp <span>(không bắt buộc)</span></label>
       <textarea class="qr-note" id="note" maxlength="160" rows="2" placeholder="Ví dụ: Món ít cay, đồ uống mang sau…"></textarea>
       <p id="submitError" class="qr-error hidden" role="alert"></p>
@@ -107,6 +118,7 @@ let currentView = 'menu';
 const note = $('#note');
 const submit = $('#submit');
 let selectedPaymentMethod = 'cash';
+let bankRecipient = null;
 const paymentOptions = document.querySelectorAll('input[name="paymentMethod"]');
 function syncPaymentMethod() {
   paymentOptions.forEach(input => {
@@ -114,14 +126,42 @@ function syncPaymentMethod() {
     input.disabled = sending || Boolean(pendingPayload) || confirmed;
   });
   $('#paymentMethodHint').textContent = selectedPaymentMethod === 'bank_transfer'
-    ? 'Chọn chuyển khoản không đồng nghĩa đã thanh toán. Nhân viên sẽ cung cấp thông tin nhận tiền chính thức và xác nhận sau khi nhận tiền.'
+    ? 'Chọn chuyển khoản: QR được điền sẵn số tiền. Đơn chỉ được xác nhận thanh toán khi tiền thực sự về ngân hàng.'
     : 'Bạn sẽ thanh toán tiền mặt với nhân viên. Đơn sẽ được ghi nhận trước khi thanh toán.';
+  updateTransferPreview();
 }
 paymentOptions.forEach(input => input.addEventListener('change', () => {
   if (sending || pendingPayload || confirmed) return;
   if(input.checked && ['cash','bank_transfer'].includes(input.value)) selectedPaymentMethod = input.value;
   syncPaymentMethod();
 }));
+
+function transferUrl(recipient,amount,reference){
+ if(!recipient||!/^\d{6}$/.test(recipient.bankBin)||!/^\d{6,25}$/.test(recipient.accountNumber)||
+    !Number.isSafeInteger(amount)||amount<=0||amount>999999999999)return null;
+ const q=new URLSearchParams({amount:String(amount),addInfo:reference||'TAM TRANG 6',accountName:recipient.accountName});
+ return 'https://img.vietqr.io/image/'+recipient.bankBin+'-'+recipient.accountNumber+'-compact2.png?'+q.toString();
+}
+function updateTransferPreview(){
+ const show=selectedPaymentMethod==='bank_transfer';
+ hidden('#transferPreview',!show);
+ if(!show)return;
+ const amount=totalStats().subtotal;
+ const status=$('#transferPreviewStatus'),content=$('#transferPreviewContent');
+ const url=bankRecipient?transferUrl(bankRecipient,amount,'TT6 TAM TINH'):null;
+ if(!url){
+   hidden('#transferPreviewContent',true);
+   status.textContent=!bankRecipient?'Cửa hàng chưa cấu hình tài khoản nhận chuyển khoản. Vui lòng chọn tiền mặt hoặc liên hệ nhân viên.':'Hãy thêm món để tạo QR theo số tiền cần thanh toán.';
+   return;
+ }
+ status.textContent='Quét để xem trước số tiền. QR hóa đơn sẽ có mã tham chiếu riêng sau khi đặt món.';
+ hidden('#transferPreviewContent',false);
+ $('#transferPreviewQr').src=url;
+ $('#transferPreviewAmount').textContent=money(amount);
+ $('#transferPreviewRecipient').textContent='Người nhận: '+bankRecipient.accountName;
+ $('#transferPreviewAccount').textContent='STK: '+bankRecipient.accountNumber+' · BIN: '+bankRecipient.bankBin;
+}
+
 const newUUID = () => crypto.randomUUID();
 const pendingKey = tableToken ? `saleshub:pending-order:${tableToken}` : null;
 const recentKey = tableToken ? `saleshub:recent-order:${tableToken}` : null;
@@ -421,6 +461,7 @@ function playOrderSuccessAnimation(orderId) {
 }
 async function submitOrder() {
   if (sending || confirmed || !table || !totalStats().count) return;
+  if(!pendingPayload&&selectedPaymentMethod==='bank_transfer'&&!bankRecipient){showError('Chưa có tài khoản ngân hàng nhận tiền. Bạn hãy chọn Tiền mặt hoặc liên hệ nhân viên.');return}
   const animationStart = Date.now();
   if (!pendingPayload) pendingPayload = {
     token: tableToken,
@@ -461,6 +502,10 @@ async function init() {
     const data = await api(`/api/menu/${tableToken}`);
     if (!data?.table || !Array.isArray(data.items)) throw Error('Phản hồi thực đơn không hợp lệ.');
     table = data.table; products = data.items.filter(p=>p.active!==false); mode = data.mode;
+    try{
+      const config=await api('/api/payment/recipient?token='+encodeURIComponent(tableToken));
+      bankRecipient=config.configured?config.recipient:null;
+    }catch{bankRecipient=null}
     $('#tableName').textContent = `${table.name} · ${table.zone}`;
     $('#tableBadge').textContent = table.name;
     $('#cartTable').textContent = table.name;
