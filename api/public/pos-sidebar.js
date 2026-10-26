@@ -63,7 +63,7 @@ function setup(){
  '<nav class="tt6-side-nav" aria-label="Các chức năng Tắm Tráng 6">'+
  link('/admin','Tổng quan','home')+
  link('/admin/core','Món & bàn','table')+
- link('/admin/operations','Thu – chi & kho','wallet')+
+ link('/admin/operations','Thu–chi','wallet')+
  link('/staff','Màn hình bếp / Bar','chef')+
  '<span class="tt6-side-section-label">QUẢN LÝ CỬA HÀNG</span>'+
  link('/admin/users','Nhân viên & quyền','users')+
@@ -74,8 +74,7 @@ function setup(){
    link('/admin/core#reservations','Đặt bàn','calendar',{sub:true})+
    link('/admin/core#shifts','Ca thu ngân','wallet',{sub:true})+
    link('/admin#security','Bảo mật & đổi mật khẩu','settings',{sub:true})+
-   link('/admin/core#audit','Nhật ký thay đổi','chart',{sub:true})+
-   link('/admin/operations#recipes','Định mức nguyên liệu','restaurant',{sub:true}),
+   link('/admin/core#audit','Nhật ký thay đổi','chart',{sub:true}),
    advancedOpen)+
  '</nav></div>'+
  '<div class="tt6-side-bottom"><div class="tt6-side-user"><span class="tt6-side-avatar">QT</span><span class="tt6-side-user-label"><strong>Quản trị cửa hàng</strong><small>Dữ liệu lưu trên Neon</small></span>'+svg('settings')+'</div>'+

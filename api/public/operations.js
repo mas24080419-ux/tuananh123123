@@ -20,11 +20,7 @@ function filteredLedger(){
  const q=$('#opsLedgerSearch').value.trim().toLocaleLowerCase('vi-VN'),dir=$('#opsLedgerDirection').value;
  return (data.entries||[]).filter(x=>(dir==='all'||x.direction===dir)&&(!q||[x.category,x.note,x.source].join(' ').toLocaleLowerCase('vi-VN').includes(q)));
 }
-function filteredStock(){
- if(!data)return[];
- const q=$('#opsStockSearch').value.trim().toLocaleLowerCase('vi-VN'),lowOnly=$('#opsLowOnly').checked;
- return (data.inventory||[]).filter(x=>(!lowOnly||x.low_stock)&&(!q||String(x.name).toLocaleLowerCase('vi-VN').includes(q)));
-}
+
 function downloadCsv(filename,headers,rows){
  if(!rows.length){notice('Không có bản ghi để xuất theo bộ lọc hiện tại.','error');return}
  const safe=v=>{let s=String(v??'');if(/^[=+\-@\t\r]/.test(s))s="'"+s;return '"'+s.replace(/"/g,'""')+'"';};
@@ -35,25 +31,18 @@ function downloadCsv(filename,headers,rows){
 function redrawViews(){if(data)render()}
 $('#opsLedgerSearch').addEventListener('input',redrawViews);
 $('#opsLedgerDirection').addEventListener('change',redrawViews);
-$('#opsStockSearch').addEventListener('input',redrawViews);
-$('#opsLowOnly').addEventListener('change',redrawViews);
 $('#opsLedgerMore').addEventListener('click',()=>{ledgerExpanded=true;redrawViews()});
 $('#opsLedgerExport').addEventListener('click',()=>downloadCsv('TamTrang6_ThuChi_'+$('#dateFrom').value+'_'+$('#dateTo').value+'.csv',
  ['Mã','Ngày','Loại','Danh mục','Số tiền VND','Phương thức','Nguồn','Diễn giải'],
  filteredLedger().map(x=>[x.id,x.created_at,x.direction,x.category,x.amount,x.payment_method,x.source,x.note])));
-$('#opsStockExport').addEventListener('click',()=>downloadCsv('TamTrang6_TonKho.csv',
- ['Mã','Tên','Đơn vị','Tồn','Ngưỡng cảnh báo','Đơn giá bình quân VND','Cần nhập'],
- filteredStock().map(x=>[x.id,x.name,x.unit,x.quantity,x.reorder_level,x.avg_unit_cost,x.low_stock?'Có':'Không'])));
 
 function render(){
  if(!data)return;
  const s=data.finance;
- [['#totalIn',fmt(s.total_in)],['#totalOut',fmt(s.total_out)],['#netCash',fmt(s.net_cashflow)],['#lowStock',s.low_stock_count],
- ['#salesReceived',fmt(s.sales_received)],['#purchases',fmt(s.stock_purchases)],['#inventoryValue','Giá trị kho ước tính: '+fmt(s.stock_value_estimate)]].forEach(([i,v])=>$(i).textContent=v);
+ [['#totalIn',fmt(s.total_in)],['#totalOut',fmt(s.total_out)],['#netCash',fmt(s.net_cashflow)],
+ ['#salesReceived',fmt(s.sales_received)],['#purchases',fmt(s.stock_purchases)]].forEach(([i,v])=>$(i).textContent=v);
  const methods={cash:'Tiền mặt',bank_transfer:'Chuyển khoản'};
  $('#opsLedgerCount').textContent=filteredLedger().length+' khoản khớp bộ lọc · trong '+data.entries.length+' khoản đã tải.';
- $('#opsStockCount').textContent=filteredStock().length+' nguyên liệu khớp bộ lọc · trong '+data.inventory.length+' nguyên liệu.';
- $('#opsMissingRecipe').textContent=data.menu.filter(m=>!data.recipes.some(r=>r.menu_item_id===m.id)).length+' / '+data.menu.length+' món chưa khai báo định mức nguyên liệu.';
  $('#financeRows').innerHTML=filteredLedger().map(x=>'<tr><td>'+esc(dtime(x.created_at))+'</td><td><span class="pill '+(x.direction==='expense'?'danger':'')+'">'+(x.direction==='expense'?'Chi':'Thu')+'</span></td><td>'+esc(x.category)+(x.source==='stock_purchase'?'<div class="muted">Tự ghi khi nhập kho</div>':'')+'</td><td>'+esc(methods[x.payment_method]||'—')+'</td><td><b>'+fmt(x.amount)+'</b></td><td>'+esc(x.note)+'</td></tr>').join('')||empty(6,'Chưa có khoản thu–chi phát sinh.');
  const entries=filteredLedger();
  const recent=ledgerExpanded?entries:entries.slice(0,15);
@@ -70,18 +59,6 @@ function render(){
  }).join(''):'<p class="tt6-transactions-empty">Chưa có giao dịch trong kỳ này. Chọn “Ghi khoản thu” hoặc “Ghi khoản chi” để bắt đầu.</p>';
  $('#opsLedgerMore').hidden=entries.length<=15||ledgerExpanded;
  $('#opsLedgerMore').textContent='Xem tất cả '+entries.length+' giao dịch';
- $('#inventoryRows').innerHTML=filteredStock().map(x=>'<tr><td><b>'+esc(x.name)+'</b><div class="muted">'+esc(x.unit)+'</div></td><td>'+dec(x.quantity)+'</td><td>'+dec(x.reorder_level)+'</td><td>'+fmt(x.avg_unit_cost)+'</td><td><span class="pill '+(x.low_stock?'danger':'')+'">'+(x.low_stock?'Cần nhập':'Đủ hàng')+'</span></td></tr>').join('')||empty(5,'Chưa tạo nguyên liệu. Bắt đầu ở biểu mẫu phía trên.');
- $('#recipeRows').innerHTML=data.recipes.map(r=>'<tr><td>'+esc(r.menu_name)+'</td><td>'+esc(r.ingredient_name)+'</td><td><b>'+dec(r.quantity_per_unit)+'</b> '+esc(r.unit)+'</td></tr>').join('')||empty(3,'Chưa có định mức. Các món chưa tự trừ kho.');
- const kinds={purchase:'Nhập mua',opening:'Tồn đầu kỳ',adjustment_in:'Điều chỉnh tăng',adjustment_out:'Hao hụt/giảm',consume:'Đơn QR',restore:'Hủy món chưa làm'};
- $('#movementRows').innerHTML=data.movements.map(r=>'<tr><td>'+esc(dtime(r.created_at))+'</td><td>'+esc(r.item_name)+'</td><td>'+esc(kinds[r.kind]||r.kind)+'</td><td><b>'+((Number(r.delta)>0)?'+':'')+dec(r.delta)+' '+esc(r.unit)+'</b></td><td>'+esc(r.note)+'</td></tr>').join('')||empty(5,'Chưa có phiếu kho.');
- const prevStock=$('#stockItem').value,prevRecipe=$('#recipeItem').value,prevDish=$('#recipeMenu').value;
- const options=data.inventory.map(i=>'<option value="'+esc(i.id)+'">'+esc(i.name)+' ('+esc(i.unit)+')</option>').join('');
- $('#stockItem').innerHTML='<option value="">Chọn nguyên liệu</option>'+options;
- $('#recipeItem').innerHTML='<option value="">Chọn nguyên liệu</option>'+options;
- $('#recipeMenu').innerHTML='<option value="">Chọn món</option>'+data.menu.map(m=>'<option value="'+esc(m.id)+'">'+esc(m.name)+'</option>').join('');
- if(data.inventory.some(i=>i.id===prevStock))$('#stockItem').value=prevStock;
- if(data.inventory.some(i=>i.id===prevRecipe))$('#recipeItem').value=prevRecipe;
- if(data.menu.some(m=>m.id===prevDish))$('#recipeMenu').value=prevDish;
  const rows=data.daily.slice(-20),max=Math.max(...rows.flatMap(r=>[Number(r.inflow)||0,Number(r.outflow)||0]),1);
  $('#cashChart').innerHTML=rows.length?rows.map(r=>'<div class="bar-group" title="'+esc(r.day)+' | Thu '+fmt(r.inflow)+' | Chi '+fmt(r.outflow)+'"><div style="display:flex;align-items:end;gap:2px;height:132px;width:100%;justify-content:center"><div class="bar-pos" style="height:'+Math.max(2,Math.round(Number(r.inflow)/max*120))+'px"></div><div class="bar-neg" style="height:'+Math.max(2,Math.round(Number(r.outflow)/max*120))+'px"></div></div><span>'+esc(String(r.day).slice(5))+'</span></div>').join(''):'<div class="empty">Chưa có dòng tiền trong thời gian đã chọn.</div>';
 }
@@ -104,16 +81,6 @@ async function load(){
  }catch(e){notice(e.message,'error');if(e.status===403||e.status===401)location.assign('/admin')}
  finally{busy=false}
 }
-function kindFields(){
- const purchase=$('#stockKind').value==='purchase';
- $('#purchaseFields').classList.toggle('hidden',!purchase);
- $('#purchaseFields input[name="unitCost"]').required=purchase;
-}
-$('#stockKind').addEventListener('change',kindFields);kindFields();
-document.querySelectorAll('[data-section]').forEach(b=>b.addEventListener('click',()=>{
- document.querySelectorAll('[data-section]').forEach(x=>{const active=x===b;x.classList.toggle('active',active);x.setAttribute('aria-selected',String(active))});
- document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===b.dataset.section));
-}));
 async function submit(form,path,transform){
  const button=form.querySelector('[type="submit"]');
  const payload=transform(Object.fromEntries(new FormData(form)));
@@ -123,8 +90,8 @@ async function submit(form,path,transform){
  if(!existing)pending.set(key,body);
  button.disabled=true;
  try{
-  await api(path,{method:form.id==='recipeForm'?'PUT':'POST',body:JSON.stringify(body)});
-  pending.delete(key);form.reset();kindFields();
+  await api(path,{method:'POST',body:JSON.stringify(body)});
+  pending.delete(key);form.reset();
   await load();
   if(form.id==='financeForm'){
    closeFinanceSheet();
@@ -157,7 +124,7 @@ function selectFinanceDirection(direction){
  $('#financeEntryHeading').textContent=type==='income'?'Ghi khoản thu khác':'Ghi khoản chi';
  $('#financeEntryHelp').textContent=type==='income'?
   'Chỉ ghi khoản thu ngoài đơn QR, ví dụ: hoàn ứng hoặc dịch vụ khác. Không ghi lại món đã thanh toán.':
-  'Ghi chi phí vận hành. Nhập nguyên liệu tại mục Tồn kho để chi phí không bị ghi hai lần.';
+  'Ghi khoản chi như mua hàng, điện nước, lương nhân viên hoặc sửa chữa.';
  $('#financeSubmit').textContent=type==='income'?'Lưu khoản thu':'Lưu khoản chi';
  $('#quick-entry').dataset.direction=type;
 }
@@ -214,73 +181,9 @@ if(financeMode==='income'||financeMode==='expense'){
  openFinanceSheet(financeMode,$('#quick'+(financeMode==='income'?'Income':'Expense')));
 }
 const analyticsFold=$('#financeAnalyticsFold');
-if(window.matchMedia('(min-width: 900px)').matches)analyticsFold.open=true;
+analyticsFold.open=false;
 $('#financeForm').addEventListener('submit',e=>{e.preventDefault();submit(e.currentTarget,'/api/admin/finance/entries',x=>({...x,amount:Number(x.amount)}))});
-$('#createItemForm').addEventListener('submit',e=>{e.preventDefault();submit(e.currentTarget,'/api/admin/inventory/items',x=>({...x,reorderLevel:Number(x.reorderLevel)}))});
-$('#stockForm').addEventListener('submit',e=>{e.preventDefault();submit(e.currentTarget,'/api/admin/inventory/movements',x=>({...x,quantity:Number(x.quantity),unitCost:x.kind==='purchase'?Number(x.unitCost):0}))});
-$('#recipeForm').addEventListener('submit',e=>{e.preventDefault();submit(e.currentTarget,'/api/admin/inventory/recipes',x=>({...x,quantityPerUnit:Number(x.quantityPerUnit)}))});
 $('#dateFilter').addEventListener('submit',e=>{e.preventDefault();load()});
 $('#refresh').addEventListener('click',load);
 (async()=>{try{const m=await api('/api/me');if(m.role!=='admin'){location.assign('/admin');return}await load()}catch(e){notice(e.message,'error')}})();
 
-/* V11: show data first, allow a single accounting or stock form on demand. */
-(function quietOperations(){
- const actions=[
-  {section:'recipes',name:'Sửa định mức',form:'recipeForm'}
- ];
- const toggles=new Map();
- for(const action of actions){
-  const section=document.getElementById(action.section);
-  const form=document.getElementById(action.form);
-  const panel=form?.closest('.panel');
-  if(!section||!panel)throw Error('Thiếu biểu mẫu '+action.form);
-  panel.classList.add('ui-hide-by-default');
-  const button=document.createElement('button');button.type='button';button.className='ui-quiet-action';
-  button.textContent='+ '+action.name;button.setAttribute('aria-expanded','false');
-  const show=(open)=>{
-   for(const other of actions.filter(x=>x.section===action.section&&x.form!==action.form)){
-    const node=document.getElementById(other.form)?.closest('.panel');
-    node?.classList.remove('is-open');
-    const oldButton=toggles.get(other.form)?.button;
-    if(oldButton){oldButton.textContent='+ '+other.name;oldButton.setAttribute('aria-expanded','false')}
-   }
-   panel.classList.toggle('is-open',open);
-   button.textContent=open?'Đóng biểu mẫu':'+ '+action.name;
-   button.setAttribute('aria-expanded',String(open));
-   if(open)panel.scrollIntoView({behavior:'smooth',block:'nearest'});
-  };
-  button.addEventListener('click',()=>show(!panel.classList.contains('is-open')));
-  form.addEventListener('reset',()=>setTimeout(()=>show(false),0));
-  toggles.set(action.form,{button,show});
- }
- for(const sectionName of ['recipes']){
-  const section=document.getElementById(sectionName);
-  const row=document.createElement('div');row.className='ui-toolbar';
-  for(const action of actions.filter(x=>x.section===sectionName))row.append(toggles.get(action.form).button);
-  const columns=section.querySelector('.columns');
-  const remaining=[...section.querySelectorAll(':scope > .panel')];
-  // The ledger and the current inventory/recipe tables are the default starting point.
-  for(const panel of remaining)section.insertBefore(panel,columns);
-  if(sectionName==='recipes'){
-   const list=columns.querySelector(':scope > .panel:not(.ui-hide-by-default)');
-   if(list)section.insertBefore(list,columns);
-  }
-  section.insertBefore(row,columns);
- }
- // Move financial chart into an optional disclosure at the bottom.
- const finance=document.getElementById('finance');
- const chart=finance.querySelector('.columns > .panel:not(.ui-hide-by-default)');
- if(chart){
-  const details=document.createElement('details');details.className='ui-detail';
-  const summary=document.createElement('summary');summary.textContent='Biểu đồ dòng tiền';
-  details.append(summary,chart);finance.append(details);
- }
- const cols=finance.querySelector('.columns');if(cols)cols.style.display='block';
- const inv=document.getElementById('inventory').querySelector('.columns');if(inv){inv.classList.add('stock-entry-forms');inv.querySelectorAll(':scope > .panel').forEach(p=>p.classList.add('is-open'));}
- const recipe=document.getElementById('recipes').querySelector('.columns');if(recipe)recipe.style.display='block';
- const fromHash=location.hash.slice(1);
- const tab=document.querySelector('[data-section="'+fromHash+'"]');
- if(tab)tab.click();
-})();
-
-document.getElementById('inventoryShortcut')?.addEventListener('click',()=>{document.querySelector('[data-section="inventory"]').click();document.getElementById('inventory').scrollIntoView({behavior:'smooth',block:'start'});});

@@ -72,7 +72,7 @@
   <div class="tt6-analytics-kpi income"><small>TỔNG TIỀN VÀO</small><strong id="faIncome">—</strong><small>Đã thu + thu khác</small></div>
   <div class="tt6-analytics-kpi expense"><small>TỔNG TIỀN RA</small><strong id="faOutflow">—</strong><small>Chi đã ghi sổ</small></div>
   <div class="tt6-analytics-kpi"><small>DÒNG TIỀN THUẦN</small><strong id="faNet">—</strong><small>Thu trừ chi, không phải lãi</small></div>
-  <div class="tt6-analytics-kpi"><small>CẢNH BÁO TỒN KHO</small><strong id="faLowStock">—</strong><small>Nguyên liệu dưới ngưỡng</small></div>
+  
  </div>
  <div class="tt6-analytics-panels">
   <article class="tt6-analytics-card"><h3>Chi phí theo danh mục</h3><p class="tt6-chart-desc">Tỷ trọng các khoản chi thực tế. Bấm một danh mục để xem giao dịch.</p><div id="faExpensePie"><p class="tt6-chart-empty">Đang tải số liệu…</p></div></article>
@@ -81,18 +81,18 @@
    <div class="tt6-trend-legend"><span><i></i>Tiền vào</span><span><i class="expense-key"></i>Tiền ra</span></div>
    <div id="faCashBars"><p class="tt6-chart-empty">Đang tải số liệu…</p></div>
   </article>
- </div><p class="tt6-analytics-foot">Số tiền nhận từ đơn hàng chỉ tính khi được xác nhận đã thanh toán. Nhập nguyên liệu đã ghi thành khoản chi không được cộng lần hai. Dòng tiền thuần không phải lợi nhuận kế toán.</p>
+ </div><p class="tt6-analytics-foot">Số tiền nhận từ đơn hàng chỉ tính khi được xác nhận đã thanh toán. Dòng tiền thuần không phải lợi nhuận kế toán.</p>
 </section>
 <details class="ui-detail" id="extraMetrics">
-<summary>Chỉ số chi tiết và tồn kho</summary><div class="cards"><div class="card"><small>GIÁ TRỊ ĐƠN TRONG KỲ</small><b id="orderValue">—</b><p>Tổng các món chưa bị hủy</p></div>
-<div class="card"><small>TỔNG TIỀN RA TRONG KỲ</small><b class="accent" id="adminExpenses">—</b><p>Chi vận hành và nhập nguyên liệu</p></div>
+<summary>Chỉ số chi tiết</summary><div class="cards"><div class="card"><small>GIÁ TRỊ ĐƠN TRONG KỲ</small><b id="orderValue">—</b><p>Tổng các món chưa bị hủy</p></div>
+<div class="card"><small>TỔNG TIỀN RA TRONG KỲ</small><b class="accent" id="adminExpenses">—</b><p>Các khoản chi đã ghi sổ</p></div>
 <div class="card"><small>TIỀN MẶT ĐÃ THU</small><b id="paidCash">—</b><p>Theo ngày xác nhận thanh toán</p></div>
 <div class="card"><small>CHUYỂN KHOẢN ĐÃ THU</small><b id="paidTransfer">—</b><p>Chỉ ghi nhận sau khi đối soát</p></div>
 <div class="card"><small>ĐÃ THU – CHƯA RÕ PHƯƠNG THỨC</small><b id="paidUnknown">—</b><p>Dành cho dữ liệu lịch sử</p></div>
 <div class="card"><small>GIAO DỊCH XÁC NHẬN TRONG KỲ</small><b id="paidOrders">—</b><p>Số đơn được xác nhận thanh toán</p></div>
-<div class="card"><small>NGUYÊN LIỆU SẮP HẾT</small><b class="accent" id="adminLowStock">—</b><p>Theo ngưỡng cảnh báo được thiết lập</p></div>
-<div class="card"><small>GIÁ TRỊ HÀNG TỒN (ƯỚC TÍNH)</small><b id="adminInventoryValue">—</b><p>Đơn giá nhập bình quân × số lượng tồn</p></div></div></details>
-<div class="ui-toolbar"><a class="sh-quicklink" href="/admin/operations">Quản lý thu–chi và kho</a> <a class="sh-quicklink" href="/admin/core">Quản lý món và bàn</a></div>
+
+</div></details>
+<div class="ui-toolbar"><a class="sh-quicklink" href="/admin/operations">Quản lý thu–chi</a> <a class="sh-quicklink" href="/admin/core">Quản lý món và bàn</a></div>
 <details class="ui-detail" id="expandedCharts"><summary>Biểu đồ doanh thu và món bán chạy</summary><div class="two">
 <div class="panel"><div class="panel-head"><div><h2>Tiền đã thu theo ngày</h2><p class="muted">Ngày xác nhận thu tiền, không phải ngày tạo đơn</p></div></div><div id="dailyChart" class="chart"><div class="empty">Đang tải…</div></div></div>
 <div class="panel"><div class="panel-head"><div><h2>Món được gọi nhiều</h2><p class="muted">Số lượng món đặt trong kỳ (chưa bị hủy)</p></div></div><div id="topItems" class="bar-list"><div class="empty">Đang tải…</div></div></div>

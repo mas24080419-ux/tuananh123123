@@ -107,7 +107,6 @@ function renderFinanceAnalytics(report){
  text('#faIncome',cash(report.summary.total_in));
  text('#faOutflow',cash(report.summary.total_out));
  text('#faNet',cash(report.summary.net_cashflow));
- text('#faLowStock',report.summary.low_stock_count);
  ch.donut($('#faExpensePie'),report.expense_categories.map(x=>({name:x.name,amount:x.amount})),
     {title:'Tỷ trọng chi phí theo danh mục',totalLabel:'TỔNG CHI',drilldown:true,transactions:report.expense_transactions});
  ch.donut($('#faPaymentPie'),report.payment_methods,
@@ -125,7 +124,7 @@ async function reload(){
  for(const [key,v] of [['#totalOrders',s.order_count],['#orderValue',cash(s.order_value)],['#collected',cash(s.collected)],['#outstanding',cash(s.outstanding)],['#unpaidOrders',s.unpaid_orders],['#paidCash',cash(s.paid_cash)],['#paidTransfer',cash(s.paid_transfer)],['#paidUnknown',cash(s.paid_unknown)],['#paidOrders',s.paid_orders]])text(key,v??'0');
  renderBarChart(data.daily||[]);renderTop(data.top_items||[]);applyOrderFilters();renderFinanceAnalytics(analyticsReport);
  const f=operations.finance||{};
- for(const [selector,v] of [['#adminExpenses',cash(f.total_out)],['#adminNetCash',cash(f.net_cashflow)],['#adminLowStock',f.low_stock_count||0],['#adminInventoryValue',cash(f.stock_value_estimate)]])text(selector,v);
+ for(const [selector,v] of [['#adminExpenses',cash(f.total_out)],['#adminNetCash',cash(f.net_cashflow)]])text(selector,v);
  notice(data.mode==='pilot'?'Đang ở chế độ thử nghiệm: dữ liệu sẽ mất nếu khởi động lại máy chủ.':'Đã đồng bộ với dữ liệu PostgreSQL · '+new Date().toLocaleTimeString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}),'ok');
  }catch(e){notice(e.message,'error');if(e.status===401||e.status===403)screen(false)}
  finally{loading=false}

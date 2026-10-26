@@ -1,31 +1,32 @@
 <!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Tắm Tráng 6 · Thu–chi & Kho</title><meta name="theme-color" content="#112737">
+<title>Tắm Tráng 6 · Thu–chi</title><meta name="theme-color" content="#112737">
 <link rel="stylesheet" href="/operations.css"><link rel="stylesheet" href="/admin-minimal.css"><link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
-<link rel="stylesheet" href="/finance-charts.css?v=tt6-finance-v1"><script src="/finance-charts.js?v=tt6-finance-v1"></script><link rel="stylesheet" href="/finance-app.css?v=tt6-money-v2-20261026"></head><body class="tt6-money-app">
-<div class="shell"><aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside>
+<link rel="stylesheet" href="/finance-charts.css?v=tt6-finance-v1"><script src="/finance-charts.js?v=tt6-finance-v1"></script><link rel="stylesheet" href="/finance-app.css?v=tt6-money-v2-20261026"><link rel="stylesheet" href="/operations-layout.css?v=2"></head><body class="tt6-money-app">
+<div class="shell"><aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside>
 <main>
-<div class="top"><div><span class="sh-eyebrow">TẮM TRÁNG 6 / VẬN HÀNH CỬA HÀNG</span><h1>Sổ tiền & giao dịch</h1><p class="sh-page-caption">Theo dõi dòng tiền, ghi thu chi và quản lý nguyên liệu tại một nơi.</p></div><span class="tag"><span class="sh-dot"></span> Dữ liệu Neon</span></div>
+<div class="top"><div><span class="sh-eyebrow">TẮM TRÁNG 6 / VẬN HÀNH CỬA HÀNG</span><h1>Thu–chi</h1><p class="sh-page-caption">Ghi thu, ghi chi và xem giao dịch của cửa hàng.</p></div><span class="tag"><span class="sh-dot"></span> Dữ liệu Neon</span></div>
 <div id="notice" class="notice hidden" role="status"></div>
-<section class="tt6-wallet-hero" aria-label="Tổng quan thu chi">
-<div class="tt6-wallet-eyebrow"><span class="tt6-wallet-dot" aria-hidden="true"></span> SỔ TIỀN CỬA HÀNG</div>
-<div class="stats">
-<div class="stat"><small>TỔNG TIỀN VÀO</small><strong class="green" id="totalIn">—</strong><p>Đơn đã thanh toán + thu khác</p></div>
-<div class="stat"><small>TỔNG TIỀN RA</small><strong class="orange" id="totalOut">—</strong><p>Chi hoạt động + nhập nguyên liệu</p></div>
-<div class="stat"><small>CHÊNH LỆCH DÒNG TIỀN</small><strong id="netCash">—</strong><p>Không đồng nghĩa lợi nhuận kế toán</p></div>
-<div class="stat"><small>NGUYÊN LIỆU CẦN NHẬP</small><strong class="orange" id="lowStock">—</strong><p>Theo ngưỡng tối thiểu đã cấu hình</p></div>
-</div>
-</section>
-<p><a class="sh-quicklink" href="#inventory" id="inventoryShortcut">＋ Thêm nguyên liệu / nhập kho →</a></p>
 <div class="tt6-app-actions" aria-label="Thao tác tài chính">
 <button type="button" id="quickIncome" class="tt6-finance-action is-income" aria-pressed="false"><span class="tt6-action-icon" aria-hidden="true">↓</span><span><b>Ghi khoản thu</b><small>Tiền vào</small></span></button>
 <button type="button" id="quickExpense" class="tt6-finance-action is-expense" aria-pressed="true"><span class="tt6-action-icon" aria-hidden="true">↑</span><span><b>Ghi khoản chi</b><small>Tiền ra</small></span></button>
 </div>
+<section class="tt6-wallet-hero" aria-label="Tổng quan thu chi">
+<div class="tt6-wallet-eyebrow"><span class="tt6-wallet-dot" aria-hidden="true"></span> SỔ TIỀN CỬA HÀNG</div>
+<div class="stats">
+<div class="stat"><small>TỔNG TIỀN VÀO</small><strong class="green" id="totalIn">—</strong><p>Đơn đã thanh toán + thu khác</p></div>
+<div class="stat"><small>TỔNG TIỀN RA</small><strong class="orange" id="totalOut">—</strong><p>Các khoản chi đã ghi sổ</p></div>
+<div class="stat"><small>CHÊNH LỆCH DÒNG TIỀN</small><strong id="netCash">—</strong><p>Không đồng nghĩa lợi nhuận kế toán</p></div>
+
+</div>
+</section>
+
+
 <section id="quick-entry" class="tt6-finance-entry" aria-labelledby="financeEntryHeading">
 <div id="financeBackdrop" class="tt6-finance-backdrop" aria-hidden="true"></div>
 <div class="panel tt6-quick-finance-panel" id="tt6-money-dialog" role="dialog" aria-labelledby="financeEntryHeading">
 <div class="tt6-money-handle" aria-hidden="true"></div>
-<button type="button" id="closeFinanceSheet" class="tt6-money-close" aria-label="Đóng biểu mẫu thu chi">✕</button><div class="tt6-quick-finance-header"><div><span class="tt6-mini-eyebrow">NHẬP GIAO DỊCH</span><h2 id="financeEntryHeading">Ghi khoản chi</h2><p class="muted" id="financeEntryHelp">Ví dụ: điện nước, lương nhân viên, sửa chữa. Nhập nguyên liệu qua mục Tồn kho để không ghi chi phí hai lần.</p></div><span class="tt6-quick-finance-mark" aria-hidden="true">₫</span></div>
+<button type="button" id="closeFinanceSheet" class="tt6-money-close" aria-label="Đóng biểu mẫu thu chi">✕</button><div class="tt6-quick-finance-header"><div><span class="tt6-mini-eyebrow">NHẬP GIAO DỊCH</span><h2 id="financeEntryHeading">Ghi khoản chi</h2><p class="muted" id="financeEntryHelp">Ví dụ: mua hàng, điện nước, lương nhân viên, sửa chữa.</p></div><span class="tt6-quick-finance-mark" aria-hidden="true">₫</span></div>
 <form class="field" id="financeForm">
 <div class="pair"><label>Loại giao dịch<select name="direction" required><option value="expense">Chi tiền</option><option value="income">Thu khác</option></select></label>
 <label>Phương thức<select name="paymentMethod" required><option value="cash">Tiền mặt</option><option value="bank_transfer">Chuyển khoản</option></select></label></div>
@@ -41,15 +42,15 @@
 <details class="tt6-date-fold" id="tt6DateFold">
 <summary><span class="tt6-calendar-icon" aria-hidden="true">▦</span><span>Khoảng thời gian <small id="financePeriodCaption">Tháng hiện tại</small></span><span class="tt6-filter-chevron" aria-hidden="true">⌄</span></summary>
 <form id="dateFilter" class="filters"><label>Từ ngày<input type="date" id="dateFrom" required></label><label>Đến ngày<input type="date" id="dateTo" required></label>
-<button type="submit">Áp dụng</button><button class="alt" type="button" id="refresh">↻ Tải lại</button><p class="muted">Theo thời điểm ghi nhận (UTC+7). Tồn kho luôn là số dư hiện tại.</p></form>
+<button type="submit">Áp dụng</button><button class="alt" type="button" id="refresh">↻ Tải lại</button><p class="muted">Theo thời điểm ghi nhận (UTC+7). </p></form>
 </details>
-<div class="sh-section-heading"><div><span class="sh-eyebrow">NGHIỆP VỤ QUẢN LÝ</span><span class="sh-headingline">Làm việc theo từng phân hệ</span></div><a class="sh-quicklink" href="/admin">← Về tổng quan</a></div>
-<div class="tabs" role="tablist"><button type="button" class="active" data-section="finance" role="tab" aria-selected="true">Thu–chi</button><button type="button" data-section="inventory" role="tab" aria-selected="false">Tồn kho</button><button type="button" data-section="recipes" role="tab" aria-selected="false">Định mức món</button><button type="button" data-section="history" role="tab" aria-selected="false">Lịch sử</button></div>
+
+
 <section id="finance" class="section active">
-<div class="columns">
+<div class="columns" hidden>
 <div class="panel"><h2>Phân tích dòng tiền</h2><p class="muted">Màu xanh: tiền vào; màu cam: tiền ra. Theo ngày phát sinh.</p><div id="cashChart" class="bars"><div class="empty">Đang tải…</div></div>
-<div class="pair" style="margin-top:13px"><div><span class="muted">Tiền thu từ đơn QR đã xác nhận</span><h2 id="salesReceived">—</h2></div><div><span class="muted">Chi nhập nguyên liệu trong kỳ</span><h2 id="purchases">—</h2></div></div></div></div>
-<div class="panel"><h2>Sổ thu–chi</h2><p class="muted">200 khoản gần nhất trong khoảng ngày. Chi nhập hàng được ghi tự động.</p>
+<div class="pair" style="margin-top:13px"><div><span class="muted">Tiền thu từ đơn QR đã xác nhận</span><h2 id="salesReceived">—</h2></div><div><span class="muted">Chi mua hàng đã ghi trong kỳ</span><h2 id="purchases">—</h2></div></div></div></div>
+<div class="panel"><h2>Sổ thu–chi</h2><p class="muted">Các khoản thu–chi gần nhất trong khoảng ngày đã chọn.</p>
 <div class="sh-toolbar"><input id="opsLedgerSearch" type="search" placeholder="Tìm danh mục, diễn giải..." aria-label="Tìm khoản thu chi"><select id="opsLedgerDirection"><option value="all">Tất cả thu–chi</option><option value="income">Chỉ khoản thu</option><option value="expense">Chỉ khoản chi</option></select><button id="opsLedgerExport" class="alt" type="button">↓ Xuất CSV</button></div>
 <div id="opsLedgerCount" class="sh-info"></div><div id="opsLedgerMobile" class="tt6-ledger-mobile" aria-label="Giao dịch gần đây"></div>
 <button type="button" id="opsLedgerMore" class="tt6-ledger-more" hidden>Xem thêm giao dịch</button><div class="scroll tt6-ledger-table"><table><thead><tr><th>Thời gian</th><th>Thu/chi</th><th>Danh mục</th><th>Thanh toán</th><th>Số tiền</th><th>Ghi chú</th></tr></thead><tbody id="financeRows"></tbody></table></div></div>
@@ -63,48 +64,9 @@
  <article class="tt6-analytics-card wide"><h3>So sánh tiền vào và tiền ra</h3><p class="tt6-chart-desc">Biểu đồ cột theo ngày hoặc theo tháng.</p>
  <div class="tt6-trend-legend"><span><i></i>Tiền vào</span><span><i class="expense-key"></i>Tiền ra</span></div>
  <div id="opsCashBars"><p class="tt6-chart-empty">Đang tải số liệu…</p></div></article>
- </div><p class="tt6-analytics-foot">Không tính đơn chưa thu tiền. Chi mua nguyên liệu chỉ ghi một lần trong sổ. Dòng tiền thuần không phải lợi nhuận kế toán.</p>
+ </div><p class="tt6-analytics-foot">Không tính đơn chưa thu tiền. Dòng tiền thuần không phải lợi nhuận kế toán.</p>
 </section>
 </details>
-</section>
-<section id="inventory" class="section">
-<div class="panel"><h2>Nguyên liệu &amp; tồn kho</h2><p>Tạo nguyên liệu ở bước 1, sau đó nhập số lượng tồn đầu kỳ hoặc ghi phiếu nhập mua ở bước 2.</p></div>
-<div class="columns">
-<div class="panel"><h2>1. Thêm nguyên liệu / hàng tồn</h2>
-<form id="createItemForm" class="field">
-<label>Tên nguyên liệu<input name="name" maxlength="80" required placeholder="Ví dụ: Gạo, thịt bò, trà đào"></label>
-<div class="pair"><label>Đơn vị tính<input name="unit" maxlength="16" required placeholder="kg, lít, g, cái"></label>
-<label>Ngưỡng báo sắp hết<input name="reorderLevel" type="number" min="0" step=".001" value="0" required></label></div>
-<button type="submit">Tạo nguyên liệu</button></form>
-<p class="helper">Tạo nguyên liệu không tự sinh số lượng kho. Dùng “Tồn đầu kỳ” để nhập số liệu kiểm kê ban đầu.</p></div>
-<div class="panel"><h2>2. Nhập / xuất kho</h2><form id="stockForm" class="field">
-<label>Nguyên liệu<select name="inventoryItemId" id="stockItem" required><option value="">Chọn nguyên liệu</option></select></label>
-<div class="pair"><label>Nghiệp vụ<select name="kind" id="stockKind" required><option value="purchase">Nhập mua (đồng thời ghi chi)</option><option value="opening">Tồn đầu kỳ</option><option value="adjustment_in">Điều chỉnh tăng</option><option value="adjustment_out">Điều chỉnh giảm / hao hụt</option></select></label>
-<label>Số lượng<input name="quantity" min=".001" max="1000000" step=".001" type="number" required></label></div>
-<div id="purchaseFields" class="pair"><label>Đơn giá nhập (VND / đơn vị)<input name="unitCost" min="1" step="1" type="number" value="1"></label>
-<label>Thanh toán<select name="paymentMethod"><option value="cash">Tiền mặt</option><option value="bank_transfer">Chuyển khoản</option></select></label></div>
-<label>Lý do / nhà cung cấp / chứng từ<textarea name="note" rows="2" maxlength="250" placeholder="Ví dụ: Nhập từ nhà cung cấp A; kiểm kê kho" required></textarea></label>
-<button type="submit">Ghi phiếu kho</button></form>
-<p class="helper">Nhập mua ghi đồng thời 1 phiếu tăng kho và 1 khoản chi, trong cùng giao dịch PostgreSQL. Điều chỉnh kho không tự tính tiền.</p></div>
-</div>
-<div class="panel"><div class="top"><h2>Tình trạng kho hiện tại</h2><span class="tag" id="inventoryValue">—</span></div>
-<div class="sh-toolbar"><input type="search" id="opsStockSearch" placeholder="Tìm theo tên nguyên liệu..." aria-label="Tìm nguyên liệu"><label style="font-size:12px;display:flex;align-items:center;gap:7px;white-space:nowrap"><input type="checkbox" id="opsLowOnly" style="width:16px;height:16px"> Chỉ sắp hết / hết</label><button id="opsStockExport" class="alt" type="button">↓ Xuất CSV</button></div>
-<div id="opsStockCount" class="sh-info"></div><div class="scroll"><table><thead><tr><th>Nguyên liệu</th><th>Tồn hiện tại</th><th>Mức cảnh báo</th><th>Đơn giá bình quân</th><th>Trạng thái</th></tr></thead><tbody id="inventoryRows"></tbody></table></div></div>
-</section>
-<section id="recipes" class="section">
-<div class="columns"><div class="panel"><h2>Thiết lập định mức mỗi món</h2>
-<p class="muted">Ví dụ một phần phở cần 0,15 kg thịt bò. Khi đơn QR được ghi nhận, Tắm Tráng 6 trừ nguyên liệu tương ứng.</p>
-<form id="recipeForm" class="field">
-<label>Món trong thực đơn<select id="recipeMenu" name="menuItemId" required><option value="">Chọn món ăn</option></select></label>
-<label>Nguyên liệu<select id="recipeItem" name="inventoryItemId" required><option value="">Chọn nguyên liệu</option></select></label>
-<label>Lượng tiêu hao mỗi phần<input name="quantityPerUnit" type="number" min="0" step=".001" required placeholder="Ví dụ: 0.15"></label>
-<p class="helper">Nhập 0 để gỡ nguyên liệu khỏi công thức. Cần nhập kho trước khi cho khách đặt món có định mức.</p>
-<button type="submit">Lưu định mức</button></form></div>
-<div class="panel"><h2>Định mức đang áp dụng</h2><p id="opsMissingRecipe" class="sh-info">Đang kiểm tra số món chưa khai báo nguyên liệu.</p><div class="scroll"><table><thead><tr><th>Món</th><th>Nguyên liệu</th><th>Lượng mỗi phần</th></tr></thead><tbody id="recipeRows"></tbody></table></div></div></div>
-<div class="notice">Chỉ các món có công thức mới tự trừ kho. Khi hủy món còn ở trạng thái chưa chế biến, hệ thống hoàn lại nguyên liệu đã trừ. Món đã bắt đầu chế biến không tự nhập lại nguyên liệu.</div>
-</section>
-<section id="history" class="section">
-<div class="panel"><h2>Lịch sử nhập/xuất/tiêu hao kho</h2><div class="scroll"><table><thead><tr><th>Thời điểm</th><th>Nguyên liệu</th><th>Nghiệp vụ</th><th>Biến động</th><th>Ghi chú</th></tr></thead><tbody id="movementRows"></tbody></table></div></div>
 </section>
 </main></div>
 <script src="/operations.js"></script></body></html>

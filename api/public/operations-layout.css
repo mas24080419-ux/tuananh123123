@@ -1,0 +1,10 @@
+/* Finance workspace: actions, totals, ledger, optional analysis. */
+body.tt6-money-app .tt6-wallet-hero .stats{grid-template-columns:repeat(3,minmax(0,1fr))!important}
+body.tt6-money-app #finance>.columns[hidden]{display:none!important}
+body.tt6-money-app .tt6-app-actions{margin:16px 0!important}
+body.tt6-money-app .tt6-app-actions button{min-height:60px!important}
+body.tt6-money-app .tt6-wallet-hero{margin:10px 0!important}
+body.tt6-money-app .tt6-wallet-hero .stat{padding:14px!important}
+body.tt6-money-app .tt6-wallet-hero .stat p{font-size:11px}
+body.tt6-money-app #tt6DateFold{margin-bottom:14px}
+@media(max-width:760px){body.tt6-money-app .tt6-wallet-hero .stats{grid-template-columns:1fr!important;gap:7px!important}body.tt6-money-app .tt6-wallet-hero .stat{display:grid;grid-template-columns:1fr auto;align-items:center;gap:4px 12px}body.tt6-money-app .tt6-wallet-hero .stat small{margin:0!important}body.tt6-money-app .tt6-wallet-hero .stat strong{font-size:21px!important}body.tt6-money-app .tt6-wallet-hero .stat p{grid-column:1/-1;margin:0!important}}
