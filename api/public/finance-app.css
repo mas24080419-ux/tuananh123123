@@ -1,0 +1,155 @@
+/* Tắm Tráng 6 · Money app shell for /admin/operations. Authoritative Neon data only. */
+body.tt6-money-app{--money-ink:#183e45;--money-muted:#789299;--money-mint:#eef8f4;--money-teal:#087f78;--money-coral:#c56b46;background:#f5f9f8!important;color:var(--money-ink)}
+body.tt6-money-app main{min-width:0}
+body.tt6-money-app .top{margin-bottom:10px}
+body.tt6-money-app .top h1{font-size:clamp(23px,3vw,30px)!important;letter-spacing:-.9px}
+body.tt6-money-app .top .tag{background:#eaf7ef!important;color:#178366!important}
+body.tt6-money-app .tt6-wallet-hero{display:grid;gap:10px;min-width:0;margin:16px 0 18px}
+body.tt6-money-app .tt6-wallet-eyebrow{display:flex;align-items:center;gap:7px;font-size:10px;letter-spacing:1.6px;font-weight:850;color:#557d7f;padding:0 2px}
+body.tt6-money-app .tt6-wallet-dot{width:8px;height:8px;border-radius:50%;background:#24b5a4}
+body.tt6-money-app .tt6-wallet-hero .stats{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;margin:0!important;gap:12px}
+body.tt6-money-app .tt6-wallet-hero .stat{border-radius:18px!important;min-width:0;background:#fff;border:1px solid #e5eded;padding:18px!important;box-shadow:0 6px 19px #1b5d5d06}
+body.tt6-money-app .tt6-wallet-hero .stat small{font-size:10px;letter-spacing:.6px;margin:0 0 10px;line-height:1.5;font-weight:800}
+body.tt6-money-app .tt6-wallet-hero .stat strong{font-size:clamp(17px,2vw,25px)!important;letter-spacing:-.5px;overflow-wrap:anywhere}
+body.tt6-money-app .tt6-wallet-hero .stat p{line-height:1.4}
+body.tt6-money-app .tt6-app-actions{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:0 0 18px;min-width:0}
+body.tt6-money-app .tt6-app-actions .tt6-finance-action{display:flex;align-items:center;gap:13px;text-align:left;width:100%;min-width:0;min-height:72px!important;padding:14px 18px!important;border-radius:17px!important;border:1px solid #ddece9!important;background:#fff!important;box-shadow:0 5px 17px rgba(17,73,74,.045)!important;color:#153d45!important;transition:transform .16s,box-shadow .16s}
+body.tt6-money-app .tt6-app-actions .tt6-finance-action:hover{transform:translateY(-2px);box-shadow:0 9px 25px #155b5916!important}
+body.tt6-money-app .tt6-app-actions .tt6-action-icon{display:grid;place-items:center;flex:0 0 43px;width:43px;height:43px;border-radius:14px;background:#eaf8f4;color:#087b72;font-size:25px;font-weight:900}
+body.tt6-money-app .tt6-app-actions .is-expense .tt6-action-icon{background:#fdf0e9;color:#bb6245}
+body.tt6-money-app .tt6-app-actions .tt6-finance-action span:last-child{display:grid;gap:5px;min-width:0}
+body.tt6-money-app .tt6-app-actions .tt6-finance-action b{font-size:15px;font-weight:850;line-height:1.2}
+body.tt6-money-app .tt6-app-actions .tt6-finance-action small{font-size:11px;color:#84989f}
+body.tt6-money-app .tt6-date-fold{background:#fff;border-radius:14px;border:1px solid #e5eeed;margin:0 0 19px;overflow:hidden}
+body.tt6-money-app .tt6-date-fold>summary{display:flex;align-items:center;gap:12px;min-height:59px;padding:11px 16px;cursor:pointer;font-size:12px;font-weight:800;list-style:none;color:#355b62}
+body.tt6-money-app .tt6-date-fold>summary::-webkit-details-marker{display:none}
+body.tt6-money-app .tt6-calendar-icon{display:grid;place-items:center;width:35px;height:35px;flex:0 0 35px;background:#eef7f7;border-radius:10px;font-size:22px;color:#19867e}
+body.tt6-money-app .tt6-date-fold>summary span:nth-child(2){display:grid;gap:4px;min-width:0}
+body.tt6-money-app .tt6-date-fold>summary small{font-size:11px;font-weight:550;color:#81939d}
+body.tt6-money-app .tt6-filter-chevron{margin-left:auto;font-size:22px;color:#749294;transition:transform .2s}
+body.tt6-money-app .tt6-date-fold[open] .tt6-filter-chevron{transform:rotate(180deg)}
+body.tt6-money-app .tt6-date-fold #dateFilter{border:0!important;box-shadow:none!important;border-top:1px solid #eaf0ee!important;border-radius:0!important;margin:0!important;max-width:100%;background:white!important}
+body.tt6-money-app .tt6-date-fold #dateFilter label{min-width:0}
+body.tt6-money-app .tt6-date-fold #dateFilter input{font-size:16px!important;min-width:0}
+body.tt6-money-app .tt6-date-fold #dateFilter button{min-height:45px!important}
+body.tt6-money-app .sh-section-heading{margin:18px 0 12px}
+body.tt6-money-app .tabs{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 16px!important}
+body.tt6-money-app .tabs button{font-size:12px!important;font-weight:780!important;min-height:45px!important;padding:10px 14px!important;border-radius:12px!important}
+body.tt6-money-app .tabs button.active{background:#087f78!important;color:#fff!important;border-color:#087f78!important}
+body.tt6-money-app #finance>.panel{background:#fff;border:1px solid #e5eeed;border-radius:18px;padding:18px;margin-bottom:16px}
+body.tt6-money-app #finance>.panel>h2{font-size:19px!important;margin-bottom:5px}
+body.tt6-money-app #finance .sh-toolbar{display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin:14px 0}
+body.tt6-money-app #finance .sh-toolbar input{flex:1 1 165px!important}
+body.tt6-money-app #finance .sh-toolbar select{flex:1 1 140px!important}
+body.tt6-money-app #finance .sh-toolbar button{flex:0 0 auto!important}
+body.tt6-money-app .tt6-ledger-mobile{display:none}
+body.tt6-money-app .tt6-ledger-more{display:none}
+body.tt6-money-app .tt6-analytics-fold{display:block;border:1px solid #e5eeec;background:white;border-radius:17px;margin:14px 0 25px;overflow:hidden;min-width:0}
+body.tt6-money-app .tt6-analytics-fold>summary{display:flex;align-items:center;gap:12px;padding:18px;cursor:pointer;list-style:none;min-height:71px}
+body.tt6-money-app .tt6-analytics-fold>summary::-webkit-details-marker{display:none}
+body.tt6-money-app .tt6-fold-chart-icon{display:grid;place-items:center;background:#edf8f4;color:#13857b;font-size:25px;width:41px;height:41px;flex:0 0 41px;border-radius:13px}
+body.tt6-money-app .tt6-analytics-fold>summary>span:nth-child(2){display:grid;gap:5px;flex:1;min-width:0}
+body.tt6-money-app .tt6-analytics-fold>summary b{font-size:15px;color:#24444c}
+body.tt6-money-app .tt6-analytics-fold>summary small{font-size:11px;font-weight:500;color:#82969e;line-height:1.4}
+body.tt6-money-app .tt6-fold-chevron{font-size:22px;color:#7e929b;transition:transform .2s}
+body.tt6-money-app .tt6-analytics-fold[open] .tt6-fold-chevron{transform:rotate(180deg)}
+body.tt6-money-app .tt6-analytics-fold>.tt6-analytics{padding:0 16px 17px;margin:0!important;min-width:0}
+body.tt6-money-app .tt6-analytics-fold>.tt6-analytics .tt6-analytics-head{display:none}
+body.tt6-money-app .tt6-analytics-fold>.tt6-analytics .tt6-analytics-panels{margin:0}
+body.tt6-money-app .tt6-finance-entry .tt6-finance-backdrop{display:none}
+body.tt6-money-app #closeFinanceSheet{display:none}
+body.tt6-money-app .tt6-money-handle{display:none}
+body.tt6-money-app .tt6-finance-toast{position:fixed;bottom:calc(91px + env(safe-area-inset-bottom,0px));left:50%;transform:translate(-50%,12px);opacity:0;pointer-events:none;z-index:101;background:#224b4e;color:white;border-radius:13px;max-width:calc(100vw - 30px);padding:14px 18px;font-size:12px;font-weight:750;line-height:1.4;text-align:center;transition:opacity .2s,transform .2s}
+body.tt6-money-app .tt6-finance-toast.is-visible{opacity:1;transform:translate(-50%,0)}
+body.tt6-money-app .tt6-finance-fab{display:none}
+/* With JavaScript enhanced, retain the same fallback form but present it as an overlay. */
+body.tt6-finance-enhanced .tt6-finance-entry{position:fixed!important;inset:0!important;z-index:95!important;margin:0!important;padding:20px!important;display:flex!important;justify-content:center;align-items:center;opacity:0;visibility:hidden;pointer-events:none;transition:opacity .16s,visibility .16s;scroll-margin:0}
+body.tt6-finance-enhanced .tt6-finance-entry .tt6-finance-backdrop{display:block!important;position:absolute;inset:0;background:rgba(13,35,43,.58);z-index:0}
+body.tt6-finance-enhanced .tt6-finance-entry .tt6-quick-finance-panel{position:relative;z-index:1;min-width:0;width:100%;max-width:590px;max-height:calc(100dvh - 42px);overflow-y:auto;overscroll-behavior:contain;-webkit-overflow-scrolling:touch;border-radius:25px!important;padding:26px!important;box-shadow:0 20px 75px rgba(14,40,46,.2)!important;transform:translateY(22px);transition:transform .2s}
+body.tt6-finance-enhanced.tt6-sheet-open .tt6-finance-entry{visibility:visible;opacity:1;pointer-events:auto}
+body.tt6-finance-enhanced.tt6-sheet-open .tt6-finance-entry .tt6-quick-finance-panel{transform:translateY(0)}
+body.tt6-finance-enhanced.tt6-sheet-open{overflow:hidden!important}
+body.tt6-finance-enhanced #closeFinanceSheet{display:grid!important;place-items:center;position:absolute;top:14px;right:14px;z-index:2;width:38px;height:38px;min-height:38px!important;border-radius:12px!important;padding:0!important;color:#526e75!important;background:#ecf5f3!important;font-size:15px!important}
+body.tt6-finance-enhanced .tt6-quick-finance-header{padding-right:36px}
+body.tt6-finance-enhanced .tt6-form-feedback{margin:0;grid-column:1/-1;color:#b04739;font-size:12px;font-weight:700;line-height:1.55}
+body.tt6-finance-enhanced .tt6-form-feedback:empty{display:none}
+body.tt6-finance-enhanced .tt6-finance-entry #financeForm{display:grid!important;grid-template-columns:1fr!important}
+body.tt6-finance-enhanced .tt6-finance-entry #financeForm>.pair{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:12px}
+body.tt6-finance-enhanced .tt6-finance-entry #financeSubmit{width:100%!important;min-height:51px!important;font-size:14px!important;position:relative}
+body.tt6-money-app :is(button,a,summary):focus-visible{outline:3px solid #18a89d!important;outline-offset:3px!important}
+@media(max-width:1150px){
+ body.tt6-money-app .tt6-wallet-hero .stats{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+ body.tt6-money-app .tt6-wallet-hero .stat:nth-child(3){grid-column:1/-1;grid-row:1;order:-1;background:linear-gradient(122deg,#0c847c,#155d65)!important;border:0!important;color:#fff!important}
+ body.tt6-money-app .tt6-wallet-hero .stat:nth-child(3) small,body.tt6-money-app .tt6-wallet-hero .stat:nth-child(3) strong,body.tt6-money-app .tt6-wallet-hero .stat:nth-child(3) p{color:#fff!important}
+ body.tt6-money-app .tt6-wallet-hero .stat:nth-child(3) strong{font-size:clamp(25px,4vw,34px)!important}
+}
+@media(max-width:760px){
+ body.tt6-money-app .shell>main{padding-top:13px!important}
+ body.tt6-money-app .top{align-items:flex-start!important;margin-bottom:7px!important;gap:5px}
+ body.tt6-money-app .top h1{font-size:23px!important}
+ body.tt6-money-app .top .tag{display:none}
+ body.tt6-money-app .sh-page-caption{font-size:11px!important;line-height:1.55!important}
+ body.tt6-money-app .tt6-wallet-hero{margin:14px 0!important;gap:9px}
+ body.tt6-money-app .tt6-wallet-hero .stats{display:grid!important;grid-template-columns:repeat(2,minmax(0,1fr))!important;gap:9px!important}
+ body.tt6-money-app .tt6-wallet-hero .stat{padding:14px!important;border-radius:15px!important}
+ body.tt6-money-app .tt6-wallet-hero .stat:nth-child(3){order:-1;grid-column:1/-1;grid-row:1;min-height:135px;padding:22px 18px!important;border-radius:19px!important;box-shadow:0 12px 25px rgba(8,105,106,.14)!important}
+ body.tt6-money-app .tt6-wallet-hero .stat:nth-child(3) strong{font-size:clamp(27px,8vw,39px)!important}
+ body.tt6-money-app .tt6-wallet-hero .stat small{font-size:10px}
+ body.tt6-money-app .tt6-wallet-hero .stat strong{font-size:clamp(17px,4.8vw,22px)!important}
+ body.tt6-money-app .tt6-wallet-hero .stat:nth-child(4){grid-column:1/-1}
+ body.tt6-money-app .tt6-app-actions{gap:9px!important;margin-bottom:13px!important}
+ body.tt6-money-app .tt6-app-actions .tt6-finance-action{padding:12px 9px!important;gap:9px;min-height:66px!important;border-radius:16px!important}
+ body.tt6-money-app .tt6-app-actions .tt6-action-icon{width:36px;height:36px;flex-basis:36px;border-radius:11px;font-size:23px}
+ body.tt6-money-app .tt6-app-actions .tt6-finance-action b{font-size:12px}
+ body.tt6-money-app .tt6-app-actions .tt6-finance-action small{font-size:10px}
+ body.tt6-money-app .tt6-date-fold>summary{padding:9px 12px!important}
+ body.tt6-money-app .tt6-date-fold #dateFilter{display:flex!important;flex-direction:column!important;gap:12px!important;padding:13px!important}
+ body.tt6-money-app .tt6-date-fold #dateFilter label{width:100%;min-width:0}
+ body.tt6-money-app .tt6-date-fold #dateFilter input{width:100%;min-width:0;max-width:100%;box-sizing:border-box}
+ body.tt6-money-app .tt6-date-fold #dateFilter button{width:100%;min-height:44px!important}
+ body.tt6-money-app .tt6-date-fold #dateFilter p{width:100%;margin:0}
+ body.tt6-money-app .sh-section-heading{margin:17px 0 11px}
+ body.tt6-money-app .sh-section-heading .sh-quicklink{display:none}
+ body.tt6-money-app .tabs{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr));gap:5px!important;margin:0 0 12px!important}
+ body.tt6-money-app .tabs button{width:100%;min-width:0;padding:9px 4px!important;white-space:normal;line-height:1.2;font-size:10px!important;min-height:47px!important}
+ body.tt6-money-app #finance>.panel{padding:15px!important;border-radius:17px!important}
+ body.tt6-money-app #finance .sh-toolbar{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:8px!important}
+ body.tt6-money-app #finance .sh-toolbar input{grid-column:1/-1;min-width:0;width:100%;font-size:16px}
+ body.tt6-money-app #finance .sh-toolbar select,body.tt6-money-app #finance .sh-toolbar button{min-width:0;width:100%;font-size:11px;min-height:42px!important;padding:9px!important}
+ body.tt6-money-app .tt6-ledger-table{display:none!important}
+ body.tt6-money-app .tt6-ledger-mobile{display:grid!important;gap:2px;margin-top:5px}
+ body.tt6-money-app .tt6-transaction{display:flex;align-items:center;gap:10px;min-width:0;padding:13px 0;border-bottom:1px solid #eff3f3}
+ body.tt6-money-app .tt6-transaction:last-child{border-bottom:0}
+ body.tt6-money-app .tt6-transaction-icon{display:grid;place-items:center;flex:0 0 40px;width:40px;height:40px;border-radius:14px;background:#e9f8f3;color:#0b8b77;font-size:24px;font-weight:900}
+ body.tt6-money-app .tt6-transaction.expense .tt6-transaction-icon{color:#b96848;background:#fdf0e8}
+ body.tt6-money-app .tt6-transaction-info{min-width:0;flex:1;display:grid;gap:4px}
+ body.tt6-money-app .tt6-transaction-info strong{font-size:12px;color:#294750;overflow-wrap:anywhere}
+ body.tt6-money-app .tt6-transaction-info small{font-size:11px;color:#728994;overflow-wrap:anywhere}
+ body.tt6-money-app .tt6-transaction-meta{font-size:10px;color:#899ba3}
+ body.tt6-money-app .tt6-transaction-amount{font-size:12px;white-space:nowrap;color:#0b8778;text-align:right}
+ body.tt6-money-app .tt6-transaction.expense .tt6-transaction-amount{color:#c2704b}
+ body.tt6-money-app .tt6-transactions-empty{text-align:center;color:#8a9ea5;background:#f7faf9;padding:25px 15px;border-radius:14px;font-size:12px;line-height:1.6}
+ body.tt6-money-app .tt6-ledger-more:not([hidden]){display:block!important;min-height:43px!important;width:100%;margin-top:10px;background:#edf7f4!important;color:#138478!important}
+ body.tt6-money-app .tt6-analytics-fold{margin:12px 0 20px}
+ body.tt6-money-app .tt6-analytics-fold>summary{padding:12px;gap:9px}
+ body.tt6-money-app .tt6-analytics-fold>.tt6-analytics{padding:0 10px 14px!important}
+ body.tt6-money-app .tt6-finance-fab{position:fixed;bottom:calc(85px + env(safe-area-inset-bottom,0px));right:17px;z-index:48;display:grid!important;place-items:center;width:52px;height:52px;border-radius:18px!important;background:#087f78!important;box-shadow:0 9px 25px rgba(3,91,86,.28)!important;color:#fff;font-size:31px!important;font-weight:500!important;padding:0!important}
+ body.tt6-finance-enhanced .tt6-finance-entry{padding:0!important;align-items:flex-end!important;justify-content:center!important}
+ body.tt6-finance-enhanced .tt6-finance-entry .tt6-quick-finance-panel{max-width:100%!important;width:100%!important;max-height:calc(96dvh - env(safe-area-inset-top,0px))!important;border-radius:24px 24px 0 0!important;box-shadow:0 -7px 40px rgba(6,30,41,.22)!important;padding:16px 18px calc(21px + env(safe-area-inset-bottom,0px))!important;margin:0!important;transform:translateY(40px)}
+ body.tt6-finance-enhanced.tt6-sheet-open .tt6-finance-entry .tt6-quick-finance-panel{transform:translateY(0)}
+ body.tt6-finance-enhanced .tt6-money-handle{display:block;width:40px;height:5px;background:#d2dedf;border-radius:99px;margin:0 auto 18px}
+ body.tt6-finance-enhanced .tt6-finance-entry .tt6-quick-finance-header h2{font-size:20px!important}
+ body.tt6-finance-enhanced .tt6-finance-entry #financeForm>.pair{grid-template-columns:1fr!important}
+ body.tt6-finance-enhanced .tt6-finance-entry #financeForm{gap:10px!important}
+ body.tt6-finance-enhanced .tt6-finance-entry #financeForm :is(select,input,textarea){font-size:16px!important}
+ body.tt6-money-app .tt6-finance-toast{bottom:calc(145px + env(safe-area-inset-bottom,0px))}
+}
+@media(max-width:360px){
+ body.tt6-money-app .tt6-app-actions .tt6-finance-action{gap:7px;padding:10px 7px!important}
+ body.tt6-money-app .tt6-app-actions .tt6-action-icon{flex-basis:33px;width:33px;height:33px}
+ body.tt6-money-app .tt6-wallet-hero .stat strong{font-size:17px!important}
+ body.tt6-money-app .tabs button{font-size:9px!important}
+}
+@media(prefers-reduced-motion:reduce){
+ body.tt6-money-app .tt6-app-actions .tt6-finance-action,body.tt6-money-app .tt6-finance-entry,body.tt6-money-app .tt6-finance-entry .tt6-quick-finance-panel{transition:none!important}
+}
