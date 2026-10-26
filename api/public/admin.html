@@ -154,21 +154,50 @@ tbody tr:last-child td{border-bottom:none!important}
 <link rel="stylesheet" href="/admin-minimal.css">
 <link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css">
 <script defer src="/pos-sidebar.js"></script>
-</head>
+<style>
+/* MediQueue-inspired owner account gateway, scoped to authentication and security panel. */
+body.tt6-owner-login{background:linear-gradient(145deg,#ecf8f6,#fefaf3)!important}
+#login.tt6-auth-card{max-width:450px;margin:clamp(20px,8vh,90px) auto!important;padding:clamp(20px,4vw,32px)!important;border-radius:24px;border:1px solid #e5eee9;box-shadow:0 20px 50px #18595a16;background:white}
+.tt6-auth-logo{display:flex;align-items:center;gap:14px;margin-bottom:25px}
+.tt6-auth-logo img{width:66px;height:66px;object-fit:cover;border-radius:17px;box-shadow:0 5px 18px #177b7a17}
+.tt6-auth-logo span{display:grid;gap:5px;color:#164f4c}
+.tt6-auth-logo strong{font-size:23px;letter-spacing:-.7px}
+.tt6-auth-logo small,.tt6-auth-eyebrow{font-size:10px;letter-spacing:1.3px;font-weight:850;color:#529b92}
+.tt6-auth-card h1{font-size:25px!important;letter-spacing:-.7px}
+.tt6-auth-card label,.tt6-security-card label{display:block;margin:18px 0 7px;font-weight:750;font-size:12px;color:#375d63}
+#login.tt6-auth-card input{width:100%;min-height:46px;font-size:16px;margin:0!important;border:1px solid #dbe6e7;background:#fbfdfc;border-radius:11px;padding:11px 14px}
+.tt6-password-row{display:flex;align-items:center;position:relative;min-width:0}
+.tt6-password-row input{padding-right:67px!important;min-width:0}
+#login button.tt6-show-pass,button.tt6-show-pass{position:absolute;right:5px;top:50%;transform:translateY(-50%);min-height:36px!important;width:auto!important;padding:7px 10px!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#137d76!important;font-size:12px!important;z-index:2}
+#login #loginButton{width:100%;margin-top:24px;min-height:47px!important;background:linear-gradient(125deg,#078b7e,#18a78f)!important;color:white!important;border:0;border-radius:12px;box-shadow:0 8px 24px #0c8e7c20}
+.tt6-auth-foot{font-size:11px;line-height:1.5;color:#8da1a1;margin:16px 0 0}
+.tt6-security-panel{padding:20px 0 40px;min-width:0}
+.tt6-security-card{width:100%;max-width:590px;padding:clamp(17px,3vw,28px);background:white;border:1px solid #e3eded;border-radius:20px;box-shadow:0 8px 25px #183e4908}
+.tt6-security-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.tt6-security-head h2{margin:4px 0}
+.tt6-security-card input{width:100%;min-height:45px;font-size:16px;border:1px solid #dbe6e7;border-radius:11px;padding:11px 70px 11px 13px}
+.tt6-security-card button#savePassword{margin-top:15px;min-height:43px;background:#0c8e7c!important}
+.tt6-security-card #securityNotice{font-size:12px;min-height:20px}
+@media(max-width:760px){#login.tt6-auth-card{margin:18px 13px!important;padding:22px 18px!important}.tt6-auth-logo img{width:54px;height:54px}.tt6-security-panel{padding-top:13px}.tt6-security-card{padding:18px}}
+</style><style>#dashboard.tt6-security-mode>:not(#security){display:none!important}#dashboard.tt6-security-mode #security{display:block!important;max-width:720px;margin:0 auto}</style></head>
 <body class="tt6-owner-login">
 <div class="shell">
 <aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside>
 <div>
-<section id="login">
-<div class="brand" style="color:#112637"><img class="brand-icon sh-brand-logo" src="/tam-trang-6-logo.svg" width="40" height="40" alt="">Tắm Tráng 6</div>
-<h1 style="margin-top:25px">Đăng nhập quản trị</h1>
-<p class="muted">Dùng mật khẩu chủ cửa hàng. Tài khoản bếp/nhân viên không có quyền xem báo cáo tài chính.</p>
-<form id="loginForm"><input id="password" type="password" autocomplete="current-password" required placeholder="Mật khẩu quản trị">
-<button type="submit" id="loginButton">Đăng nhập an toàn</button><p id="loginError" role="alert"></p></form>
+<section id="login" class="tt6-auth-card" aria-labelledby="authTitle">
+<div class="tt6-auth-logo"><img src="/tam-trang-6-logo.svg" width="66" height="66" alt=""><span><strong>Tắm Tráng 6</strong><small>QUẢN TRỊ CỬA HÀNG</small></span></div>
+<div class="tt6-auth-eyebrow">CHÀO MỪNG TRỞ LẠI</div>
+<h1 id="authTitle">Đăng nhập quản trị</h1>
+<p class="muted">Đăng nhập bằng email và mật khẩu riêng của chủ cửa hàng.</p>
+<form id="loginForm" autocomplete="on">
+<label for="adminEmail">Email quản trị</label><input id="adminEmail" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" placeholder="Email của chủ cửa hàng" required maxlength="254">
+<label for="password">Mật khẩu</label><div class="tt6-password-row"><input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Nhập mật khẩu"><button type="button" class="tt6-show-pass" data-visibility="password" aria-label="Hiện mật khẩu">Hiện</button></div>
+<button type="submit" id="loginButton">Đăng nhập</button><p id="loginError" role="alert" aria-live="polite"></p></form>
+<p class="tt6-auth-foot">Phiên đăng nhập được bảo vệ bằng cookie HttpOnly. Không chia sẻ mật khẩu hoặc mã OTP.</p>
 </section>
 <main id="dashboard" class="hidden">
 <div class="topbar"><div><span class="sh-eyebrow">TRUNG TÂM ĐIỀU HÀNH / OWNER CONSOLE</span><h1>Tổng quan</h1><p class="sh-page-caption">Các số liệu quan trọng của cửa hàng, cập nhật từ đơn hàng và dòng tiền đã xác nhận.</p></div>
-<div style="display:flex;gap:8px;align-items:center"><span class="tag">● Chủ cửa hàng</span><button type="button" class="alt" id="logout">Đăng xuất</button></div></div>
+<div style="display:flex;gap:8px;align-items:center"><span class="tag">● Chủ cửa hàng</span><button type="button" class="alt" id="changePassBtn">Đổi mật khẩu</button><button type="button" class="alt" id="logout">Đăng xuất</button></div></div>
 <div id="notice" class="notice hidden" role="status"></div>
 <form class="filters" id="filterForm">
 <label>Từ ngày<input type="date" id="from" required></label>
@@ -206,6 +235,16 @@ tbody tr:last-child td{border-bottom:none!important}
 <div class="notice">Chỉ bấm <strong>Đã nhận tiền</strong> sau khi nhận đủ tiền mặt hoặc kiểm tra giao dịch chuyển khoản thực tế. Chọn chuyển khoản không có nghĩa khách đã trả tiền.</div>
 <div class="table-scroll"><table class="data-table"><thead><tr><th>Đơn hàng</th><th>Bàn</th><th>Phương thức</th><th>Tiền hàng</th><th>Trạng thái</th><th>Xác nhận</th></tr></thead><tbody id="orders"><tr><td colspan="6" class="empty">Đang tải dữ liệu…</td></tr></tbody></table></div>
 </div>
+<section id="security" class="tt6-security-panel hidden" aria-labelledby="securityTitle">
+<div class="tt6-security-card">
+<div class="tt6-security-head"><div><span class="sh-eyebrow">BẢO MẬT TÀI KHOẢN</span><h2 id="securityTitle">Đổi mật khẩu quản trị</h2><p class="muted">Để bảo vệ doanh thu và thông tin cửa hàng, hãy sử dụng mật khẩu mới có ít nhất 12 ký tự.</p></div><button class="alt" type="button" id="closeSecurity">Đóng</button></div>
+<form id="passwordForm" autocomplete="off">
+<label for="currentPassword">Mật khẩu hiện tại</label><div class="tt6-password-row"><input type="password" id="currentPassword" autocomplete="current-password" required><button type="button" class="tt6-show-pass" data-visibility="currentPassword">Hiện</button></div>
+<label for="newPassword">Mật khẩu mới</label><div class="tt6-password-row"><input type="password" id="newPassword" autocomplete="new-password" required minlength="12" maxlength="128"><button type="button" class="tt6-show-pass" data-visibility="newPassword">Hiện</button></div>
+<label for="confirmPassword">Nhập lại mật khẩu mới</label><div class="tt6-password-row"><input type="password" id="confirmPassword" autocomplete="new-password" required minlength="12" maxlength="128"><button type="button" class="tt6-show-pass" data-visibility="confirmPassword">Hiện</button></div>
+<p class="muted">Mật khẩu mới nên có chữ, số và ký tự đặc biệt. Sau khi đổi, mọi phiên cũ sẽ hết hiệu lực.</p>
+<p id="securityNotice" role="status" aria-live="polite"></p><button type="submit" id="savePassword">Lưu mật khẩu mới</button>
+</form></div></section>
 </main></div></div>
 <script>
 'use strict';
@@ -326,15 +365,43 @@ async function reload(){
 $('#loginForm').addEventListener('submit',async e=>{
  e.preventDefault();const button=$('#loginButton');button.disabled=true;text('#loginError','');
  try{
-  await request('/api/admin/login',{method:'POST',body:JSON.stringify({password:$('#password').value})});
+  await request('/api/admin/login',{method:'POST',body:JSON.stringify({email:$('#adminEmail').value.trim(),password:$('#password').value})});
   $('#password').value='';screen(true);await reload();
  }catch(e){text('#loginError',e.message)}finally{button.disabled=false}
+});
+document.querySelectorAll('[data-visibility]').forEach(button=>button.addEventListener('click',()=>{
+ const field=document.getElementById(button.dataset.visibility);
+ const reveal=field.type==='password';field.type=reveal?'text':'password';
+ button.textContent=reveal?'Ẩn':'Hiện';button.setAttribute('aria-label',reveal?'Ẩn mật khẩu':'Hiện mật khẩu');
+}));
+function securityPanel(show){
+ if($('#dashboard').classList.contains('hidden'))return;
+ $('#security').classList.toggle('hidden',!show);
+ $('#dashboard').classList.toggle('tt6-security-mode',show);
+ if(show){location.hash='security';$('#currentPassword').focus({preventScroll:true})}
+ else if(location.hash==='#security')history.replaceState(null,'',location.pathname);
+}
+$('#changePassBtn').addEventListener('click',()=>securityPanel(true));
+$('#closeSecurity').addEventListener('click',()=>securityPanel(false));
+window.addEventListener('hashchange',()=>{if(!$('#dashboard').classList.contains('hidden'))securityPanel(location.hash==='#security')});
+$('#passwordForm').addEventListener('submit',async ev=>{
+ ev.preventDefault();
+ const old=$('#currentPassword').value,neu=$('#newPassword').value,confirmed=$('#confirmPassword').value;
+ const output=$('#securityNotice'),btn=$('#savePassword');
+ output.textContent='';output.style.color='#a3293a';
+ if(neu!==confirmed){output.textContent='Hai lần nhập mật khẩu mới không khớp.';return}
+ btn.disabled=true;
+ try{
+  await request('/api/admin/change-password',{method:'POST',body:JSON.stringify({currentPassword:old,newPassword:neu})});
+  $('#passwordForm').reset();output.style.color='#197a63';
+  output.textContent='Đổi mật khẩu thành công. Những phiên đăng nhập cũ đã bị thu hồi.';
+ }catch(e){output.textContent=e.message}finally{btn.disabled=false}
 });
 $('#logout').addEventListener('click',async()=>{try{await request('/api/logout',{method:'POST',body:'{}'})}catch{}screen(false);latest=null});
 $('#filterForm').addEventListener('submit',e=>{e.preventDefault();reload()});
 $('#today').addEventListener('click',()=>{$('#from').value=zoneDate;$('#to').value=zoneDate;reload()});
 $('#thisMonth').addEventListener('click',()=>{defaultDates();reload()});
 $('#refresh').addEventListener('click',reload);
-(async()=>{defaultDates();try{const me=await request('/api/me');if(me.role==='admin'){screen(true);await reload()}else screen(false)}catch{screen(false)}})();
+(async()=>{defaultDates();try{const me=await request('/api/me');if(me.role==='admin'){screen(true);await reload();if(location.hash==='#security')securityPanel(true)}else screen(false)}catch{screen(false)}})();
 </script>
 </body></html>

@@ -73,6 +73,7 @@ function setup(){
    link('/admin/core#suppliers','Nhà cung cấp','box',{sub:true})+
    link('/admin/core#reservations','Đặt bàn','calendar',{sub:true})+
    link('/admin/core#shifts','Ca thu ngân','wallet',{sub:true})+
+   link('/admin#security','Bảo mật & đổi mật khẩu','settings',{sub:true})+
    link('/admin/core#audit','Nhật ký thay đổi','chart',{sub:true})+
    link('/admin/operations#recipes','Định mức nguyên liệu','restaurant',{sub:true}),
    advancedOpen)+
