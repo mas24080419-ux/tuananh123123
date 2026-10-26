@@ -180,3 +180,52 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
 .guest-orange .qr-success-payment{background:#fff7f0;border-radius:11px;padding:8px 12px;margin:-2px 0 15px!important;font-size:11px!important;color:#6f594b!important}
 @media(max-width:400px){.guest-orange .qr-payment-options{grid-template-columns:1fr}.guest-orange .qr-payment-option{min-height:66px}}
 @media(prefers-reduced-motion:reduce){.guest-orange .qr-payment-option{transition:none}}
+
+
+/* QR guest app: tap anywhere on a food card to add one portion.
+   Card-wide button and steppers are siblings: exactly one change per tap. */
+.guest-orange .qr-menu-card{
+  position:relative;
+  transition:border-color .16s ease,background-color .16s ease,box-shadow .16s ease;
+}
+.guest-orange .qr-menu-card.is-selected{
+  border-color:#f0a185;
+  background:#fffaf7;
+  box-shadow:0 4px 15px rgba(232,78,27,.075);
+}
+.guest-orange .qr-menu-card .qr-card-hit{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  width:100%;
+  height:100%;
+  padding:0;
+  margin:0;
+  border:0;
+  border-radius:19px;
+  background:transparent;
+  cursor:pointer;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
+}
+.guest-orange .qr-menu-card .qr-card-hit:focus-visible{
+  outline:3px solid #e84e1b;
+  outline-offset:3px;
+}
+.guest-orange .qr-menu-card .qr-card-hit:disabled{cursor:default}
+.guest-orange .qr-menu-card .qr-menu-head,
+.guest-orange .qr-menu-card .qr-menu-bottom{
+  pointer-events:none;
+}
+.guest-orange .qr-menu-card .qr-menu-bottom .qr-add,
+.guest-orange .qr-menu-card .qr-menu-bottom .qr-stepper{
+  position:relative;
+  z-index:2;
+  pointer-events:auto;
+}
+@media(hover:hover){
+  .guest-orange .qr-menu-card:hover{border-color:#f1af95}
+}
+@media(prefers-reduced-motion:reduce){
+  .guest-orange .qr-menu-card{transition:none}
+}
