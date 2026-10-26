@@ -9,7 +9,7 @@ p{color:#728493;font-size:13px;line-height:1.7}
 .card{background:white;border:1px solid #e6ebef;border-radius:16px;padding:21px;margin:16px 0;box-shadow:none}
 .field{display:grid;gap:14px}
 label{display:grid;gap:6px;color:#455c6c;font-size:12px;font-weight:750}
-input{font:inherit;border:1px solid #dfe5e9;border-radius:9px;padding:12px;font-size:14px;width:100%}
+input,select{font:inherit;border:1px solid #dfe5e9;border-radius:9px;padding:12px;font-size:14px;width:100%;background:#fff;color:#263847}
 button{padding:12px 17px;border:0;border-radius:9px;background:#df623e;color:#fff;font-weight:750;cursor:pointer}
 button:disabled{opacity:.6}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .info{border-radius:11px;background:#f2f9f5;color:#336c53;padding:13px;font-size:12px}
@@ -19,11 +19,11 @@ button:disabled{opacity:.6}.row{display:grid;grid-template-columns:1fr 1fr;gap:1
 .small{font-size:11px}
 @media(max-width:600px){.row,.preview{grid-template-columns:1fr}.card{padding:16px}}
 </style></head><body><div class="wrap"><header class="top"><strong style="font-size:17px">6 · Tắm Tráng 6</strong><nav><a href="/admin">Tổng quan</a> · <a href="/admin/operations">Thu–chi</a></nav></header>
-<h1>Cấu hình QR chuyển khoản</h1><p>Nhập chính xác ngân hàng, số tài khoản và tên người thụ hưởng. Sau khi lưu, khách chọn <b>Chuyển khoản</b> sẽ có QR theo số tiền đơn hàng.</p>
+<h1>Cấu hình QR chuyển khoản</h1><p>Chọn ngân hàng và nhập tài khoản nhận tiền. Hệ thống tự lấy mã ngân hàng để tạo QR đúng số tiền đơn hàng. <b>Không yêu cầu mã PIN, OTP hay mật khẩu ngân hàng.</b></p>
 <div id="notice" class="info status" role="status">Đang kiểm tra tài khoản quản trị...</div>
 <div class="card"><h2 style="margin-top:0">Tài khoản nhận tiền</h2>
 <form id="bankForm" class="field" autocomplete="off">
-<div class="row"><label>BIN ngân hàng (6 chữ số)<input id="bankBin" inputmode="numeric" name="bankBin" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="Mã BIN ngân hàng" required><small class="small">Tra cứu BIN 6 số chính thức của ngân hàng.</small></label>
+<div class="row"><label>Ngân hàng nhận tiền<select id="bankSelect" name="bankBin" required><option value="">Đang tải danh sách ngân hàng…</option></select><small id="bankDirectoryNote" class="small">Chỉ cần chọn ngân hàng; hệ thống tự lấy mã BIN.</small></label>
 <label>Số tài khoản nhận tiền<input name="accountNumber" type="text" id="bankAccount" inputmode="numeric" pattern="[0-9]{6,25}" minlength="6" maxlength="25" placeholder="Số tài khoản" required></label></div>
 <label>Tên chủ tài khoản nhận tiền<input id="bankName" name="accountName" minlength="2" maxlength="100" required placeholder="Tên hiển thị trên tài khoản ngân hàng"></label>
 <label style="display:flex;flex-direction:row;align-items:center;gap:9px"><input type="checkbox" style="width:18px" id="bankEnabled" checked> Bật QR thanh toán cho khách hàng</label>
@@ -41,6 +41,23 @@ async function api(path,opts={}){
  let j;try{j=await r.json()}catch{throw Error('Máy chủ trả về dữ liệu không hợp lệ')}
  if(!r.ok)throw Error(j.error||'Không lưu được cấu hình');return j;
 }
+let banks=[];
+function renderBanks(selectedBin=''){
+ const select=$('#bankSelect');
+ const sorted=[...banks].sort((a,b)=>a.name.localeCompare(b.name,'vi'));
+ select.replaceChildren();
+ const option=document.createElement('option');
+ option.value='';option.textContent='Chọn ngân hàng nhận tiền';select.append(option);
+ for(const bank of sorted){
+  const opt=document.createElement('option');opt.value=bank.bin;opt.textContent=bank.name;
+  select.append(opt);
+ }
+ // Preserve an older configured bank if VietQR no longer lists its routing code.
+ if(selectedBin&&!sorted.some(bank=>bank.bin===selectedBin)){
+  const opt=document.createElement('option');opt.value=selectedBin;opt.textContent='Ngân hàng đã lưu (mã '+selectedBin+')';select.append(opt);
+ }
+ select.value=selectedBin||'';
+}
 function display(bank){
  const okay=bank&&bank.enabled;
  $('#previewCard').hidden=!okay;
@@ -49,20 +66,24 @@ function display(bank){
  const bin=bank.bank_bin||bank.bankBin,account=bank.account_number||bank.accountNumber;
  $('#previewQr').src='https://img.vietqr.io/image/'+bin+'-'+account+'-compact2.png?'+params.toString();
  $('#previewName').textContent=bank.account_name||bank.accountName;
- $('#previewDescription').textContent='Ngân hàng BIN '+bin+' · STK '+account;
+ const selected=banks.find(b=>b.bin===bin);$('#previewDescription').textContent=(selected?selected.name:'Ngân hàng mã '+bin)+' · STK '+account;
 }
 async function init(){
  try{
   const me=await api('/api/me');if(me.role!=='admin'){location.replace('/admin');return}
-  const r=await api('/api/admin/payment-settings');
-  if(r.payment){$('#bankBin').value=r.payment.bank_bin;$('#bankAccount').value=r.payment.account_number;$('#bankName').value=r.payment.account_name;$('#bankEnabled').checked=r.payment.enabled;display(r.payment);show('Đã tải cấu hình ngân hàng từ Neon.')}
-  else show('Chưa có tài khoản nhận tiền. Điền thông tin ngân hàng thực tế để bật QR.');
+  const [directory,r]=await Promise.all([api('/api/admin/payment-banks'),api('/api/admin/payment-settings')]);
+  banks=Array.isArray(directory.banks)?directory.banks.filter(b=>/^\d{6}$/.test(b.bin)&&b.name):[];
+  if(!banks.length)throw Error('Chưa tải được danh sách ngân hàng. Vui lòng tải lại trang.');
+  renderBanks(r.payment?.bank_bin||'');
+  $('#bankDirectoryNote').textContent=directory.source==='fallback'?'Đang dùng danh sách ngân hàng dự phòng. Chỉ cần chọn tên ngân hàng.':'Danh sách ngân hàng được đồng bộ từ VietQR. Không cần nhập PIN hay BIN.';
+  if(r.payment){$('#bankAccount').value=r.payment.account_number;$('#bankName').value=r.payment.account_name;$('#bankEnabled').checked=r.payment.enabled;display(r.payment);show('Đã tải cấu hình ngân hàng từ Neon.')}
+  else show('Chọn ngân hàng và nhập tài khoản nhận tiền của cửa hàng.');
  }catch(e){show(e.message,true)}
 }
 $('#bankForm').addEventListener('submit',async e=>{
  e.preventDefault();const b=$('#save');b.disabled=true;
  try{
-  const body={bankBin:$('#bankBin').value.trim(),accountNumber:$('#bankAccount').value.trim(),accountName:$('#bankName').value.trim(),enabled:$('#bankEnabled').checked};
+  const body={bankBin:$('#bankSelect').value,accountNumber:$('#bankAccount').value.trim(),accountName:$('#bankName').value.trim(),enabled:$('#bankEnabled').checked};
   const r=await api('/api/admin/payment-settings',{method:'PUT',body:JSON.stringify(body)});
   display(r.payment);show('Đã lưu ngân hàng nhận tiền. Hãy kiểm tra thông tin bằng app ngân hàng trước khi nhận thanh toán thật.');
  }catch(e){show(e.message,true)}finally{b.disabled=false}
