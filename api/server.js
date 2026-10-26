@@ -370,6 +370,7 @@ if(req.method==='GET'&&p==='/api/kds'){if(!await requireAuth(req,res))return;
 if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!await requireAuth(req,res))return;const a=await identity(req);if(!canCook(a.role))return err(res,403,'Vai trò này không được cập nhật chế biến.');const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status,a.role)})}
 if(req.method==='GET'&&/^\/qr\/[0-9a-f]{48}\.svg$/.test(p)){if(!await requireAuth(req,res))return;if(!canSeeTables((await identity(req)).role))return err(res,403,'Không có quyền lấy QR bàn.');const t=p.slice(4,-4);if(!(await getTable(t)))return err(res,404,'Không tìm thấy bàn.');const origin=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;const svg=await QRCode.toString(origin+'/t/'+t,{type:'svg',margin:2,width:320,errorCorrectionLevel:'M'});res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'no-store'});res.end(svg);return}
 if(req.method==='GET'&&p.startsWith('/t/'))return staticPage(req,res,'guest.html');
+if(req.method==='GET'&&p==='/admin/users')return staticPage(req,res,'users.html');
 if(req.method==='GET'&&p==='/admin/core')return staticPage(req,res,'core.html');
 if(req.method==='GET'&&p==='/admin/operations')return staticPage(req,res,'operations.html');
 if(req.method==='GET'&&p==='/admin')return staticPage(req,res,'admin.html');
