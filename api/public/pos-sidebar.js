@@ -56,7 +56,8 @@ function setup(){
  side.innerHTML=
  '<div class="tt6-side-header">'+
  '<a href="/admin" class="tt6-side-brand" aria-label="Tắm Tráng 6 - Tổng quan"><img src="/tam-trang-6-logo.svg" alt="" width="44" height="44"><span class="tt6-side-brand-name"><strong>Tắm Tráng 6</strong><small>BEACH POS · QUẢN TRỊ</small></span></a>'+
- '<button type="button" id="tt6-collapse" class="tt6-side-collapse" aria-label="Thu gọn thanh điều hướng" aria-pressed="false" title="Thu gọn / mở rộng">'+svg('panel')+'</button></div>'+
+ '<button type="button" id="tt6-collapse" class="tt6-side-collapse" aria-label="Thu gọn thanh điều hướng" aria-pressed="false" title="Thu gọn / mở rộng">'+svg('panel')+'</button>'+
+ '<button type="button" id="tt6-side-mobile-close" class="tt6-side-mobile-close" aria-label="Đóng menu">'+svg('close')+'</button></div>'+
  '<div class="tt6-side-summary"><span class="tt6-side-summary-icon">'+svg('restaurant')+'</span><span class="tt6-side-summary-label"><b>Cửa hàng</b><small>Quản lý bán hàng</small></span></div>'+
  '<div class="tt6-side-scroller"><span class="tt6-side-section-label">ĐIỀU HƯỚNG</span>'+
  '<nav class="tt6-side-nav" aria-label="Các chức năng Tắm Tráng 6">'+
@@ -93,6 +94,7 @@ function setup(){
  document.body.insertBefore(mobile,shell);
  const btn=mobile.querySelector('#tt6-mobile-open');
  const collapse=side.querySelector('#tt6-collapse');
+ const closeButton=side.querySelector('#tt6-side-mobile-close');
  let lastFocus=null;
  const isMobile=()=>window.matchMedia('(max-width: 760px)').matches;
  const close=()=>{
@@ -100,6 +102,7 @@ function setup(){
   overlay.hidden=true;
   btn.setAttribute('aria-expanded','false');
   side.removeAttribute('aria-modal');
+  side.removeAttribute('role');
   if(lastFocus && document.activeElement && side.contains(document.activeElement))lastFocus.focus();
  };
  const open=()=>{
@@ -108,11 +111,13 @@ function setup(){
   document.body.classList.add('tt6-menu-open');
   overlay.hidden=false;
   btn.setAttribute('aria-expanded','true');
+  side.setAttribute('role','dialog');
   side.setAttribute('aria-modal','true');
   side.querySelector('.tt6-side-brand')?.focus();
  };
  btn.addEventListener('click',()=>document.body.classList.contains('tt6-menu-open')?close():open());
  overlay.addEventListener('click',close);
+ closeButton.addEventListener('click',close);
  document.addEventListener('keydown',e=>{
   if(e.key==='Escape'&&document.body.classList.contains('tt6-menu-open')){e.preventDefault();close()}
   if(e.key==='Tab'&&document.body.classList.contains('tt6-menu-open')){
