@@ -274,7 +274,7 @@ const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&
 const dtime=x=>new Date(x).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
 const today=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Ho_Chi_Minh',year:'numeric',month:'2-digit',day:'2-digit'}).format(new Date());
 $('#dateFrom').value=today.slice(0,7)+'-01';$('#dateTo').value=today;
-let data=null,busy=false;const pending=new Map();
+let data=null,busy=false,ledgerExpanded=false;const pending=new Map();
 function notice(s,mode='ok'){$('#notice').textContent=s;$('#notice').className='notice '+mode+(s?'':' hidden')}
 async function api(url,options={}){
  let r;try{r=await fetch(url,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}})}catch{const e=Error('Mất kết nối. Thử lại để kiểm tra giao dịch.');e.ambiguous=true;throw e}
@@ -305,6 +305,7 @@ $('#opsLedgerSearch').addEventListener('input',redrawViews);
 $('#opsLedgerDirection').addEventListener('change',redrawViews);
 $('#opsStockSearch').addEventListener('input',redrawViews);
 $('#opsLowOnly').addEventListener('change',redrawViews);
+$('#opsLedgerMore').addEventListener('click',()=>{ledgerExpanded=true;redrawViews()});
 $('#opsLedgerExport').addEventListener('click',()=>downloadCsv('TamTrang6_ThuChi_'+$('#dateFrom').value+'_'+$('#dateTo').value+'.csv',
  ['Mã','Ngày','Loại','Danh mục','Số tiền VND','Phương thức','Nguồn','Diễn giải'],
  filteredLedger().map(x=>[x.id,x.created_at,x.direction,x.category,x.amount,x.payment_method,x.source,x.note])));
@@ -322,6 +323,21 @@ function render(){
  $('#opsStockCount').textContent=filteredStock().length+' nguyên liệu khớp bộ lọc · trong '+data.inventory.length+' nguyên liệu.';
  $('#opsMissingRecipe').textContent=data.menu.filter(m=>!data.recipes.some(r=>r.menu_item_id===m.id)).length+' / '+data.menu.length+' món chưa khai báo định mức nguyên liệu.';
  $('#financeRows').innerHTML=filteredLedger().map(x=>'<tr><td>'+esc(dtime(x.created_at))+'</td><td><span class="pill '+(x.direction==='expense'?'danger':'')+'">'+(x.direction==='expense'?'Chi':'Thu')+'</span></td><td>'+esc(x.category)+(x.source==='stock_purchase'?'<div class="muted">Tự ghi khi nhập kho</div>':'')+'</td><td>'+esc(methods[x.payment_method]||'—')+'</td><td><b>'+fmt(x.amount)+'</b></td><td>'+esc(x.note)+'</td></tr>').join('')||empty(6,'Chưa có khoản thu–chi phát sinh.');
+ const entries=filteredLedger();
+ const recent=ledgerExpanded?entries:entries.slice(0,15);
+ $('#opsLedgerMobile').innerHTML=recent.length?recent.map(x=>{
+  const expense=x.direction==='expense',method=methods[x.payment_method]||'Không rõ';
+  const label=x.source==='stock_purchase'?x.category+' · Nhập kho':x.category;
+  const mark=expense?'↑':'↓';
+  const note=x.note?'<small>'+esc(x.note)+'</small>':'';
+  return '<article class="tt6-transaction '+(expense?'expense':'income')+'">'+
+    '<span class="tt6-transaction-icon" aria-hidden="true">'+mark+'</span>'+
+    '<div class="tt6-transaction-info"><strong>'+esc(label)+'</strong>'+note+
+    '<span class="tt6-transaction-meta">'+esc(dtime(x.created_at))+' · '+esc(method)+'</span></div>'+
+    '<b class="tt6-transaction-amount">'+(expense?'−':'+')+fmt(x.amount)+'</b></article>';
+ }).join(''):'<p class="tt6-transactions-empty">Chưa có giao dịch trong kỳ này. Chọn “Ghi khoản thu” hoặc “Ghi khoản chi” để bắt đầu.</p>';
+ $('#opsLedgerMore').hidden=entries.length<=15||ledgerExpanded;
+ $('#opsLedgerMore').textContent='Xem tất cả '+entries.length+' giao dịch';
  $('#inventoryRows').innerHTML=filteredStock().map(x=>'<tr><td><b>'+esc(x.name)+'</b><div class="muted">'+esc(x.unit)+'</div></td><td>'+dec(x.quantity)+'</td><td>'+dec(x.reorder_level)+'</td><td>'+fmt(x.avg_unit_cost)+'</td><td><span class="pill '+(x.low_stock?'danger':'')+'">'+(x.low_stock?'Cần nhập':'Đủ hàng')+'</span></td></tr>').join('')||empty(5,'Chưa tạo nguyên liệu. Bắt đầu ở biểu mẫu phía trên.');
  $('#recipeRows').innerHTML=data.recipes.map(r=>'<tr><td>'+esc(r.menu_name)+'</td><td>'+esc(r.ingredient_name)+'</td><td><b>'+dec(r.quantity_per_unit)+'</b> '+esc(r.unit)+'</td></tr>').join('')||empty(3,'Chưa có định mức. Các món chưa tự trừ kho.');
  const kinds={purchase:'Nhập mua',opening:'Tồn đầu kỳ',adjustment_in:'Điều chỉnh tăng',adjustment_out:'Hao hụt/giảm',consume:'Đơn QR',restore:'Hủy món chưa làm'};
@@ -352,7 +368,7 @@ async function load(){
   const [operations,finance]=await Promise.all([api('/api/admin/operations?'+params),
     api('/api/admin/analytics?'+params).catch(e=>({error:e.message}))]);
   data=operations;render();drawFinancialCharts(finance);
-  notice('Đã đồng bộ dữ liệu thu–chi và kho từ Neon PostgreSQL.');
+  notice('');
  }catch(e){notice(e.message,'error');if(e.status===403||e.status===401)location.assign('/admin')}
  finally{busy=false}
 }
@@ -377,35 +393,96 @@ async function submit(form,path,transform){
  try{
   await api(path,{method:form.id==='recipeForm'?'PUT':'POST',body:JSON.stringify(body)});
   pending.delete(key);form.reset();kindFields();
-  notice('Đã lưu nghiệp vụ vào Neon.');await load();
- }catch(e){if(!e.ambiguous)pending.delete(key);notice(e.message+(e.ambiguous?' Mã giao dịch được giữ nguyên để thử lại.':''),'error')}
+  await load();
+  if(form.id==='financeForm'){
+   closeFinanceSheet();
+   showFinanceToast('Giao dịch đã được lưu vào sổ thu–chi.');
+  }else notice('Đã lưu nghiệp vụ vào Neon.');
+ }catch(e){
+  if(!e.ambiguous)pending.delete(key);
+  const message=e.message+(e.ambiguous?' Kiểm tra sổ giao dịch trước khi thử lại để tránh trùng khoản thu/chi.':'');
+  notice(message,'error');
+  if(form.id==='financeForm')$('#financeFormNotice').textContent=message;
+ }
  finally{button.disabled=false}
 }
-/* Finance entry is always visible above reports; two clear tabs choose transaction type. */
-function selectFinanceDirection(direction,{focus=false}={}){
- const form=$('#financeForm'),field=form.elements.namedItem('direction'),type=direction==='income'?'income':'expense';
- field.value=type;
+/* App-like transaction editor. The existing Neon POST and requestId guard stay unchanged. */
+let financeLastFocus=null,financeToastTimer=null;
+function showFinanceToast(message){
+ const target=$('#financeToast');
+ target.textContent=message;
+ target.classList.add('is-visible');
+ clearTimeout(financeToastTimer);
+ financeToastTimer=setTimeout(()=>target.classList.remove('is-visible'),4500);
+}
+function selectFinanceDirection(direction){
+ const form=$('#financeForm'),type=direction==='income'?'income':'expense';
+ form.elements.namedItem('direction').value=type;
  $('#quickExpense').classList.toggle('is-selected',type==='expense');
  $('#quickIncome').classList.toggle('is-selected',type==='income');
  $('#quickExpense').setAttribute('aria-pressed',String(type==='expense'));
  $('#quickIncome').setAttribute('aria-pressed',String(type==='income'));
  $('#financeEntryHeading').textContent=type==='income'?'Ghi khoản thu khác':'Ghi khoản chi';
  $('#financeEntryHelp').textContent=type==='income'?
-   'Chỉ ghi khoản thu ngoài đơn QR, ví dụ: thu dịch vụ khác hoặc hoàn ứng. Doanh thu món đã xác nhận không nhập lại.':
-   'Ví dụ: điện nước, lương nhân viên, sửa chữa. Nhập nguyên liệu tại mục Tồn kho để tránh ghi chi phí hai lần.';
- $('#financeSubmit').textContent=type==='income'?'Lưu khoản thu vào sổ':'Lưu khoản chi vào sổ';
+  'Chỉ ghi khoản thu ngoài đơn QR, ví dụ: hoàn ứng hoặc dịch vụ khác. Không ghi lại món đã thanh toán.':
+  'Ghi chi phí vận hành. Nhập nguyên liệu tại mục Tồn kho để chi phí không bị ghi hai lần.';
+ $('#financeSubmit').textContent=type==='income'?'Lưu khoản thu':'Lưu khoản chi';
  $('#quick-entry').dataset.direction=type;
- if(focus){
-  $('#quick-entry').scrollIntoView({behavior:'smooth',block:'start'});
-  const category=form.elements.namedItem('category');category.focus({preventScroll:true});
- }
 }
-$('#quickExpense').addEventListener('click',()=>selectFinanceDirection('expense',{focus:true}));
-$('#quickIncome').addEventListener('click',()=>selectFinanceDirection('income',{focus:true}));
+function openFinanceSheet(direction,launcher){
+ selectFinanceDirection(direction);
+ financeLastFocus=launcher||document.activeElement;
+ $('#financeFormNotice').textContent='';
+ document.body.classList.add('tt6-sheet-open');
+ $('#tt6-money-dialog').setAttribute('aria-modal','true');
+ $('#closeFinanceSheet').setAttribute('aria-expanded','true');
+ const input=$('#financeForm').elements.namedItem('amount');
+ input.focus({preventScroll:true});
+}
+function closeFinanceSheet(){
+ if(!document.body.classList.contains('tt6-sheet-open'))return;
+ document.body.classList.remove('tt6-sheet-open');
+ $('#tt6-money-dialog').removeAttribute('aria-modal');
+ $('#closeFinanceSheet').setAttribute('aria-expanded','false');
+ if(financeLastFocus&&typeof financeLastFocus.focus==='function')financeLastFocus.focus({preventScroll:true});
+ financeLastFocus=null;
+}
+$('#quickExpense').addEventListener('click',function(){openFinanceSheet('expense',this)});
+$('#quickIncome').addEventListener('click',function(){openFinanceSheet('income',this)});
+$('#financeFab').addEventListener('click',function(){openFinanceSheet('expense',this)});
+$('#closeFinanceSheet').addEventListener('click',closeFinanceSheet);
+$('#financeBackdrop').addEventListener('click',closeFinanceSheet);
 $('#financeForm').elements.namedItem('direction').addEventListener('change',e=>selectFinanceDirection(e.target.value));
 $('#financeForm').addEventListener('reset',()=>setTimeout(()=>selectFinanceDirection('expense'),0));
+document.addEventListener('keydown',e=>{
+ if(!document.body.classList.contains('tt6-sheet-open'))return;
+ if(e.key==='Escape'){e.preventDefault();closeFinanceSheet();return}
+ if(e.key!=='Tab')return;
+ const focusables=[...$('#tt6-money-dialog').querySelectorAll('button:not([disabled]),input:not([disabled]),select:not([disabled]),textarea:not([disabled])')].filter(x=>x.getClientRects().length>0);
+ if(!focusables.length)return;
+ const first=focusables[0],last=focusables[focusables.length-1];
+ if(e.shiftKey&&document.activeElement===first){e.preventDefault();last.focus()}
+ else if(!e.shiftKey&&document.activeElement===last){e.preventDefault();first.focus()}
+});
+function updateFinancePeriod(){
+ const from=$('#dateFrom').value,to=$('#dateTo').value;
+ const month=from.slice(0,7)===to.slice(0,7);
+ $('#financePeriodCaption').textContent=month?'Tháng '+from.slice(5,7)+'/'+from.slice(0,4):from.split('-').reverse().join('/')+' – '+to.split('-').reverse().join('/');
+}
+updateFinancePeriod();
+$('#dateFilter').addEventListener('submit',()=>{
+ updateFinancePeriod();
+ if(window.matchMedia('(max-width: 760px)').matches)$('#tt6DateFold').open=false;
+});
 const financeMode=new URLSearchParams(location.search).get('type');
 selectFinanceDirection(financeMode==='income'?'income':'expense');
+// Deep links from dashboard open the real editor; ordinary visits show the wallet overview.
+document.body.classList.add('tt6-finance-enhanced');
+if(financeMode==='income'||financeMode==='expense'){
+ openFinanceSheet(financeMode,$('#quick'+(financeMode==='income'?'Income':'Expense')));
+}
+const analyticsFold=$('#financeAnalyticsFold');
+if(window.matchMedia('(min-width: 900px)').matches)analyticsFold.open=true;
 $('#financeForm').addEventListener('submit',e=>{e.preventDefault();submit(e.currentTarget,'/api/admin/finance/entries',x=>({...x,amount:Number(x.amount)}))});
 $('#createItemForm').addEventListener('submit',e=>{e.preventDefault();submit(e.currentTarget,'/api/admin/inventory/items',x=>({...x,reorderLevel:Number(x.reorderLevel)}))});
 $('#stockForm').addEventListener('submit',e=>{e.preventDefault();submit(e.currentTarget,'/api/admin/inventory/movements',x=>({...x,quantity:Number(x.quantity),unitCost:x.kind==='purchase'?Number(x.unitCost):0}))});
