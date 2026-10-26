@@ -1,0 +1,11 @@
+#areaWorkspace{max-width:920px;margin:0 auto;display:grid;gap:16px}
+#areaWorkspace.hidden{display:none}
+#areaWorkspace .card{padding:20px}
+#areaReceiptForm{display:grid;gap:14px;max-width:640px}
+#areaReceiptForm label{display:grid;gap:7px;font-size:14px;font-weight:600}
+#areaReceiptForm input,#areaReceiptForm select{font:inherit;font-size:16px;padding:12px;border:1px solid #cddcda;border-radius:9px;width:100%;box-sizing:border-box}
+#areaReceiptForm .row{display:grid;grid-template-columns:1fr 2fr;gap:12px}
+#areaFeedback{margin:0;line-height:1.6}
+.area-receipt{display:flex;justify-content:space-between;gap:16px;padding:14px 0;border-bottom:1px solid #e3ebe8}
+.area-receipt p{font-size:12px;margin:5px 0;color:#627971}
+@media(max-width:600px){#areaReceiptForm .row{grid-template-columns:1fr}#areaWorkspace .card{padding:16px}.area-receipt{flex-wrap:wrap}}

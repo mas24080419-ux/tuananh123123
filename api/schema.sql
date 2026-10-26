@@ -202,3 +202,18 @@ CREATE TABLE IF NOT EXISTS owner_accounts (
   updated_at timestamptz NOT NULL DEFAULT now(),
   password_changed_at timestamptz
 );
+
+-- Area-scoped employees and immutable service receipts.
+ALTER TABLE staff_users ADD COLUMN IF NOT EXISTS work_area text CHECK(work_area IN ('equipment','restroom'));
+CREATE TABLE IF NOT EXISTS area_receipts (
+ id uuid PRIMARY KEY,
+ request_id uuid NOT NULL UNIQUE,
+ area text NOT NULL CHECK(area IN ('equipment','restroom')),
+ service text NOT NULL,
+ quantity integer NOT NULL CHECK(quantity BETWEEN 1 AND 10000),
+ staff_user_id uuid REFERENCES staff_users(id),
+ finance_entry_id uuid NOT NULL UNIQUE REFERENCES finance_entries(id),
+ created_at timestamptz NOT NULL DEFAULT now(),
+ CHECK((area='equipment' AND service IN ('float','locker')) OR (area='restroom' AND service='restroom'))
+);
+CREATE INDEX IF NOT EXISTS idx_area_receipts_area_date ON area_receipts(area,created_at DESC);

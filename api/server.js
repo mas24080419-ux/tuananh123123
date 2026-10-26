@@ -30,6 +30,8 @@ const analytics=require('./finance-analytics')({pool});
 const paymentRecipient=require('./payment-recipient')({pool});
 const core=require('./core')({pool,id,randomToken:()=>crypto.randomBytes(24).toString('hex')});
 const staffAccounts=require('./staff-auth')({pool,id});
+const areaReceipts=require('./area-receipts')({pool,id});
+const {areas:serviceAreas,canAccess:canAccessArea,canUseDining}=require('./area-access');
 const ownerAccounts=require('./owner-auth')({pool});
 const token=i=>crypto.createHmac('sha256',SESSION_SECRET).update('qr-table-'+i).digest('hex').slice(0,48);
 const authHash=s=>crypto.createHash('sha256').update(s).digest();
@@ -93,7 +95,7 @@ async function identity(req){
   if(!/^\d+$/.test(expires)||Number(expires)<Date.now()||!STAFF_ROLES.includes(role)||!/^\d+$/.test(ver)||!/^[0-9a-f]{64}$/.test(mac))return null;
   const expected=crypto.createHmac('sha256',SESSION_SECRET).update(['v2',expires,userId,role,ver].join('.')).digest('hex');
   if(!safeEq(mac,expected))return null;
-  try{const user=await staffAccounts.activeUser(userId,role,ver);if(user)req._actor={role,userId:user.id,username:user.username,displayName:user.displayName}}catch{console.error('Staff session validation unavailable')}
+  try{const user=await staffAccounts.activeUser(userId,role,ver);if(user)req._actor={role,userId:user.id,username:user.username,displayName:user.displayName,workArea:user.workArea}}catch{console.error('Staff session validation unavailable')}
   return req._actor;
  }
  const role=sessionRole(req);
@@ -101,6 +103,7 @@ async function identity(req){
   // Legacy owner cookies are no longer accepted when the email owner exists.
   try{if(await ownerAccounts.exists())return null}catch{return null}
  }
+ if(role==='staff')return null;
  if(role)req._actor={role,legacy:true};
  return req._actor;
 }
@@ -259,7 +262,7 @@ const serveStatic=require('./static-files')(path.join(__dirname,'public'));
 async function route(req,res){for(const [k,v]of Object.entries(securityHeaders))res.setHeader(k,v);const u=new URL(req.url,'http://localhost');const p=u.pathname;
 if(!sameOrigin(req,res))return;
 if(req.method==='GET'&&p==='/api/health'){let db='pilot';if(pool){try{await pool.query('SELECT 1');db='ready'}catch{db='unavailable'}}return send(res,db==='unavailable'?503:200,{ok:db!=='unavailable',mode,database:db,pilot:mode==='pilot',notice:mode==='pilot'?'BẢN THỬ NGHIỆM: đơn hàng lưu RAM và bị xóa khi server khởi động lại. Không dùng vận hành thật.':'Dữ liệu được lưu trên PostgreSQL.'})}
-if(req.method==='POST'&&p==='/api/login'){if(!throttle(req,'login',8))return err(res,429,'Đăng nhập quá nhiều lần.');const b=await input(req);if(!safeEq(String(b.password||''),STAFF_PASSWORD))return err(res,401,'Mật khẩu không chính xác.');return send(res,200,{ok:true,role:'staff'},{'Set-Cookie':loginCookie('staff')})}
+if(req.method==='POST'&&p==='/api/login')return err(res,410,'Hãy dùng tên đăng nhập và mật khẩu riêng do chủ cửa hàng cấp.');
 if(req.method==='POST'&&p==='/api/admin/login'){
  if(!throttle(req,'admin-login',6))return err(res,429,'Đăng nhập quá nhiều lần. Hãy thử lại sau.');
  const b=await input(req);
@@ -298,10 +301,10 @@ if(req.method==='POST'&&p==='/api/admin/change-password'){
 if(req.method==='POST'&&p==='/api/users/login'){
  if(!throttle(req,'staff-user-login',8))return err(res,429,'Đăng nhập quá nhiều lần.');
  const b=await input(req),user=await staffAccounts.login(b.username,b.password);
- return send(res,200,{ok:true,role:user.role,displayName:user.displayName},{'Set-Cookie':staffCookie(user)});
+ return send(res,200,{ok:true,role:user.role,displayName:user.displayName,workArea:user.workArea},{'Set-Cookie':staffCookie(user)});
 }
 if(req.method==='POST'&&p==='/api/logout'){return send(res,200,{ok:true},{'Set-Cookie':'sh_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'})}
-if(req.method==='GET'&&p==='/api/me'){const a=await identity(req);return send(res,200,{staff:!!a,role:a?.role||null,username:a?.username||null,email:a?.email||null,needsOwnerSetup:Boolean(a?.role==='admin'&&a?.legacy),displayName:a?.displayName||null})}
+if(req.method==='GET'&&p==='/api/me'){const a=await identity(req);return send(res,200,{staff:!!a,role:a?.role||null,username:a?.username||null,email:a?.email||null,needsOwnerSetup:Boolean(a?.role==='admin'&&a?.legacy),displayName:a?.displayName||null,workArea:a?.workArea||null})}
 if(req.method==='GET'&&p.startsWith('/api/menu/')){const t=await getTable(p.slice('/api/menu/'.length));if(!t)return err(res,404,'QR không hợp lệ.');return send(res,200,{table:{name:t.name,zone:t.zone},items:await getMenu(),mode})}
 if(req.method==='GET'&&p==='/api/payment/recipient'){
  const table=await getTable(u.searchParams.get('token')||'');
@@ -435,19 +438,31 @@ if(req.method==='POST'&&/^\/api\/admin\/orders\/[0-9a-f-]{36}\/confirm-payment$/
  if(data.confirm!==true)return err(res,400,'Cần xác nhận đã thực sự nhận đủ tiền.');
  return send(res,200,{payment:await confirmPayment(p.split('/')[4],data.paymentMethod)});
 }
-if(req.method==='GET'&&p==='/api/tables'){if(!await requireAuth(req,res))return;if(!canSeeTables((await identity(req)).role))return err(res,403,'Vai trò này không được xem mã QR bàn.');return send(res,200,{tables:await getTables()})}
+if(p==='/api/area/receipts'){
+ if(!await requireAuth(req,res))return;
+ const actor=await identity(req),area=u.searchParams.get('area')||actor.workArea;
+ if(!canAccessArea(actor,area))return err(res,403,'Không có quyền truy cập khu vực này.');
+ if(req.method==='GET')return send(res,200,await areaReceipts.list(actor,area));
+ if(req.method==='POST'){
+  if(!throttle(req,'area-receipt',30))return err(res,429,'Thao tác quá nhanh.');
+  return send(res,201,await areaReceipts.create(actor,area,await input(req)));
+ }
+ return err(res,405,'Phương thức không được hỗ trợ.');
+}
+if(req.method==='GET'&&p==='/api/tables'){if(!await requireAuth(req,res))return;if(!canUseDining(await identity(req))||!canSeeTables((await identity(req)).role))return err(res,403,'Vai trò này không được xem mã QR bàn.');return send(res,200,{tables:await getTables()})}
 if(req.method==='GET'&&p==='/api/order-status'){return err(res,400,'Vui lòng cung cấp mã đơn.')}if(req.method==='GET'&&p.startsWith('/api/order-status/')){if(!throttle(req,'status',120))return err(res,429,'Quá nhiều lần kiểm tra');const oid=p.split('/').at(-1);if(!/^[0-9a-f-]{36}$/.test(oid))return err(res,400,'Mã đơn không hợp lệ');const data=await orderStatus(oid,u.searchParams.get('token'));return data?send(res,200,data):err(res,404,'Không tìm thấy đơn, hãy hỏi nhân viên trước khi gửi lại')}
 if(req.method==='GET'&&p==='/api/history'){if(!await requireAdmin(req,res))return;const limit=Math.min(100,Math.max(1,Number(u.searchParams.get('limit'))||50)),offset=Math.min(10000,Math.max(0,Number(u.searchParams.get('offset'))||0));return send(res,200,{orders:await history(limit,offset),persistent:!!pool})}
 if(req.method==='GET'&&p==='/api/kds'){if(!await requireAuth(req,res))return;
  const actor=await identity(req);
+ if(!canUseDining(actor))return err(res,403,'Không có quyền xem đơn Bếp/Bar.');
  const visible=(await getOrders()).map(o=>({...o,
   payment_method:canSeeTables(actor.role)?o.payment_method:null,
   payment_status:canSeeTables(actor.role)?o.payment_status:null,
   items:o.items.filter(line=>actor.role==='kitchen'?line.station==='kitchen':actor.role==='bar'?line.station==='bar':true)
   .map(({unit_price,...line})=>line)})).filter(o=>o.items.length);
  return send(res,200,{orders:visible})}
-if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!await requireAuth(req,res))return;const a=await identity(req);if(!canCook(a.role))return err(res,403,'Vai trò này không được cập nhật chế biến.');const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status,a.role)})}
-if(req.method==='GET'&&/^\/qr\/[0-9a-f]{48}\.svg$/.test(p)){if(!await requireAuth(req,res))return;if(!canSeeTables((await identity(req)).role))return err(res,403,'Không có quyền lấy QR bàn.');const t=p.slice(4,-4);if(!(await getTable(t)))return err(res,404,'Không tìm thấy bàn.');const origin=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;const svg=await QRCode.toString(origin+'/t/'+t,{type:'svg',margin:2,width:320,errorCorrectionLevel:'M'});res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'no-store'});res.end(svg);return}
+if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!await requireAuth(req,res))return;const a=await identity(req);if(!canUseDining(a)||!canCook(a.role))return err(res,403,'Vai trò này không được cập nhật chế biến.');const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status,a.role)})}
+if(req.method==='GET'&&/^\/qr\/[0-9a-f]{48}\.svg$/.test(p)){if(!await requireAuth(req,res))return;if(!canUseDining(await identity(req))||!canSeeTables((await identity(req)).role))return err(res,403,'Không có quyền lấy QR bàn.');const t=p.slice(4,-4);if(!(await getTable(t)))return err(res,404,'Không tìm thấy bàn.');const origin=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;const svg=await QRCode.toString(origin+'/t/'+t,{type:'svg',margin:2,width:320,errorCorrectionLevel:'M'});res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'no-store'});res.end(svg);return}
 if(await serveStatic(req,res,p))return;
 err(res,404,'Không có tài nguyên.');}
 async function main(){
