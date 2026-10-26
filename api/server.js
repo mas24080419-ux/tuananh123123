@@ -26,6 +26,7 @@ const menuSeed=[
 let tables=[], menu=[], orders=[], lines=[];
 const id=()=>crypto.randomUUID();
 const ops=require('./operations')({pool,id});
+const analytics=require('./finance-analytics')({pool});
 const paymentRecipient=require('./payment-recipient')({pool});
 const core=require('./core')({pool,id,randomToken:()=>crypto.randomBytes(24).toString('hex')});
 const staffAccounts=require('./staff-auth')({pool,id});
@@ -418,6 +419,11 @@ if(req.method==='POST'&&p==='/api/admin/finance/entries'){
  if(!throttle(req,'finance',40))return err(res,429,'Thao tác quá nhanh.');
  return send(res,201,{entry:await ops.entry(await input(req))});
 }
+if(req.method==='GET'&&p==='/api/admin/analytics'){
+ if(!await requireAdmin(req,res))return;
+ const range=adminDateRange(u.searchParams);
+ return send(res,200,await analytics.overview(range.from,range.to));
+}
 if(req.method==='GET'&&p==='/api/admin/summary'){
  if(!await requireAdmin(req,res))return;
  const range=adminDateRange(u.searchParams);
@@ -451,6 +457,8 @@ if(req.method==='GET'&&p==='/admin/operations')return staticPage(req,res,'operat
 if(req.method==='GET'&&p==='/admin')return staticPage(req,res,'admin.html');
 if(req.method==='GET'&&(p==='/'||p==='/staff'))return staticPage(req,res,'staff.html');
 if(req.method==='GET'&&p==='/mediqueue-auth.css')return staticPage(req,res,'mediqueue-auth.css');
+if(req.method==='GET'&&p==='/finance-charts.css')return staticPage(req,res,'finance-charts.css');
+if(req.method==='GET'&&p==='/finance-charts.js')return staticPage(req,res,'finance-charts.js');
 if(req.method==='GET'&&p==='/pos-sidebar.css')return staticPage(req,res,'pos-sidebar.css');
 if(req.method==='GET'&&p==='/pos-sidebar.js')return staticPage(req,res,'pos-sidebar.js');
 if(req.method==='GET'&&p==='/admin-minimal.css')return staticPage(req,res,'admin-minimal.css');
