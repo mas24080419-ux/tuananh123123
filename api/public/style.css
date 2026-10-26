@@ -414,3 +414,12 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
     justify-self:end;
   }
 }
+
+
+/* Tắm Tráng 6 · beach logo applied consistently on mobile guest and staff views. */
+.guest-orange .qr-brandline{display:flex;align-items:center;gap:10px;min-width:0}
+.guest-orange .qr-brand-logo{display:block!important;flex:0 0 42px!important;width:42px!important;height:42px!important;min-width:42px;object-fit:cover;object-position:center;background:#fff!important;color:transparent;border-radius:12px!important;padding:0!important;box-shadow:0 1px 5px rgba(0,0,0,.08)}
+.guest-orange .qr-brandtext{min-width:0;overflow-wrap:normal}
+body:not(.guest-orange) .brand:has(.sh-brand-logo){display:flex;align-items:center;gap:10px;flex-wrap:nowrap;font-size:clamp(17px,2.5vw,24px)}
+body:not(.guest-orange) .sh-brand-logo{width:40px;height:40px;min-width:40px;object-fit:cover;border-radius:11px;background:#fff}
+@media(max-width:390px){.guest-orange .qr-brand-logo{width:36px!important;height:36px!important;min-width:36px;flex-basis:36px!important}.guest-orange .qr-brandtext{font-size:14px!important}body:not(.guest-orange) .sh-brand-logo{width:34px;height:34px;min-width:34px}}
