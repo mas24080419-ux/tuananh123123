@@ -1,48 +1,48 @@
 /* Tắm Tráng 6 owner sign-in — visual source: MediQueue V4 auth-v4.css. */
-body.tt6-owner-login #login{--bg:#eaf0f6;--teal:#087f83;--ink:#163440;--muted:#687f91;--depth:rgba(160,177,195,.47);margin:0;min-height:100svh;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-x:hidden}
-body.tt6-owner-login #login [hidden]{display:none!important}body.tt6-owner-login #login button,body.tt6-owner-login #login input{font:inherit}body.tt6-owner-login #login button{cursor:pointer}
-body.tt6-owner-login #login :is(button,a,input):focus-visible{outline:3px solid #0b8588;outline-offset:3px}
-body.tt6-owner-login #login .mqn-layout{position:relative;isolation:isolate;max-width:1480px;min-height:100svh;margin:0 auto;padding:44px clamp(26px,5.9vw,96px);display:grid;grid-template-columns:minmax(0,1.08fr) minmax(360px,.92fr);gap:clamp(45px,6.5vw,102px);align-items:center}
-body.tt6-owner-login #login .mqn-orb{position:absolute;z-index:-1;border-radius:50%;pointer-events:none;background:var(--bg);box-shadow:15px 15px 30px var(--depth),-15px -15px 30px #fff}
-body.tt6-owner-login #login .mqn-orb.first{width:200px;height:200px;left:-125px;top:12%}body.tt6-owner-login #login .mqn-orb.second{width:120px;height:120px;right:2%;bottom:7%}
-body.tt6-owner-login #login .mqn-intro{max-width:615px}body.tt6-owner-login #login .mqn-brand{display:flex;align-items:center;gap:12px;margin-bottom:clamp(60px,9vw,122px);color:inherit;text-decoration:none}
-body.tt6-owner-login #login .mqn-symbol{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(145deg,#13a9a5,#08797d);box-shadow:5px 5px 13px #bbcdd4,-5px -5px 13px #fff;color:white;font-weight:900;font-size:24px}
-body.tt6-owner-login #login .mqn-brand b{font-size:23px;letter-spacing:-.9px}body.tt6-owner-login #login .mqn-brand small{display:block;margin-top:4px;font-size:9px;letter-spacing:2px;font-weight:800;color:#8299aa}
-body.tt6-owner-login #login .mqn-eyebrow{font-size:10px;font-weight:850;letter-spacing:1.7px;color:var(--teal);display:flex;align-items:center;gap:10px}
-body.tt6-owner-login #login .mqn-dot{width:8px;height:8px;border-radius:50%;background:#10a8a1;box-shadow:0 0 0 5px #d7f0ec}
-body.tt6-owner-login #login .mqn-intro h1{font-size:clamp(40px,4.45vw,68px);line-height:1.13;letter-spacing:-2.6px;font-weight:850;margin:19px 0}body.tt6-owner-login #login .mqn-intro em{font-style:normal;color:var(--teal)}
-body.tt6-owner-login #login .mqn-intro p{color:#658092;font-size:15px;line-height:1.85;max-width:495px}body.tt6-owner-login #login .mqn-benefits{display:flex;flex-wrap:wrap;gap:12px;margin:42px 0}
-body.tt6-owner-login #login .mqn-benefits span{padding:11px 14px;border-radius:13px;box-shadow:5px 5px 13px rgba(163,177,198,.25),-5px -5px 13px #fff;font-size:11px;font-weight:750;color:#507787}
-body.tt6-owner-login #login .mqn-intro-foot{font-size:11px;color:#91a3af;margin-top:clamp(60px,9vw,120px)}
-body.tt6-owner-login #login .mqn-auth{min-width:0;width:100%;max-width:500px;margin:0 auto}body.tt6-owner-login #login .mqn-topline{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:0 4px 18px;color:#647e8a;letter-spacing:1px;font-size:10px;font-weight:850}
-body.tt6-owner-login #login .mqn-security{font-size:9px;color:#087b7c;border:1px solid #afd9d5;border-radius:99px;padding:7px 10px}
-body.tt6-owner-login #login .mqn-roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:7px;margin-bottom:23px;border-radius:20px;box-shadow:inset 5px 5px 11px rgba(162,180,196,.41),inset -5px -5px 11px #fff}
-body.tt6-owner-login #login .mqn-role{min-height:49px;padding:8px 3px;display:grid;place-items:center;gap:2px;border:0;border-radius:14px;background:transparent;font-size:11px;font-weight:800;color:#71899a}
-body.tt6-owner-login #login .mqn-role[aria-current=page]{color:#fff;background:linear-gradient(140deg,#0ca29c,#087e85);box-shadow:5px 5px 12px rgba(7,128,134,.21),-4px -4px 10px #fff}
-body.tt6-owner-login #login .mqn-auth-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:5px;margin-bottom:22px;border-radius:17px;box-shadow:inset 4px 4px 9px rgba(162,180,196,.36),inset -4px -4px 9px #fff}body.tt6-owner-login #login .mqn-auth-tab{min-height:45px;padding:10px 12px;border:0;border-radius:13px;background:transparent;color:#667f8f;font-size:12px;font-weight:800;transition:background .2s,color .2s}body.tt6-owner-login #login .mqn-auth-tab[aria-selected=true]{color:#087f83;background:var(--bg);box-shadow:5px 5px 12px rgba(162,180,196,.45),-5px -5px 12px #fff}body.tt6-owner-login #login .mqn-stage{perspective:1300px;position:relative}body.tt6-owner-login #login .mqn-card{position:relative;transform-style:preserve-3d;transition:transform .65s cubic-bezier(.22,.72,.22,1)}
-body.tt6-owner-login #login .mqn-card.flipped{transform:rotateY(180deg)}
-body.tt6-owner-login #login .mqn-face,body.tt6-owner-login #login .mqn-panel{border-radius:32px;background:var(--bg);box-shadow:17px 17px 34px var(--depth),-17px -17px 34px rgba(255,255,255,.96);padding:29px clamp(21px,3vw,34px) 24px}
-body.tt6-owner-login #login .mqn-face{position:absolute;inset:0;display:flex;flex-direction:column;min-width:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}body.tt6-owner-login #login .mqn-face.front{position:relative;inset:auto}body.tt6-owner-login #login .mqn-face.back{transform:rotateY(180deg)}body.tt6-owner-login #login .mqn-card.flipped .mqn-face.front{position:absolute;inset:0}body.tt6-owner-login #login .mqn-card.flipped .mqn-face.back{position:relative;inset:auto}
-body.tt6-owner-login #login .mqn-main{flex:1;min-height:0}body.tt6-owner-login #login .mqn-icon{display:grid;place-items:center;width:61px;height:61px;margin:0 auto 15px;border-radius:50%;color:var(--teal);box-shadow:6px 6px 13px rgba(160,177,195,.6),-6px -6px 13px #fff;font-size:24px}
-body.tt6-owner-login #login .mqn-face h2,body.tt6-owner-login #login .mqn-panel h2{text-align:center;font-size:25px;letter-spacing:-.7px;margin:0}body.tt6-owner-login #login .mqn-description{text-align:center;color:var(--muted);font-size:12px;line-height:1.7;margin:10px auto 23px;max-width:345px}
-body.tt6-owner-login #login .mqn-field{display:block;margin:0 0 15px}body.tt6-owner-login #login .mqn-field span{display:block;font-size:11px;font-weight:750;margin:0 0 8px 3px;color:#4a6474}
-body.tt6-owner-login #login .mqn-input{display:flex;align-items:center;min-height:52px;padding:0 14px;border-radius:17px;border:1px solid transparent;box-shadow:inset 5px 5px 10px rgba(162,177,195,.47),inset -5px -5px 10px #fff}
-body.tt6-owner-login #login .mqn-input:focus-within{border-color:#37a7a6}body.tt6-owner-login #login .mqn-input input{width:100%;min-width:0;padding:13px 3px;color:var(--ink);border:0;outline:0;background:transparent;font-size:13px}body.tt6-owner-login #login .mqn-input input::placeholder{color:#9aabba}
-body.tt6-owner-login #login .mqn-input button{border:0;background:transparent;color:#4b7380;padding:5px;font-size:12px;font-weight:750}
-body.tt6-owner-login #login .mqn-submit{display:block;width:100%;border:0;min-height:52px;padding:12px 15px;margin-top:18px;border-radius:17px;font-size:13px;font-weight:850;background:linear-gradient(145deg,#0e9f9b,#087b84);color:white;box-shadow:7px 8px 17px rgba(12,122,129,.29),-7px -7px 17px #fff;transition:transform .15s}
-body.tt6-owner-login #login .mqn-submit:hover{transform:translateY(-2px)}body.tt6-owner-login #login .mqn-submit:disabled{opacity:.7;cursor:progress}body.tt6-owner-login #login .mqn-tools{display:flex;justify-content:flex-end;margin:10px 0 0}
-body.tt6-owner-login #login .mqn-link{border:0;padding:4px;background:transparent;color:var(--teal);font-size:11px;font-weight:800;text-decoration:underline;text-underline-offset:3px}
-body.tt6-owner-login #login .mqn-note{font-size:10px;color:#607f8b;line-height:1.5;margin:14px 0 0}body.tt6-owner-login #login .mqn-footer{border-top:1px solid #d8e1e8;padding-top:18px;margin-top:22px;display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:65px}
-body.tt6-owner-login #login .mqn-footer p{flex:1;min-width:0;font-size:11px;color:#708693;line-height:1.5;margin:0}body.tt6-owner-login #login .mqn-footer strong{color:var(--teal)}
-body.tt6-owner-login #login .mqn-switch{height:47px;width:47px;display:grid;place-items:center;flex:none;border:0;border-radius:50%;background:var(--bg);color:var(--teal);font-size:19px;font-weight:850;box-shadow:7px 7px 14px rgba(163,177,198,.58),-7px -7px 14px #fff;transition:transform .36s,background .2s,color .2s}
-body.tt6-owner-login #login .mqn-switch:hover{transform:rotate(180deg);background:var(--teal);color:#fff}
-body.tt6-owner-login #login .mqn-panel{min-height:385px;padding-top:42px}body.tt6-owner-login #login .mqn-return{display:block;margin:25px auto 0}
-body.tt6-owner-login #login .mqn-error{font-size:12px;line-height:1.5;color:#a13642;background:#fff1f1;border:1px solid #e8bbbb;padding:12px;border-radius:11px;margin:12px 0}
-body.tt6-owner-login #login .mqn-info{font-size:12px;line-height:1.6;color:#15575c;background:#def7f2;border:1px solid #b4ddd6;padding:12px;border-radius:11px;margin:12px 0}
-body.tt6-owner-login #login .mqn-smallprint{text-align:center;font-size:11px;line-height:1.6;color:#79909e;margin:26px 0 0;padding:0 12px}
-@media(max-width:950px){body.tt6-owner-login #login .mqn-layout{grid-template-columns:1fr;gap:35px;padding:25px 26px 50px}body.tt6-owner-login #login .mqn-intro{max-width:700px}body.tt6-owner-login #login .mqn-brand{margin-bottom:30px}body.tt6-owner-login #login .mqn-intro h1{font-size:clamp(32px,6vw,52px)}body.tt6-owner-login #login .mqn-benefits,body.tt6-owner-login #login .mqn-intro-foot{display:none}body.tt6-owner-login #login .mqn-auth{max-width:500px}}
-@media(max-width:480px){body.tt6-owner-login #login .mqn-layout{padding:22px 16px 35px;gap:29px}body.tt6-owner-login #login .mqn-brand{margin-bottom:26px}body.tt6-owner-login #login .mqn-intro h1{font-size:32px;letter-spacing:-1.5px}body.tt6-owner-login #login .mqn-intro p{font-size:12px;margin:13px 0}body.tt6-owner-login #login .mqn-topline{font-size:9px}body.tt6-owner-login #login .mqn-face{padding:28px 23px 23px}body.tt6-owner-login #login .mqn-role{font-size:10px}}
-@media(prefers-reduced-motion:reduce){body.tt6-owner-login #login .mqn-card,body.tt6-owner-login #login .mqn-switch{transition:none!important}}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login){--bg:#eaf0f6;--teal:#087f83;--ink:#163440;--muted:#687f91;--depth:rgba(160,177,195,.47);margin:0;min-height:100svh;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;overflow-x:hidden}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) [hidden]{display:none!important}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) button,:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) input{font:inherit}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) button{cursor:pointer}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) :is(button,a,input):focus-visible{outline:3px solid #0b8588;outline-offset:3px}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-layout{position:relative;isolation:isolate;max-width:1480px;min-height:100svh;margin:0 auto;padding:44px clamp(26px,5.9vw,96px);display:grid;grid-template-columns:minmax(0,1.08fr) minmax(360px,.92fr);gap:clamp(45px,6.5vw,102px);align-items:center}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-orb{position:absolute;z-index:-1;border-radius:50%;pointer-events:none;background:var(--bg);box-shadow:15px 15px 30px var(--depth),-15px -15px 30px #fff}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-orb.first{width:200px;height:200px;left:-125px;top:12%}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-orb.second{width:120px;height:120px;right:2%;bottom:7%}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-intro{max-width:615px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-brand{display:flex;align-items:center;gap:12px;margin-bottom:clamp(60px,9vw,122px);color:inherit;text-decoration:none}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-symbol{width:46px;height:46px;display:grid;place-items:center;border-radius:14px;background:linear-gradient(145deg,#13a9a5,#08797d);box-shadow:5px 5px 13px #bbcdd4,-5px -5px 13px #fff;color:white;font-weight:900;font-size:24px}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-brand b{font-size:23px;letter-spacing:-.9px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-brand small{display:block;margin-top:4px;font-size:9px;letter-spacing:2px;font-weight:800;color:#8299aa}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-eyebrow{font-size:10px;font-weight:850;letter-spacing:1.7px;color:var(--teal);display:flex;align-items:center;gap:10px}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-dot{width:8px;height:8px;border-radius:50%;background:#10a8a1;box-shadow:0 0 0 5px #d7f0ec}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-intro h1{font-size:clamp(40px,4.45vw,68px);line-height:1.13;letter-spacing:-2.6px;font-weight:850;margin:19px 0}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-intro em{font-style:normal;color:var(--teal)}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-intro p{color:#658092;font-size:15px;line-height:1.85;max-width:495px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-benefits{display:flex;flex-wrap:wrap;gap:12px;margin:42px 0}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-benefits span{padding:11px 14px;border-radius:13px;box-shadow:5px 5px 13px rgba(163,177,198,.25),-5px -5px 13px #fff;font-size:11px;font-weight:750;color:#507787}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-intro-foot{font-size:11px;color:#91a3af;margin-top:clamp(60px,9vw,120px)}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-auth{min-width:0;width:100%;max-width:500px;margin:0 auto}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-topline{display:flex;justify-content:space-between;gap:10px;align-items:center;margin:0 4px 18px;color:#647e8a;letter-spacing:1px;font-size:10px;font-weight:850}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-security{font-size:9px;color:#087b7c;border:1px solid #afd9d5;border-radius:99px;padding:7px 10px}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-roles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:7px;margin-bottom:23px;border-radius:20px;box-shadow:inset 5px 5px 11px rgba(162,180,196,.41),inset -5px -5px 11px #fff}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-role{min-height:49px;padding:8px 3px;display:grid;place-items:center;gap:2px;border:0;border-radius:14px;background:transparent;font-size:11px;font-weight:800;color:#71899a}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-role[aria-current=page]{color:#fff;background:linear-gradient(140deg,#0ca29c,#087e85);box-shadow:5px 5px 12px rgba(7,128,134,.21),-4px -4px 10px #fff}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-auth-tabs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;padding:5px;margin-bottom:22px;border-radius:17px;box-shadow:inset 4px 4px 9px rgba(162,180,196,.36),inset -4px -4px 9px #fff}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-auth-tab{min-height:45px;padding:10px 12px;border:0;border-radius:13px;background:transparent;color:#667f8f;font-size:12px;font-weight:800;transition:background .2s,color .2s}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-auth-tab[aria-selected=true]{color:#087f83;background:var(--bg);box-shadow:5px 5px 12px rgba(162,180,196,.45),-5px -5px 12px #fff}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-stage{perspective:1300px;position:relative}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-card{position:relative;transform-style:preserve-3d;transition:transform .65s cubic-bezier(.22,.72,.22,1)}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-card.flipped{transform:rotateY(180deg)}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-face,:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-panel{border-radius:32px;background:var(--bg);box-shadow:17px 17px 34px var(--depth),-17px -17px 34px rgba(255,255,255,.96);padding:29px clamp(21px,3vw,34px) 24px}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-face{position:absolute;inset:0;display:flex;flex-direction:column;min-width:0;backface-visibility:hidden;-webkit-backface-visibility:hidden}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-face.front{position:relative;inset:auto}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-face.back{transform:rotateY(180deg)}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-card.flipped .mqn-face.front{position:absolute;inset:0}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-card.flipped .mqn-face.back{position:relative;inset:auto}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-main{flex:1;min-height:0}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-icon{display:grid;place-items:center;width:61px;height:61px;margin:0 auto 15px;border-radius:50%;color:var(--teal);box-shadow:6px 6px 13px rgba(160,177,195,.6),-6px -6px 13px #fff;font-size:24px}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-face h2,:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-panel h2{text-align:center;font-size:25px;letter-spacing:-.7px;margin:0}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-description{text-align:center;color:var(--muted);font-size:12px;line-height:1.7;margin:10px auto 23px;max-width:345px}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-field{display:block;margin:0 0 15px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-field span{display:block;font-size:11px;font-weight:750;margin:0 0 8px 3px;color:#4a6474}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-input{display:flex;align-items:center;min-height:52px;padding:0 14px;border-radius:17px;border:1px solid transparent;box-shadow:inset 5px 5px 10px rgba(162,177,195,.47),inset -5px -5px 10px #fff}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-input:focus-within{border-color:#37a7a6}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-input input{width:100%;min-width:0;padding:13px 3px;color:var(--ink);border:0;outline:0;background:transparent;font-size:13px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-input input::placeholder{color:#9aabba}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-input button{border:0;background:transparent;color:#4b7380;padding:5px;font-size:12px;font-weight:750}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-submit{display:block;width:100%;border:0;min-height:52px;padding:12px 15px;margin-top:18px;border-radius:17px;font-size:13px;font-weight:850;background:linear-gradient(145deg,#0e9f9b,#087b84);color:white;box-shadow:7px 8px 17px rgba(12,122,129,.29),-7px -7px 17px #fff;transition:transform .15s}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-submit:hover{transform:translateY(-2px)}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-submit:disabled{opacity:.7;cursor:progress}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-tools{display:flex;justify-content:flex-end;margin:10px 0 0}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-link{border:0;padding:4px;background:transparent;color:var(--teal);font-size:11px;font-weight:800;text-decoration:underline;text-underline-offset:3px}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-note{font-size:10px;color:#607f8b;line-height:1.5;margin:14px 0 0}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-footer{border-top:1px solid #d8e1e8;padding-top:18px;margin-top:22px;display:flex;justify-content:space-between;align-items:center;gap:16px;min-height:65px}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-footer p{flex:1;min-width:0;font-size:11px;color:#708693;line-height:1.5;margin:0}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-footer strong{color:var(--teal)}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-switch{height:47px;width:47px;display:grid;place-items:center;flex:none;border:0;border-radius:50%;background:var(--bg);color:var(--teal);font-size:19px;font-weight:850;box-shadow:7px 7px 14px rgba(163,177,198,.58),-7px -7px 14px #fff;transition:transform .36s,background .2s,color .2s}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-switch:hover{transform:rotate(180deg);background:var(--teal);color:#fff}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-panel{min-height:385px;padding-top:42px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-return{display:block;margin:25px auto 0}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-error{font-size:12px;line-height:1.5;color:#a13642;background:#fff1f1;border:1px solid #e8bbbb;padding:12px;border-radius:11px;margin:12px 0}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-info{font-size:12px;line-height:1.6;color:#15575c;background:#def7f2;border:1px solid #b4ddd6;padding:12px;border-radius:11px;margin:12px 0}
+:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-smallprint{text-align:center;font-size:11px;line-height:1.6;color:#79909e;margin:26px 0 0;padding:0 12px}
+@media(max-width:950px){:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-layout{grid-template-columns:1fr;gap:35px;padding:25px 26px 50px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-intro{max-width:700px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-brand{margin-bottom:30px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-intro h1{font-size:clamp(32px,6vw,52px)}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-benefits,:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-intro-foot{display:none}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-auth{max-width:500px}}
+@media(max-width:480px){:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-layout{padding:22px 16px 35px;gap:29px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-brand{margin-bottom:26px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-intro h1{font-size:32px;letter-spacing:-1.5px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-intro p{font-size:12px;margin:13px 0}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-topline{font-size:9px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-face{padding:28px 23px 23px}:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-role{font-size:10px}}
+@media(prefers-reduced-motion:reduce){:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-card,:is(body.tt6-owner-login #login, body.tt6-staff-auth #login) .mqn-switch{transition:none!important}}
 
 
 
@@ -251,4 +251,148 @@ body.tt6-owner-login #login .mqn-input input:focus-visible{outline:0!important}
   body.tt6-owner-login #login *,body.tt6-owner-login #login *::before,body.tt6-owner-login #login *::after{
     transition:none!important;animation:none!important;scroll-behavior:auto!important;
   }
+}
+
+
+
+/* The same authentic MediQueue V4 typography and neumorphic card for staff KDS.
+   Scoped to login state. Once authorized, the KDS remains unchanged. */
+body.tt6-staff.tt6-staff-auth{
+  background:#eaf0f6!important;color:#163440!important;
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+  overflow-x:clip!important;
+}
+body.tt6-staff.tt6-staff-auth>main{
+  max-width:none!important;width:100%!important;margin:0!important;padding:0!important;
+}
+body.tt6-staff.tt6-staff-auth>main>.top,
+body.tt6-staff.tt6-staff-auth>main>#storageNotice{
+  display:none!important;
+}
+body.tt6-staff.tt6-staff-auth #login.tt6-mqn-staff{
+  --bg:#eaf0f6;--teal:#087f83;--ink:#163440;--muted:#687f91;--depth:rgba(160,177,195,.47);
+  display:block!important;background:#eaf0f6!important;color:#163440!important;
+  margin:0!important;padding:0!important;border:0!important;border-radius:0!important;
+  max-width:none!important;min-height:100svh!important;height:auto!important;
+  width:100%!important;box-shadow:none!important;
+  font-family:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif!important;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-layout{
+  min-height:100svh!important;
+  padding-top:max(40px,env(safe-area-inset-top,0px))!important;
+  padding-bottom:max(35px,env(safe-area-inset-bottom,0px))!important;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-brand{justify-content:flex-start}
+body.tt6-staff.tt6-staff-auth #login .tt6-mqn-brand-logo{
+  width:48px!important;height:48px!important;min-width:48px!important;
+  object-fit:cover;border-radius:14px;
+  box-shadow:5px 5px 13px #b9cbd4,-5px -5px 13px #fff;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-brand b{font-size:23px!important}
+body.tt6-staff.tt6-staff-auth #login .mqn-intro h1{
+  font-size:clamp(38px,4.35vw,68px)!important;line-height:1.14!important;
+  letter-spacing:-2.3px!important;color:#163440!important;margin:19px 0!important;font-weight:850!important;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-intro em{color:#087f83!important}
+body.tt6-staff.tt6-staff-auth #login .mqn-intro p{font-size:15px!important;line-height:1.8!important}
+body.tt6-staff.tt6-staff-auth #login .mqn-roles{grid-template-columns:minmax(130px,1fr) minmax(0,1fr)}
+body.tt6-staff.tt6-staff-auth #login .mqn-role[aria-current="page"]{
+  display:grid!important;place-items:center!important;border-radius:14px!important;
+  color:white!important;background:linear-gradient(140deg,#0ca29c,#087e85)!important;
+  box-shadow:5px 5px 12px rgba(7,128,134,.21),-4px -4px 10px #fff!important;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-role-memo{
+  font-size:10px;color:#71899a;font-weight:750;padding:5px 8px;line-height:1.45;
+  display:grid;place-items:center;text-align:center;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-face.front{
+  background:#eaf0f6!important;border:0!important;border-radius:32px!important;
+  position:relative!important;padding:29px clamp(21px,3vw,34px) 24px!important;
+  box-shadow:17px 17px 34px rgba(160,177,195,.47),-17px -17px 34px rgba(255,255,255,.96)!important;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-face h2{
+  font-size:25px!important;text-align:center!important;letter-spacing:-.7px!important;color:#163440!important;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-input{
+  display:flex!important;align-items:center;gap:7px;
+  min-height:52px!important;min-width:0;max-width:100%;
+  padding:0 13px!important;border-radius:17px!important;border:1px solid transparent!important;
+  background:#eaf0f6!important;
+  box-shadow:inset 5px 5px 10px rgba(162,177,195,.47),inset -5px -5px 10px #fff!important;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-input:focus-within{border-color:#37a7a6!important}
+body.tt6-staff.tt6-staff-auth #login .mqn-input input{
+  display:block!important;flex:1 1 auto;width:100%!important;max-width:100%!important;min-width:0!important;
+  height:50px!important;min-height:0!important;padding:12px 3px!important;
+  margin:0!important;box-shadow:none!important;background:transparent!important;
+  border:0!important;border-radius:0!important;outline:0!important;
+  font-size:16px!important;color:#163440!important;
+}
+body.tt6-staff.tt6-staff-auth #login button.mqn-show-pass{
+  flex:0 0 auto;display:block!important;width:auto!important;min-height:40px!important;
+  padding:8px 7px!important;margin:0!important;color:#4b7380!important;
+  font-size:12px!important;font-weight:800!important;
+  border:0!important;background:transparent!important;box-shadow:none!important;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-field{
+  display:block!important;margin:0 0 15px!important;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-field>span:first-child{
+  display:block!important;margin:0 0 8px 3px!important;
+  font-size:11px!important;font-weight:750!important;color:#4a6474!important;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-error{
+  font-size:12px!important;background:#fff1f1!important;color:#a13642!important;
+  border:1px solid #e8bbbb!important;border-radius:11px!important;
+  padding:12px!important;margin:0!important;overflow-wrap:anywhere;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-error:empty{display:none!important}
+body.tt6-staff.tt6-staff-auth #login #staffLoginButton{
+  display:block!important;width:100%!important;min-height:52px!important;
+  margin:18px 0 0!important;padding:14px!important;border:0!important;
+  background:linear-gradient(145deg,#0e9f9b,#087b84)!important;
+  color:#fff!important;box-shadow:7px 8px 17px rgba(12,122,129,.29),-7px -7px 17px #fff!important;
+  border-radius:17px!important;font-size:13px!important;font-weight:850!important;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-secure-mark{
+  display:grid;place-items:center;flex:0 0 42px;width:42px;height:42px;
+  font-size:20px;color:#087f83;border-radius:50%;background:#eaf0f6;
+  box-shadow:5px 5px 11px rgba(160,177,195,.55),-5px -5px 11px #fff;
+}
+body.tt6-staff.tt6-staff-auth #login .mqn-note{margin-top:14px!important}
+body.tt6-staff.tt6-staff-auth #login .mqn-footer{margin-top:22px!important}
+@media(max-width:950px){
+  body.tt6-staff.tt6-staff-auth #login .mqn-layout{
+    grid-template-columns:1fr!important;gap:26px!important;padding:23px 26px 42px!important;
+  }
+  body.tt6-staff.tt6-staff-auth #login .mqn-brand{margin-bottom:28px!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-intro h1{font-size:clamp(30px,5vw,52px)!important;letter-spacing:-1.55px!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-intro p{font-size:13px!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-intro-foot,
+  body.tt6-staff.tt6-staff-auth #login .mqn-benefits{display:none!important}
+}
+@media(max-width:480px){
+  body.tt6-staff.tt6-staff-auth #login .mqn-layout{
+    padding:20px 15px calc(32px + env(safe-area-inset-bottom,0px))!important;gap:20px!important;
+  }
+  body.tt6-staff.tt6-staff-auth #login .mqn-brand{gap:11px!important;margin-bottom:22px!important}
+  body.tt6-staff.tt6-staff-auth #login .tt6-mqn-brand-logo{width:43px!important;height:43px!important;min-width:43px!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-brand b{font-size:21px!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-brand small{font-size:8px!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-eyebrow{font-size:9px!important;letter-spacing:1.2px}
+  body.tt6-staff.tt6-staff-auth #login .mqn-intro h1{font-size:30px!important;letter-spacing:-1.35px!important;line-height:1.13!important;margin:13px 0!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-intro p{font-size:12px!important;margin:0!important;line-height:1.7!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-topline{font-size:9px!important;letter-spacing:.4px!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-security{font-size:8px!important;padding:6px 8px!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-roles{margin-bottom:16px!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-role-memo{font-size:9px}
+  body.tt6-staff.tt6-staff-auth #login .mqn-face.front{padding:25px 20px 20px!important;border-radius:24px!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-face h2{font-size:23px!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-description{margin:10px auto 19px!important}
+  body.tt6-staff.tt6-staff-auth #login .mqn-icon{width:54px;height:54px;margin-bottom:13px}
+}
+@media(max-width:360px){
+  body.tt6-staff.tt6-staff-auth #login .mqn-roles{grid-template-columns:1fr}
+  body.tt6-staff.tt6-staff-auth #login .mqn-role-memo{padding:4px}
+  body.tt6-staff.tt6-staff-auth #login .mqn-intro h1{font-size:27px!important}
 }
