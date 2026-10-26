@@ -396,3 +396,167 @@ body.tt6-staff.tt6-staff-auth #login .mqn-footer{margin-top:22px!important}
   body.tt6-staff.tt6-staff-auth #login .mqn-role-memo{padding:4px}
   body.tt6-staff.tt6-staff-auth #login .mqn-intro h1{font-size:27px!important}
 }
+
+
+
+/* V15 — one truly centered login, not a two-column landing page.
+ * Matches the existing MediQueue V4 Inter / neumorphic card design while removing
+ * the giant copy column. Shared for owner and staff, gated by auth-state classes.
+ * Last rules win over older phone-specific grid layouts. */
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-layout {
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:center!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  min-height:100svh!important;
+  height:auto!important;
+  margin:0 auto!important;
+  padding:clamp(20px,4vh,44px) 18px!important;
+  gap:0!important;
+  box-sizing:border-box!important;
+  overflow:visible!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-intro,
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-orb,
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-roles {
+  display:none!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-auth {
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:stretch!important;
+  flex:0 1 auto!important;
+  min-width:0!important;
+  width:100%!important;
+  max-width:455px!important;
+  margin:auto!important;
+  padding:0!important;
+  box-sizing:border-box!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .tt6-centered-brand {
+  display:flex!important;
+  justify-content:center!important;
+  align-items:center!important;
+  flex-wrap:nowrap!important;
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  margin:0 0 19px!important;
+  padding:0!important;
+  gap:12px!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .tt6-centered-brand .tt6-mqn-brand-logo {
+  display:block!important;
+  width:54px!important;
+  height:54px!important;
+  min-width:54px!important;
+  flex:0 0 54px!important;
+  object-fit:cover!important;
+  border-radius:15px!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .tt6-centered-brand span {
+  display:grid!important;
+  min-width:0!important;
+  gap:3px!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .tt6-centered-brand b {
+  font-size:clamp(20px,4.6vw,24px)!important;
+  font-weight:850!important;
+  line-height:1.15!important;
+  letter-spacing:-.6px!important;
+  color:#173d48!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .tt6-centered-brand small {
+  font-size:9px!important;
+  font-weight:800!important;
+  letter-spacing:1.05px!important;
+  line-height:1.4!important;
+  color:#748d97!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-topline {
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  flex-wrap:wrap!important;
+  gap:7px 10px!important;
+  min-width:0!important;
+  width:100%!important;
+  text-align:center!important;
+  margin:0 0 17px!important;
+  font-size:10px!important;
+  line-height:1.5!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-security {
+  white-space:nowrap!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-stage,
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-card {
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  margin:0!important;
+  transform:none!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-face.front {
+  width:100%!important;
+  min-width:0!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+  border-radius:24px!important;
+  padding:clamp(20px,4vw,30px)!important;
+  overflow:visible!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-input {
+  width:100%!important;
+  max-width:100%!important;
+  box-sizing:border-box!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-field,
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) form {
+  width:100%!important;
+  max-width:100%!important;
+  min-width:0!important;
+  box-sizing:border-box!important;
+}
+:is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-smallprint {
+  max-width:100%!important;
+  margin:21px auto 0!important;
+  padding:0 8px!important;
+  text-align:center!important;
+  line-height:1.55!important;
+}
+@media(max-width:480px) {
+  :is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-layout {
+    min-height:100svh!important;
+    padding:22px 17px calc(25px + env(safe-area-inset-bottom,0px))!important;
+    justify-content:center!important;
+  }
+  :is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-auth {
+    max-width:410px!important;
+  }
+  :is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .tt6-centered-brand {
+    margin-bottom:16px!important;
+    gap:10px!important;
+  }
+  :is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .tt6-centered-brand .tt6-mqn-brand-logo {
+    width:46px!important;height:46px!important;min-width:46px!important;flex-basis:46px!important;
+  }
+  :is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-topline {
+    margin-bottom:14px!important;
+  }
+  :is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-face.front {
+    padding:22px 18px!important;
+    border-radius:22px!important;
+  }
+}
+@media(max-width:350px) {
+  :is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-layout {
+    padding-inline:12px!important;
+  }
+  :is(body.tt6-owner-login #login, body.tt6-staff.tt6-staff-auth #login) .mqn-face.front {
+    padding:19px 15px!important;
+  }
+}
