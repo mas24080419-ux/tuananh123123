@@ -179,21 +179,59 @@ body.tt6-owner-login{background:linear-gradient(145deg,#ecf8f6,#fefaf3)!importan
 .tt6-security-card button#savePassword{margin-top:15px;min-height:43px;background:#0c8e7c!important}
 .tt6-security-card #securityNotice{font-size:12px;min-height:20px}
 @media(max-width:760px){#login.tt6-auth-card{margin:18px 13px!important;padding:22px 18px!important}.tt6-auth-logo img{width:54px;height:54px}.tt6-security-panel{padding-top:13px}.tt6-security-card{padding:18px}}
-</style><style>#dashboard.tt6-security-mode>:not(#security){display:none!important}#dashboard.tt6-security-mode #security{display:block!important;max-width:720px;margin:0 auto}</style></head>
+</style><style>#dashboard.tt6-security-mode>:not(#security){display:none!important}#dashboard.tt6-security-mode #security{display:block!important;max-width:720px;margin:0 auto}</style><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/mediqueue-auth.css?v=tt6-v4-20261026">
+</head>
 <body class="tt6-owner-login">
 <div class="shell">
 <aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside>
 <div>
-<section id="login" class="tt6-auth-card" aria-labelledby="authTitle">
-<div class="tt6-auth-logo"><img src="/tam-trang-6-logo.svg" width="66" height="66" alt=""><span><strong>Tắm Tráng 6</strong><small>QUẢN TRỊ CỬA HÀNG</small></span></div>
-<div class="tt6-auth-eyebrow">CHÀO MỪNG TRỞ LẠI</div>
-<h1 id="authTitle">Đăng nhập quản trị</h1>
-<p class="muted">Đăng nhập bằng email và mật khẩu riêng của chủ cửa hàng.</p>
-<form id="loginForm" autocomplete="on">
-<label for="adminEmail">Email quản trị</label><input id="adminEmail" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" placeholder="Email của chủ cửa hàng" required maxlength="254">
-<label for="password">Mật khẩu</label><div class="tt6-password-row"><input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Nhập mật khẩu"><button type="button" class="tt6-show-pass" data-visibility="password" aria-label="Hiện mật khẩu">Hiện</button></div>
-<button type="submit" id="loginButton">Đăng nhập</button><p id="loginError" role="alert" aria-live="polite"></p></form>
-<p class="tt6-auth-foot">Phiên đăng nhập được bảo vệ bằng cookie HttpOnly. Không chia sẻ mật khẩu hoặc mã OTP.</p>
+<section id="login" class="tt6-mqn-login" aria-labelledby="authTitle">
+<div class="mqn-layout">
+  <div class="mqn-orb first" aria-hidden="true"></div>
+  <div class="mqn-orb second" aria-hidden="true"></div>
+  <section class="mqn-intro" aria-label="Giới thiệu Tắm Tráng 6">
+    <div class="mqn-brand">
+      <img class="tt6-mqn-brand-logo" src="/tam-trang-6-logo.svg" width="48" height="48" alt="">
+      <span><b>Tắm Tráng 6</b><small>BEACH POS · QUẢN LÝ CỬA HÀNG</small></span>
+    </div>
+    <div class="mqn-eyebrow"><span class="mqn-dot" aria-hidden="true"></span>KHÔNG GIAN QUẢN LÝ DÀNH CHO CHỦ CỬA HÀNG</div>
+    <h1>Quản lý dễ dàng.<br>Vận hành tinh gọn.<br><em>Kinh doanh hiệu quả.</em></h1>
+    <p>Từ đơn tại bàn, màn hình bếp đến doanh thu và hàng tồn kho. Tất cả trong một không gian quản lý rõ ràng, dễ sử dụng.</p>
+    <div class="mqn-benefits" aria-label="Các chức năng chính">
+      <span>✓ Đơn hàng tại bàn</span>
+      <span>⌁ Thu – chi & tồn kho</span>
+      <span>◷ Đồng bộ dữ liệu</span>
+    </div>
+    <div class="mqn-intro-foot">TẮM TRÁNG 6 · VẬN HÀNH CỬA HÀNG THÔNG MINH</div>
+  </section>
+  <section class="mqn-auth" aria-labelledby="authTitle">
+    <div class="mqn-topline"><span>CỔNG QUẢN TRỊ TẮM TRÁNG 6</span><span class="mqn-security">BẢO MẬT TÀI KHOẢN</span></div>
+    <div class="mqn-roles" aria-label="Loại tài khoản"><span class="mqn-role" aria-current="page">Chủ cửa hàng</span><span class="mqn-role-memo">Tài khoản quản trị được phân quyền</span></div>
+    <div class="mqn-stage">
+      <div class="mqn-card">
+        <div class="mqn-face front">
+          <div class="mqn-main">
+            <div class="mqn-icon" aria-hidden="true">✦</div>
+            <h2 id="authTitle">Chào mừng trở lại</h2>
+            <p class="mqn-description">Đăng nhập bằng tài khoản chủ cửa hàng để tiếp tục quản lý Tắm Tráng 6.</p>
+            <form id="loginForm" autocomplete="on">
+              <label class="mqn-field" for="adminEmail"><span>Địa chỉ email</span><span class="mqn-input"><input id="adminEmail" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" placeholder="Nhập địa chỉ email" required maxlength="254"></span></label>
+              <label class="mqn-field" for="password"><span>Mật khẩu</span><span class="mqn-input"><input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Nhập mật khẩu"><button type="button" class="mqn-show-pass" data-visibility="password" aria-label="Hiện mật khẩu">Hiện</button></span></label>
+              <p id="loginError" class="mqn-error" role="alert" aria-live="polite"></p>
+              <button class="mqn-submit" type="submit" id="loginButton">Đăng nhập</button>
+            </form>
+            <p class="mqn-note">Chỉ tài khoản đã được cấp quyền quản trị mới có thể truy cập trang này.</p>
+          </div>
+          <div class="mqn-footer"><p><strong>Truy cập được kiểm soát</strong><br>Phiên đăng nhập được xác minh trên máy chủ.</p><span class="mqn-secure-mark" aria-hidden="true">✓</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="mqn-smallprint">Không chia sẻ mật khẩu hay mã OTP. Để đổi mật khẩu, hãy mở mục Bảo mật sau khi đăng nhập.</p>
+  </section>
+</div>
 </section>
 <main id="dashboard" class="hidden">
 <div class="topbar"><div><span class="sh-eyebrow">TRUNG TÂM ĐIỀU HÀNH / OWNER CONSOLE</span><h1>Tổng quan</h1><p class="sh-page-caption">Các số liệu quan trọng của cửa hàng, cập nhật từ đơn hàng và dòng tiền đã xác nhận.</p></div>

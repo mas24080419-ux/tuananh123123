@@ -450,6 +450,7 @@ if(req.method==='GET'&&p==='/admin/core')return staticPage(req,res,'core.html');
 if(req.method==='GET'&&p==='/admin/operations')return staticPage(req,res,'operations.html');
 if(req.method==='GET'&&p==='/admin')return staticPage(req,res,'admin.html');
 if(req.method==='GET'&&(p==='/'||p==='/staff'))return staticPage(req,res,'staff.html');
+if(req.method==='GET'&&p==='/mediqueue-auth.css')return staticPage(req,res,'mediqueue-auth.css');
 if(req.method==='GET'&&p==='/pos-sidebar.css')return staticPage(req,res,'pos-sidebar.css');
 if(req.method==='GET'&&p==='/pos-sidebar.js')return staticPage(req,res,'pos-sidebar.js');
 if(req.method==='GET'&&p==='/admin-minimal.css')return staticPage(req,res,'admin-minimal.css');
