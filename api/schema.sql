@@ -148,3 +148,15 @@ CREATE TABLE IF NOT EXISTS register_shifts (
  note text NOT NULL DEFAULT ''
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_only_one_open_register ON register_shifts((true)) WHERE status='open';
+
+CREATE TABLE IF NOT EXISTS pos_audit (
+ id uuid PRIMARY KEY,
+ actor text NOT NULL,
+ entity text NOT NULL,
+ entity_id uuid,
+ action text NOT NULL,
+ before_state jsonb,
+ after_state jsonb,
+ created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_pos_audit_date ON pos_audit(created_at DESC);
