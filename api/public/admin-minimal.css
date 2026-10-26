@@ -91,3 +91,9 @@ main{padding:18px 13px 28px!important}
 }
 @media(max-width:370px){.cards,.stats{grid-template-columns:1fr!important}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;scroll-behavior:auto!important}}
+
+
+/* Remove space allocated to closed operational forms. */
+#finance .columns:not(:has(.is-open)),#inventory .columns:not(:has(.is-open)),#recipes .columns:not(:has(.is-open)){display:none!important}
+#finance .columns:has(.is-open),#inventory .columns:has(.is-open),#recipes .columns:has(.is-open){margin:0 0 12px!important}
+#finance>.panel,#inventory>.panel,#recipes>.panel{margin-bottom:12px!important}
