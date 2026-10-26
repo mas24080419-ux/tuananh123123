@@ -179,7 +179,7 @@ body.tt6-owner-login{background:linear-gradient(145deg,#ecf8f6,#fefaf3)!importan
 .tt6-security-card button#savePassword{margin-top:15px;min-height:43px;background:#0c8e7c!important}
 .tt6-security-card #securityNotice{font-size:12px;min-height:20px}
 @media(max-width:760px){#login.tt6-auth-card{margin:18px 13px!important;padding:22px 18px!important}.tt6-auth-logo img{width:54px;height:54px}.tt6-security-panel{padding-top:13px}.tt6-security-card{padding:18px}}
-</style></head>
+</style><style>#dashboard.tt6-security-mode>:not(#security){display:none!important}#dashboard.tt6-security-mode #security{display:block!important;max-width:720px;margin:0 auto}</style></head>
 <body class="tt6-owner-login">
 <div class="shell">
 <aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside>
@@ -377,11 +377,13 @@ document.querySelectorAll('[data-visibility]').forEach(button=>button.addEventLi
 function securityPanel(show){
  if($('#dashboard').classList.contains('hidden'))return;
  $('#security').classList.toggle('hidden',!show);
+ $('#dashboard').classList.toggle('tt6-security-mode',show);
  if(show){location.hash='security';$('#currentPassword').focus({preventScroll:true})}
  else if(location.hash==='#security')history.replaceState(null,'',location.pathname);
 }
 $('#changePassBtn').addEventListener('click',()=>securityPanel(true));
 $('#closeSecurity').addEventListener('click',()=>securityPanel(false));
+window.addEventListener('hashchange',()=>{if(!$('#dashboard').classList.contains('hidden'))securityPanel(location.hash==='#security')});
 $('#passwordForm').addEventListener('submit',async ev=>{
  ev.preventDefault();
  const old=$('#currentPassword').value,neu=$('#newPassword').value,confirmed=$('#confirmPassword').value;
