@@ -176,3 +176,14 @@ CREATE TABLE IF NOT EXISTS staff_users (
  updated_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_staff_users_active ON staff_users(active);
+
+
+-- Tắm Tráng 6 payment recipient, admin-configured only. Never prefill a fictitious bank account.
+CREATE TABLE IF NOT EXISTS merchant_payment_settings (
+ singleton boolean PRIMARY KEY DEFAULT true CHECK(singleton=true),
+ bank_bin varchar(6) NOT NULL CHECK(bank_bin ~ '^[0-9]{6}$'),
+ account_number varchar(25) NOT NULL CHECK(account_number ~ '^[0-9]{6,25}$'),
+ account_name varchar(100) NOT NULL CHECK(length(trim(account_name)) BETWEEN 2 AND 100),
+ enabled boolean NOT NULL DEFAULT true,
+ updated_at timestamptz NOT NULL DEFAULT now()
+);

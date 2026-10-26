@@ -40,7 +40,18 @@
         </div>
         <p id="paymentMethodHint" class="qr-payment-hint">Bạn sẽ thanh toán tiền mặt với nhân viên. Đơn sẽ được ghi nhận trước khi thanh toán.</p>
       </fieldset>
-      <label class="qr-note-label" for="note">Ghi chú chung cho bếp <span>(không bắt buộc)</span></label>
+      <section id="transferPreview" class="qr-transfer-preview hidden" aria-live="polite">
+        <h3>QR chuyển khoản theo số tiền giỏ hàng</h3>
+        <p id="transferPreviewStatus" class="qr-transfer-message">Đang kiểm tra cấu hình tài khoản...</p>
+        <div id="transferPreviewContent" class="hidden">
+          <img id="transferPreviewQr" alt="Mã VietQR chuyển khoản theo số tiền giỏ hàng" loading="lazy" referrerpolicy="no-referrer">
+          <strong id="transferPreviewAmount"></strong>
+          <small id="transferPreviewRecipient"></small>
+          <small id="transferPreviewAccount"></small>
+        </div>
+        <p class="qr-transfer-disclaimer">Đây là số tiền tạm tính. Vui lòng <b>xác nhận gọi món trước khi chuyển khoản</b>. QR hóa đơn chính thức sẽ xuất hiện trong chi tiết đơn đã đặt.</p>
+      </section>
+      <label class="qr-note-label" for="note">Ghi chú chung cho cả đơn <span>(nếu cần — ghi chú từng món ở ngay dưới món)</span></label>
       <textarea class="qr-note" id="note" maxlength="160" rows="2" placeholder="Ví dụ: Món ít cay, đồ uống mang sau…"></textarea>
       <p id="submitError" class="qr-error hidden" role="alert"></p>
       <p id="retryHint" class="qr-retryhint hidden" role="status">Chưa xác định được đơn đã tới máy chủ hay chưa. Giỏ hàng tạm khóa để thử gửi lại cùng mã yêu cầu, tránh tạo đơn trùng.</p>
@@ -100,12 +111,14 @@ const money = (v) => new Intl.NumberFormat('vi-VN', { style: 'currency', currenc
 const escapeHTML = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const tableToken = location.pathname.match(/^\/t\/([0-9a-f]{48})$/)?.[1] || null;
 const cart = new Map();
+const itemNotes = new Map(); // one note per dish, persisted on the order line
 let products = [], table = null, mode = 'pilot', sending = false, confirmed = false;
 let pendingPayload = null; // keep snapshot and requestId on ambiguous errors
 let currentView = 'menu';
 const note = $('#note');
 const submit = $('#submit');
 let selectedPaymentMethod = 'cash';
+let bankRecipient = null;
 const paymentOptions = document.querySelectorAll('input[name="paymentMethod"]');
 function syncPaymentMethod() {
   paymentOptions.forEach(input => {
@@ -113,14 +126,42 @@ function syncPaymentMethod() {
     input.disabled = sending || Boolean(pendingPayload) || confirmed;
   });
   $('#paymentMethodHint').textContent = selectedPaymentMethod === 'bank_transfer'
-    ? 'Chọn chuyển khoản không đồng nghĩa đã thanh toán. Nhân viên sẽ cung cấp thông tin nhận tiền chính thức và xác nhận sau khi nhận tiền.'
+    ? 'Chọn chuyển khoản: QR được điền sẵn số tiền. Đơn chỉ được xác nhận thanh toán khi tiền thực sự về ngân hàng.'
     : 'Bạn sẽ thanh toán tiền mặt với nhân viên. Đơn sẽ được ghi nhận trước khi thanh toán.';
+  updateTransferPreview();
 }
 paymentOptions.forEach(input => input.addEventListener('change', () => {
   if (sending || pendingPayload || confirmed) return;
   if(input.checked && ['cash','bank_transfer'].includes(input.value)) selectedPaymentMethod = input.value;
   syncPaymentMethod();
 }));
+
+function transferUrl(recipient,amount,reference){
+ if(!recipient||!/^\d{6}$/.test(recipient.bankBin)||!/^\d{6,25}$/.test(recipient.accountNumber)||
+    !Number.isSafeInteger(amount)||amount<=0||amount>999999999999)return null;
+ const q=new URLSearchParams({amount:String(amount),addInfo:reference||'TAM TRANG 6',accountName:recipient.accountName});
+ return 'https://img.vietqr.io/image/'+recipient.bankBin+'-'+recipient.accountNumber+'-compact2.png?'+q.toString();
+}
+function updateTransferPreview(){
+ const show=selectedPaymentMethod==='bank_transfer';
+ hidden('#transferPreview',!show);
+ if(!show)return;
+ const amount=totalStats().subtotal;
+ const status=$('#transferPreviewStatus'),content=$('#transferPreviewContent');
+ const url=bankRecipient?transferUrl(bankRecipient,amount,'TT6 TAM TINH'):null;
+ if(!url){
+   hidden('#transferPreviewContent',true);
+   status.textContent=!bankRecipient?'Cửa hàng chưa cấu hình tài khoản nhận chuyển khoản. Vui lòng chọn tiền mặt hoặc liên hệ nhân viên.':'Hãy thêm món để tạo QR theo số tiền cần thanh toán.';
+   return;
+ }
+ status.textContent='Quét để xem trước số tiền. QR hóa đơn sẽ có mã tham chiếu riêng sau khi đặt món.';
+ hidden('#transferPreviewContent',false);
+ $('#transferPreviewQr').src=url;
+ $('#transferPreviewAmount').textContent=money(amount);
+ $('#transferPreviewRecipient').textContent='Người nhận: '+bankRecipient.accountName;
+ $('#transferPreviewAccount').textContent='STK: '+bankRecipient.accountNumber+' · BIN: '+bankRecipient.bankBin;
+}
+
 const newUUID = () => crypto.randomUUID();
 const pendingKey = tableToken ? `saleshub:pending-order:${tableToken}` : null;
 const recentKey = tableToken ? `saleshub:recent-order:${tableToken}` : null;
@@ -128,6 +169,7 @@ let recentOrderId = null;
 
 const savedOrdersKey = tableToken ? 'saleshub:orders:v1:' + tableToken : null;
 let savedOrderIds = [], savedOrderDetails = new Map(), receiptErrors = new Map();
+const expandedOrderIds = new Set();
 let refreshingOrders = false;
 const isUUID = value => typeof value === 'string' && /^[0-9a-f-]{36}$/i.test(value);
 function restoreSavedOrderIds() {
@@ -152,27 +194,45 @@ function rememberOrderId(orderId) {
 }
 const lineState = {new:['Chờ bếp xử lý','pending'],preparing:['Đang chế biến','working'],
  ready:['Món đã sẵn sàng','ready'],served:['Đã phục vụ','served'],cancelled:['Đã hủy','cancelled']};
+function transferReceipt(d){
+ if(d.payment_method!=='bank_transfer'||d.payment_status==='paid'||d.payment_status==='refunded')return '';
+ const p=d.payment_transfer;
+ if(!p?.qrUrl||!/^https:\/\/img\.vietqr\.io\/image\/[0-9]{6}-[0-9]{6,25}-compact2\.png\?/.test(p.qrUrl)){
+   return '<div class="qr-bill-transfer-notice">Cửa hàng chưa cấu hình QR nhận tiền. Vui lòng nhờ nhân viên cung cấp thông tin chuyển khoản chính thức.</div>';
+ }
+ return '<section class="qr-bill-transfer"><strong>Quét QR để chuyển khoản</strong>'+
+   '<img src="'+escapeHTML(p.qrUrl)+'" alt="QR VietQR chuyển khoản đúng số tiền hóa đơn" loading="lazy" referrerpolicy="no-referrer">'+
+   '<p><strong>'+money(Number(p.amount))+'</strong></p>'+
+   '<small>Người nhận: '+escapeHTML(p.recipient.accountName)+' · STK '+escapeHTML(p.recipient.accountNumber)+'</small>'+
+   '<small>Nội dung: '+escapeHTML(p.reference)+'</small>'+
+   '<p class="qr-bill-warning">Quét QR không có nghĩa đơn đã thanh toán. Nhân viên sẽ xác nhận sau khi tiền về tài khoản.</p></section>';
+}
 function receiptCard(d) {
-  const safe = escapeHTML, items = Array.isArray(d.items)?d.items:[];
-  const subtotal = items.reduce((s,item)=>s+(item.status==='cancelled'?0:Number(item.unit_price||0)*Number(item.quantity||0)),0);
-  const priceTotal = Number.isFinite(Number(d.total_vnd)) ? Number(d.total_vnd) : subtotal;
-  const date = d.created_at ? new Date(d.created_at).toLocaleString('vi-VN',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'}) : 'Chưa rõ thời gian';
-  const allServed = items.length>0&&items.every(i=>['ready','served'].includes(i.status));
-  const summary = allServed ? 'Các món đã sẵn sàng/đã phục vụ' : items.some(i=>i.status==='preparing') ? 'Bếp đang chế biến' : 'Đã ghi nhận, đang chờ xử lý';
-  return '<article class="qr-receipt-card"><div class="qr-receipt-header"><div><strong>Đơn #'+safe(d.id.slice(0,8))+'</strong><small>'+safe(date)+' · '+safe(d.table_name||'')+'</small></div><span class="qr-receipt-badge">'+safe(summary)+'</span></div>'+
-  '<p class="qr-receipt-id">Mã đơn đầy đủ: '+safe(d.id)+'</p>'+
-  '<div class="qr-receipt-items">'+items.map(i=>{
-    const state=lineState[i.status]||[i.status||'Không rõ','pending'];
-    const price=Number(i.unit_price||0),qty=Number(i.quantity||0);
-    return '<div class="qr-receipt-item"><div class="qr-receipt-item-title"><strong>'+safe(i.name)+'</strong><span class="qr-receipt-status '+safe(state[1])+'">'+safe(state[0])+'</span></div>'+
-      '<div class="qr-receipt-line"><span>'+qty+' × '+money(price)+'</span><strong>'+money(qty*price)+'</strong></div>'+
-      (i.note?'<small>Ghi chú: '+safe(i.note)+'</small>':'')+'</div>';
-  }).join('')+'</div>'+
-  (d.note?'<p class="qr-receipt-note">Ghi chú đơn: '+safe(d.note)+'</p>':'')+
-  '<div class="qr-receipt-total"><span>Tổng tiền món chưa hủy</span><strong>'+money(priceTotal)+'</strong></div>'+
-  '<p class="qr-receipt-payment">Phương thức: '+safe(d.payment_method==='cash'?'Tiền mặt':d.payment_method==='bank_transfer'?'Chuyển khoản':'Chưa có thông tin (đơn cũ)')+'</p>'+
-  '<p class="qr-receipt-payment">Trạng thái: '+safe(d.payment_status==='paid'?'Đã thanh toán':d.payment_status==='refunded'?'Đã hoàn tiền':'Chưa xác nhận thanh toán')+'</p>'+
-  '<small class="qr-receipt-footnote">Giá lấy từ đơn đã lưu trên máy chủ. Trạng thái “Chờ bếp xử lý” không có nghĩa bếp đã bắt đầu chế biến.</small></article>';
+ const safe=escapeHTML,items=Array.isArray(d.items)?d.items:[];
+ const subtotal=items.reduce((sum,item)=>sum+(item.status==='cancelled'?0:Number(item.unit_price||0)*Number(item.quantity||0)),0);
+ const total=Number.isFinite(Number(d.total_vnd))?Number(d.total_vnd):subtotal;
+ const date=d.created_at?new Date(d.created_at).toLocaleString('vi-VN',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'}):'Chưa rõ thời gian';
+ const done=items.length>0&&items.every(i=>['ready','served'].includes(i.status));
+ const summary=done?'Các món đã sẵn sàng':items.some(i=>i.status==='preparing')?'Bếp đang chế biến':'Đang chờ bếp';
+ const open=expandedOrderIds.has(d.id)?' open':'';
+ return '<details class="qr-receipt-card qr-bill-card" data-order-id="'+safe(d.id)+'"'+open+'>'+
+   '<summary class="qr-receipt-header qr-bill-summary"><div><strong>Đơn #'+safe(d.id.slice(0,8))+'</strong><small>'+safe(date)+' · '+safe(d.table_name||'')+'</small>'+
+   '<small class="qr-bill-tap">Chạm để xem món, ghi chú và thanh toán</small></div>'+
+   '<div class="qr-bill-summary-right"><span class="qr-receipt-badge">'+safe(summary)+'</span><b>'+money(total)+'</b><span aria-hidden="true" class="qr-bill-chevron">⌄</span></div></summary>'+
+   '<div class="qr-bill-body"><p class="qr-receipt-id">Mã đơn: '+safe(d.id)+'</p>'+
+   '<div class="qr-receipt-items">'+items.map(i=>{
+     const state=lineState[i.status]||[i.status||'Không rõ','pending'];
+     const price=Number(i.unit_price||0),qty=Number(i.quantity||0);
+     return '<div class="qr-receipt-item"><div class="qr-receipt-item-title"><strong>'+safe(i.name)+'</strong><span class="qr-receipt-status '+safe(state[1])+'">'+safe(state[0])+'</span></div>'+
+       '<div class="qr-receipt-line"><span>'+qty+' × '+money(price)+'</span><strong>'+money(qty*price)+'</strong></div>'+
+       (i.note?'<small>Ghi chú món: '+safe(i.note)+'</small>':'')+'</div>';
+   }).join('')+'</div>'+
+   (d.note?'<p class="qr-receipt-note">Ghi chú chung: '+safe(d.note)+'</p>':'')+
+   '<div class="qr-receipt-total"><span>Tổng tiền món chưa hủy</span><strong>'+money(total)+'</strong></div>'+
+   '<p class="qr-receipt-payment">Phương thức: '+safe(d.payment_method==='cash'?'Tiền mặt':d.payment_method==='bank_transfer'?'Chuyển khoản':'Chưa xác định (đơn cũ)')+'</p>'+
+   '<p class="qr-receipt-payment">Thanh toán: '+safe(d.payment_status==='paid'?'Đã thanh toán':d.payment_status==='refunded'?'Đã hoàn tiền':'Chưa xác nhận đã thanh toán')+'</p>'+
+   transferReceipt(d)+
+   '<small class="qr-receipt-footnote">Giá và ghi chú lấy từ hóa đơn đã lưu trên máy chủ. Chưa xác nhận thanh toán cho đến khi cửa hàng kiểm tra tiền thực nhận.</small></div></details>';
 }
 function renderSavedOrders() {
   const target=$('#orderList'); if (!target) return;
@@ -183,6 +243,12 @@ function renderSavedOrders() {
     if (error) return '<article class="qr-receipt-card"><strong>Đơn #'+escapeHTML(id.slice(0,8))+'</strong><p class="qr-error">'+escapeHTML(error)+'</p></article>';
     return '<article class="qr-receipt-card"><strong>Đơn #'+escapeHTML(id.slice(0,8))+'</strong><p>Đang tải thông tin đơn từ máy chủ...</p></article>';
   }).join('') : '<p class="qr-empty">Chưa có đơn nào trên thiết bị này. Bạn có thể chọn món từ thực đơn.</p>';
+  target.querySelectorAll('details[data-order-id]').forEach(details=>{
+    details.addEventListener('toggle',()=>{
+      const id=details.dataset.orderId;
+      if(details.open)expandedOrderIds.add(id);else expandedOrderIds.delete(id);
+    });
+  });
 }
 async function fetchSavedOrder(id) {
   try {
@@ -203,7 +269,7 @@ async function refreshSavedOrders(all=false) {
 function startNewOrder() {
   if(sending||pendingPayload)return;
   confirmed=false;showError('');hidden('#confirmation',true);
-  cart.clear();note.value='';selectedPaymentMethod='cash';syncPaymentMethod();render();showView('menu');
+  cart.clear();itemNotes.clear();note.value='';selectedPaymentMethod='cash';syncPaymentMethod();render();showView('menu');
 }
 
 async function verifyRecentOrder() {
@@ -246,7 +312,7 @@ function restorePending() {
     pendingPayload = snapshot;
     if(snapshot.paymentMethod) selectedPaymentMethod = snapshot.paymentMethod;
     syncPaymentMethod();
-    cart.clear(); snapshot.items.forEach(it => cart.set(it.id, it.qty));
+    cart.clear();itemNotes.clear();snapshot.items.forEach(it => {cart.set(it.id,it.qty);if(it.note)itemNotes.set(it.id,String(it.note).slice(0,160))});
     note.value = snapshot.note || '';
     return true;
   } catch (_) { return false; }
@@ -281,8 +347,12 @@ function changeQuantity(id, delta) {
   if (sending || pendingPayload || confirmed) return;
   const qty = cart.get(id) || 0;
   const next = Math.max(0, Math.min(20, qty + delta));
-  if (next) cart.set(id, next); else cart.delete(id);
+  if (next) cart.set(id, next); else {cart.delete(id);itemNotes.delete(id);}
   showError(''); render();
+}
+function itemNoteField(p,placement) {
+ const saved=escapeHTML(itemNotes.get(p.id)||'');
+ return `<label class="qr-dish-note"><span>Ghi chú riêng cho ${escapeHTML(p.name)} <small>(không bắt buộc)</small></span><textarea data-item-note="${p.id}" data-placement="${placement}" maxlength="160" rows="2" placeholder="Ví dụ: không hành, ít cay, không đá…">${saved}</textarea></label>`;
 }
 function quantityUI(p, qty) {
   if (!qty) return `<button class="qr-add" data-item="${p.id}" data-delta="1" type="button" aria-label="Thêm ${escapeHTML(p.name)}">+</button>`;
@@ -299,6 +369,19 @@ function wireSteppers() {
     button.disabled = sending || Boolean(pendingPayload) || confirmed;
     button.addEventListener('click', () => changeQuantity(button.dataset.selectItem, 1));
   });
+  document.querySelectorAll('[data-item-note]').forEach(field=>{
+    field.disabled=sending || Boolean(pendingPayload) || confirmed;
+    field.addEventListener('input',()=>{
+      if(field.disabled)return;
+      const id=field.dataset.itemNote;
+      const value=field.value.slice(0,160);
+      if(value)itemNotes.set(id,value);else itemNotes.delete(id);
+      // Mirror the note in menu and cart without rerendering or losing focus.
+      document.querySelectorAll('[data-item-note]').forEach(other=>{
+        if(other!==field&&other.dataset.itemNote===id)other.value=value;
+      });
+    });
+  });
 }
 function render() {
   const {count, subtotal} = totalStats();
@@ -310,10 +393,11 @@ function render() {
       <button type="button" class="qr-card-hit" data-select-item="${p.id}" aria-label="Chọn ${escapeHTML(p.name)}, thêm một phần vào giỏ hàng" aria-controls="cartList"></button>
       <div class="qr-menu-head"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div><h3>${escapeHTML(p.name)}</h3><small>${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small></div></div>
       <div class="qr-menu-bottom"><span class="qr-money">${money(p.price)}</span>${quantityUI(p, cart.get(p.id)||0)}</div>
+      ${cart.get(p.id)?itemNoteField(p,'menu'):''}
     </article>`).join('')}</div>`).join('') || '<p class="qr-empty">Chưa có món trong thực đơn.</p>';
   $('#cartList').innerHTML = [...cart.entries()].map(([id, qty]) => {
     const p = products.find(x => x.id === id);
-    return p ? `<article class="qr-cart-card"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div class="qr-cart-info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category)} · ${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small><span class="qr-money">${money(qty*p.price)}</span></div>${quantityUI(p, qty)}</article>` : '';
+    return p ? `<article class="qr-cart-card"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div class="qr-cart-info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category)} · ${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small><span class="qr-money">${money(qty*p.price)}</span>${itemNoteField(p,'cart')}</div>${quantityUI(p, qty)}</article>` : '';
   }).join('') || '<p class="qr-empty">Giỏ hàng trống. Quay lại thực đơn để chọn món.</p>';
   $('#cartCountBadge').textContent = count;
   $('#cartTitleCount').textContent = `${count} món`;
@@ -353,6 +437,7 @@ function setOrderButton(state) {
 }
 let successTimers = [];
 function finishSuccessAnimation() {
+  if(recentOrderId)expandedOrderIds.add(recentOrderId);
   successTimers.forEach(clearTimeout);
   successTimers = [];
   hidden('#orderSuccessOverlay', true);
@@ -376,10 +461,11 @@ function playOrderSuccessAnimation(orderId) {
 }
 async function submitOrder() {
   if (sending || confirmed || !table || !totalStats().count) return;
+  if(!pendingPayload&&selectedPaymentMethod==='bank_transfer'&&!bankRecipient){showError('Chưa có tài khoản ngân hàng nhận tiền. Bạn hãy chọn Tiền mặt hoặc liên hệ nhân viên.');return}
   const animationStart = Date.now();
   if (!pendingPayload) pendingPayload = {
     token: tableToken,
-    items: [...cart].map(([id, qty]) => ({id, qty})),
+    items: [...cart].map(([id, qty]) => ({id, qty,note:(itemNotes.get(id)||'').trim().slice(0,160)})),
     requestId: newUUID(),
     paymentMethod: selectedPaymentMethod,
     note: note.value.trim().slice(0,160),
@@ -394,7 +480,7 @@ async function submitOrder() {
     void verifyRecentOrder();
     $('#confirmationText').textContent = `Mã đơn: #${order.id.slice(0,8)} · ${pendingPayload.items.reduce((n,it)=>n+it.qty,0)} món · ${table.name}.`;
     hidden('#confirmation', false);
-    pendingPayload = null; savePending(); cart.clear(); note.value = '';
+    pendingPayload = null; savePending(); cart.clear(); itemNotes.clear(); note.value = '';
     renderSavedOrders();
     // Keep loading visible long enough to perceive the original button-to-spinner morph.
     const remaining = Math.max(0, 500 - (Date.now() - animationStart));
@@ -416,6 +502,10 @@ async function init() {
     const data = await api(`/api/menu/${tableToken}`);
     if (!data?.table || !Array.isArray(data.items)) throw Error('Phản hồi thực đơn không hợp lệ.');
     table = data.table; products = data.items.filter(p=>p.active!==false); mode = data.mode;
+    try{
+      const config=await api('/api/payment/recipient?token='+encodeURIComponent(tableToken));
+      bankRecipient=config.configured?config.recipient:null;
+    }catch{bankRecipient=null}
     $('#tableName').textContent = `${table.name} · ${table.zone}`;
     $('#tableBadge').textContent = table.name;
     $('#cartTable').textContent = table.name;

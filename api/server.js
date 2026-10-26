@@ -26,6 +26,7 @@ const menuSeed=[
 let tables=[], menu=[], orders=[], lines=[];
 const id=()=>crypto.randomUUID();
 const ops=require('./operations')({pool,id});
+const paymentRecipient=require('./payment-recipient')({pool});
 const core=require('./core')({pool,id,randomToken:()=>crypto.randomBytes(24).toString('hex')});
 const staffAccounts=require('./staff-auth')({pool,id});
 const token=i=>crypto.createHmac('sha256',SESSION_SECRET).update('qr-table-'+i).digest('hex').slice(0,48);
@@ -103,17 +104,21 @@ async function updateLine(lineId,status,actorRole='staff'){const allowed={new:['
 
 async function orderStatus(orderId,qrToken){
  const t=await getTable(qrToken);if(!t)return null;
+ const recipient=await paymentRecipient.publicRecipient();
  if(!pool){
   const o=orders.find(x=>x.id===orderId&&x.table_id===t.id);
   if(!o)return null;
   const orderLines=lines.filter(x=>x.order_id===o.id).map(x=>({name:x.name,quantity:x.quantity,unit_price:x.unit_price,status:x.status,station:x.station,note:x.note||''}));
-  return {id:o.id,table_name:t.name,created_at:o.created_at,note:o.note||'',payment_method:o.payment_method||null,payment_status:o.payment_status||'unpaid',total_vnd:orderLines.reduce((s,x)=>s+(x.status==='cancelled'?0:x.quantity*x.unit_price),0),persistent:false,items:orderLines};
+  return {id:o.id,table_name:t.name,created_at:o.created_at,note:o.note||'',payment_method:o.payment_method||null,payment_status:o.payment_status||'unpaid',total_vnd:orderLines.reduce((s,x)=>s+(x.status==='cancelled'?0:x.quantity*x.unit_price),0),payment_transfer:null,persistent:false,items:orderLines};
  }
  const o=(await pool.query('SELECT id,created_at,note,payment_status,payment_method FROM dining_orders WHERE id=$1 AND table_id=$2',[orderId,t.id])).rows[0];
  if(!o)return null;
  const result=await pool.query('SELECT name,quantity,unit_price,status,station,note FROM dining_order_lines WHERE order_id=$1 ORDER BY created_at,id',[o.id]);
  const amount=result.rows.reduce((s,x)=>s+(x.status==='cancelled'?0:x.quantity*x.unit_price),0);
- return {id:o.id,table_name:t.name,created_at:o.created_at,note:o.note||'',payment_method:o.payment_method,payment_status:o.payment_status,total_vnd:amount,persistent:true,items:result.rows};
+ const ref='TT6 '+o.id.replace(/-/g,'').slice(0,12).toUpperCase();
+ const transfer=o.payment_method==='bank_transfer'&&o.payment_status==='unpaid'&&recipient&&amount>0?
+  {recipient,amount,reference:ref,qrUrl:paymentRecipient.qrUrl(recipient,amount,ref)}:null;
+ return {id:o.id,table_name:t.name,created_at:o.created_at,note:o.note||'',payment_method:o.payment_method,payment_status:o.payment_status,total_vnd:amount,payment_transfer:transfer,persistent:true,items:result.rows};
 }
 async function history(limit,offset){
  if(!pool){const all=await getOrders();return all.slice(offset,offset+limit).map(x=>({...x,payment_status:x.payment_status||'unpaid',payment_method:x.payment_method||null}))}
@@ -248,6 +253,21 @@ if(req.method==='POST'&&p==='/api/users/login'){
 if(req.method==='POST'&&p==='/api/logout'){return send(res,200,{ok:true},{'Set-Cookie':'sh_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'})}
 if(req.method==='GET'&&p==='/api/me'){const a=await identity(req);return send(res,200,{staff:!!a,role:a?.role||null,username:a?.username||null,displayName:a?.displayName||null})}
 if(req.method==='GET'&&p.startsWith('/api/menu/')){const t=await getTable(p.slice('/api/menu/'.length));if(!t)return err(res,404,'QR không hợp lệ.');return send(res,200,{table:{name:t.name,zone:t.zone},items:await getMenu(),mode})}
+if(req.method==='GET'&&p==='/api/payment/recipient'){
+ const table=await getTable(u.searchParams.get('token')||'');
+ if(!table)return err(res,404,'QR bàn không hợp lệ hoặc đã khóa.');
+ const recipient=await paymentRecipient.publicRecipient();
+ return send(res,200,{configured:Boolean(recipient),recipient});
+}
+if(p==='/api/admin/payment-settings'){
+ if(!await requireAdmin(req,res))return;
+ if(req.method==='GET')return send(res,200,{payment:await paymentRecipient.get()});
+ if(req.method==='PUT'){
+  if(!throttle(req,'merchant-bank',10))return err(res,429,'Thao tác cấu hình quá nhanh.');
+  return send(res,200,{payment:await paymentRecipient.set(await input(req))});
+ }
+ return err(res,405,'Phương thức không được hỗ trợ.');
+}
 if(req.method==='POST'&&p==='/api/orders'){if(!throttle(req,'orders',25))return err(res,429,'Gửi món quá nhanh.');const a=await placeOrder(await input(req));return send(res,a.duplicate?200:201,a)}
 
 
@@ -370,6 +390,7 @@ if(req.method==='GET'&&p==='/api/kds'){if(!await requireAuth(req,res))return;
 if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!await requireAuth(req,res))return;const a=await identity(req);if(!canCook(a.role))return err(res,403,'Vai trò này không được cập nhật chế biến.');const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status,a.role)})}
 if(req.method==='GET'&&/^\/qr\/[0-9a-f]{48}\.svg$/.test(p)){if(!await requireAuth(req,res))return;if(!canSeeTables((await identity(req)).role))return err(res,403,'Không có quyền lấy QR bàn.');const t=p.slice(4,-4);if(!(await getTable(t)))return err(res,404,'Không tìm thấy bàn.');const origin=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;const svg=await QRCode.toString(origin+'/t/'+t,{type:'svg',margin:2,width:320,errorCorrectionLevel:'M'});res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'no-store'});res.end(svg);return}
 if(req.method==='GET'&&p.startsWith('/t/'))return staticPage(req,res,'guest.html');
+if(req.method==='GET'&&p==='/admin/payment')return staticPage(req,res,'payment.html');
 if(req.method==='GET'&&p==='/admin/users')return staticPage(req,res,'users.html');
 if(req.method==='GET'&&p==='/admin/core')return staticPage(req,res,'core.html');
 if(req.method==='GET'&&p==='/admin/operations')return staticPage(req,res,'operations.html');

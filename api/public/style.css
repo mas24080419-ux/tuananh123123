@@ -240,3 +240,65 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
   .guest-orange .qr-brandline{gap:6px}
   .guest-orange .qr-brandtext small{font-size:9px}
 }
+
+
+/* Tắm Tráng 6: per-dish notes, tappable bill and dynamic bank transfer QR */
+.guest-orange .qr-dish-note{
+ display:grid;gap:6px;width:100%;font-weight:750;font-size:11px;color:#654c3f;
+ margin-top:3px;min-width:0;position:relative;z-index:3;pointer-events:auto;
+}
+.guest-orange .qr-dish-note small{display:inline;color:#9e897c;font-weight:500}
+.guest-orange .qr-dish-note textarea{
+ font:inherit;font-weight:500;font-size:12px;line-height:1.45;color:#352821;
+ border:1px solid #e9dcd4;border-radius:11px;padding:10px 11px;resize:vertical;
+ width:100%;min-height:58px;max-height:130px;box-sizing:border-box;background:#fffaf7;
+ pointer-events:auto;touch-action:manipulation;
+}
+.guest-orange .qr-dish-note textarea:focus{outline:2px solid #e88a67;border-color:#e88a67}
+.guest-orange .qr-menu-card .qr-card-hit{z-index:1}
+.guest-orange .qr-menu-card .qr-dish-note{z-index:4}
+.guest-orange .qr-cart-card .qr-cart-info{min-width:0;flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+.guest-orange .qr-cart-card .qr-dish-note{margin-top:7px}
+.guest-orange .qr-cart-card .qr-stepper{flex-shrink:0;align-self:flex-start}
+.guest-orange .qr-bill-card{padding:0;overflow:hidden}
+.guest-orange .qr-bill-summary{padding:16px;cursor:pointer;list-style:none;align-items:center}
+.guest-orange .qr-bill-summary::-webkit-details-marker{display:none}
+.guest-orange .qr-bill-summary:focus-visible{outline:3px solid #e84e1b;outline-offset:-4px}
+.guest-orange .qr-bill-summary-right{display:flex;align-items:flex-end;gap:6px;flex-direction:column;min-width:100px}
+.guest-orange .qr-bill-summary-right b{font-size:15px;color:#332519;white-space:nowrap}
+.guest-orange .qr-bill-summary .qr-receipt-badge{max-width:none;font-size:10px}
+.guest-orange .qr-bill-tap{font-size:10px;color:#c06945!important;font-weight:650}
+.guest-orange .qr-bill-chevron{font-size:19px;color:#c46b49;transition:transform .2s}
+.guest-orange .qr-bill-card[open] .qr-bill-chevron{transform:rotate(180deg)}
+.guest-orange .qr-bill-body{padding:0 16px 17px;border-top:1px solid #f2e7e2}
+.guest-orange .qr-transfer-preview,.guest-orange .qr-bill-transfer{
+ margin:13px 0;border:1px solid #f5d8c5;background:#fffaf6;border-radius:16px;
+ padding:15px;display:flex;align-items:center;flex-direction:column;gap:8px;text-align:center;
+}
+.guest-orange .qr-transfer-preview h3{font-size:15px;color:#3b2b21;margin:0}
+.guest-orange .qr-transfer-preview img,.guest-orange .qr-bill-transfer img{
+ width:min(100%,255px);height:auto;object-fit:contain;border-radius:9px;min-height:150px;
+ background:white;display:block;
+}
+.guest-orange .qr-transfer-preview strong,.guest-orange .qr-bill-transfer>p strong{
+ font-size:22px;font-weight:900;color:#b64522
+}
+.guest-orange .qr-transfer-preview small,.guest-orange .qr-bill-transfer small{
+ display:block;font-size:12px;color:#80685a;overflow-wrap:anywhere
+}
+.guest-orange .qr-transfer-disclaimer,.guest-orange .qr-bill-warning{
+ margin:6px 0 0;font-size:11px;line-height:1.5;color:#9d634d
+}
+.guest-orange .qr-transfer-message{font-size:12px;color:#745b4e;line-height:1.5;margin:0}
+.guest-orange .qr-bill-transfer-notice{
+ background:#fff6ed;border:1px solid #f2daca;padding:12px;border-radius:11px;
+ color:#945c3e;font-size:12px;line-height:1.5;margin-top:12px
+}
+.guest-orange .qr-bill-transfer p{margin:4px 0}
+@media(max-width:390px){
+ .guest-orange .qr-menu-grid{grid-template-columns:1fr}
+ .guest-orange .qr-bill-summary{gap:7px}
+ .guest-orange .qr-bill-summary-right{min-width:80px}
+ .guest-orange .qr-cart-card .qr-cart-info{min-width:0}
+}
+@media(prefers-reduced-motion:reduce){.guest-orange .qr-bill-chevron{transition:none}}
