@@ -229,3 +229,14 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
 @media(prefers-reduced-motion:reduce){
   .guest-orange .qr-menu-card{transition:none}
 }
+
+
+/* Tắm Tráng 6 branding: let the longer Vietnamese app name fit narrow phones. */
+.guest-orange .qr-brandline{flex-wrap:wrap}
+.guest-orange .qr-brandicon{flex:0 0 34px}
+.guest-orange .qr-brandtext{font-size:clamp(14px,3.8vw,19px);min-width:0;overflow-wrap:anywhere}
+.guest-orange .qr-table-pill{min-width:0;flex-shrink:1}
+@media(max-width:360px){
+  .guest-orange .qr-brandline{gap:6px}
+  .guest-orange .qr-brandtext small{font-size:9px}
+}
