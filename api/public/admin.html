@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#112638"><title>SalesHub | Quản trị cửa hàng</title>
+<meta name="theme-color" content="#112638"><title>Tắm Tráng 6 | Quản trị cửa hàng</title>
 <style>
 :root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;color:#172934;background:#f5f7fa;font-synthesis:none}*{box-sizing:border-box}
 body{margin:0}button,input,select{font:inherit}button{cursor:pointer}a{color:#127a77;text-decoration:none}
@@ -60,7 +60,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid 
 @media(max-width:740px){.shell{display:block}aside{min-height:auto;padding:14px 17px}.side-sub,.side-foot,.side-link{display:none}.brand{font-size:18px}.brand-icon{width:34px;height:34px}main{padding:17px}.cards{gap:9px}.card{padding:14px}.card b{font-size:21px}.filters{gap:8px}.topbar{align-items:flex-start}.tag{font-size:10px}}
 
 
-/* SalesHub POS UI V9 — researched patterns: POS report hierarchy, dense ledger, clear inventory alerts. */
+/* Tắm Tráng 6 POS UI V9 — researched patterns: POS report hierarchy, dense ledger, clear inventory alerts. */
 :root{--sh-bg:#F4F6F9;--sh-paper:#fff;--sh-line:#E7EBF0;--sh-ink:#182935;--sh-sub:#718596;--sh-primary:#EB653B;--sh-dark:#122635;--sh-teal:#087F71;--sh-shadow:0 8px 30px rgba(19,36,49,.045)}
 html{scroll-behavior:smooth}
 body{background:var(--sh-bg)!important;color:var(--sh-ink);-webkit-font-smoothing:antialiased}
@@ -155,7 +155,7 @@ tbody tr:last-child td{border-bottom:none!important}
 </head>
 <body>
 <div class="shell">
-<aside><div class="brand"><div class="brand-icon">S</div>SalesHub</div>
+<aside><div class="brand"><div class="brand-icon">6</div>Tắm Tráng 6</div>
 <p class="side-sub">Không gian quản trị dành riêng cho chủ cửa hàng.</p>
 <a class="side-link on" href="/admin">▦ Tổng quan</a>
 <a class="side-link" href="/admin/operations">▤ Thu–chi & kho</a>
@@ -165,7 +165,7 @@ tbody tr:last-child td{border-bottom:none!important}
 <p class="side-foot">Neon PostgreSQL<br>Báo cáo dựa trên dữ liệu đã lưu<br>Giờ Việt Nam (UTC+7)</p></aside>
 <div>
 <section id="login">
-<div class="brand" style="color:#112637"><div class="brand-icon">S</div>SalesHub</div>
+<div class="brand" style="color:#112637"><div class="brand-icon">6</div>Tắm Tráng 6</div>
 <h1 style="margin-top:25px">Đăng nhập quản trị</h1>
 <p class="muted">Dùng mật khẩu chủ cửa hàng. Tài khoản bếp/nhân viên không có quyền xem báo cáo tài chính.</p>
 <form id="loginForm"><input id="password" type="password" autocomplete="current-password" required placeholder="Mật khẩu quản trị">
@@ -304,7 +304,7 @@ function exportOrderRows(){
  const csv='\ufeff'+[columns,...records].map(a=>a.map(safe).join(',')).join('\r\n');
  const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
  const url=URL.createObjectURL(blob),link=document.createElement('a');
- link.href=url;link.download='SalesHub_DonHang_'+$('#from').value+'_'+$('#to').value+'.csv';
+ link.href=url;link.download='TamTrang6_DonHang_'+$('#from').value+'_'+$('#to').value+'.csv';
  document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);
 }
 $('#adminOrderSearch').addEventListener('input',applyOrderFilters);
