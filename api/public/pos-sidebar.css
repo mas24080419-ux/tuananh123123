@@ -112,7 +112,7 @@ body.tt6-side-collapsed .tt6-side-avatar{flex:0 0 34px;width:34px;height:34px}
 .tt6-mobile-header{display:none}
 .tt6-sidebar :focus-visible{outline:2px solid #eb7d4c!important;outline-offset:2px!important}
 /* Preserve the payment screen content width with the same navigation shell. */
-.tt6-payment-shell>.tt6-payment-content{min-width:0;width:100%;max-width:940px;margin:0 auto;padding:22px 22px 60px}
+.tt6-payment-shell>.tt6-payment-content{margin:0 auto;padding:22px 22px 60px}
 /* Keep old page-level navigations out of sight: the shared sidebar is canonical. */
 body:has(.tt6-sidebar) .tt6-payment-content>header nav{display:none}
 @media(min-width:761px) and (max-width:1050px){
@@ -124,14 +124,12 @@ body:has(.tt6-sidebar) .tt6-payment-content>header nav{display:none}
 }
 @media(max-width:760px){
  body:has(.tt6-sidebar){overflow-x:hidden}
- .tt6-mobile-header{
-  display:flex;align-items:center;gap:10px;height:61px;padding:8px 13px;
-  position:sticky;top:0;z-index:41;background:rgba(255,255,255,.97);border-bottom:1px solid #e5eeee;
+ .tt6-mobile-header{align-items:center;border-bottom:1px solid #e5eeee;
   box-shadow:0 2px 10px rgba(29,69,75,.035)
  }
  .tt6-mobile-header img{border-radius:10px;object-fit:cover;flex:none}
- .tt6-mobile-header span{font-size:15px;color:#173f45;font-weight:850;letter-spacing:-.35px}
- .tt6-mobile-header small{font-size:9px;margin-left:auto;letter-spacing:1px;color:#849da2;font-weight:900}
+ .tt6-mobile-header span{color:#173f45;font-weight:850;letter-spacing:-.35px}
+ .tt6-mobile-header small{margin-left:auto;letter-spacing:1px;color:#849da2;font-weight:900}
  .tt6-mobile-header button.tt6-mobile-open{
   display:grid!important;place-items:center!important;width:37px!important;height:37px!important;flex:0 0 37px;
   border:1px solid #e0eded!important;color:#23717a!important;background:#f5fbf9!important;
@@ -182,9 +180,6 @@ body:has(.tt6-sidebar) .tt6-payment-content>header nav{display:none}
  .tt6-payment-shell>.tt6-payment-content{padding:17px 13px 42px}
 }
 @media(prefers-reduced-motion:reduce){.tt6-sidebar,.tt6-icon,.tt6-side-link{transition:none!important}}
-
-
-/* V12 unified POS shell: override all legacy page-specific sidebar/mobile rules. */
 html{max-width:100%;overflow-x:clip}
 body:has(.tt6-sidebar){width:100%;max-width:100%;overflow-x:clip}
 .shell:has(>aside.tt6-sidebar)>:not(aside){
@@ -380,11 +375,6 @@ body.tt6-staff #storageNotice{border-radius:12px}
 @media print{
  body.tt6-staff .top{position:static;box-shadow:none}
 }
-
-
-/* iPhone/Messenger hotfix — single authoritative mobile layout, appended last.
-   Prevent iOS date controls from overflowing their columns.
-   Prevent legacy global button styles from painting the drawer scrim orange. */
 @media (max-width:760px) {
   body:has(.tt6-sidebar) #filterForm {
     display:grid!important;

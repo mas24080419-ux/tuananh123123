@@ -7,7 +7,7 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
 .guest-orange .qr-app{min-height:100dvh;padding-bottom:226px}
 .guest-orange .qr-header{background:linear-gradient(139deg,#fff9f3,#ffede4);padding:21px 20px 25px;border-bottom:1px solid #ffe1d2}
 .guest-orange .qr-header>h1,.guest-orange .qr-header>p,.guest-orange .qr-brandline{max-width:790px;margin-left:auto;margin-right:auto}
-.guest-orange .qr-brandline{display:flex;align-items:center;gap:9px;font-weight:800;margin-bottom:19px}
+.guest-orange .qr-brandline{font-weight:800;margin-bottom:19px}
 .guest-orange .qr-brandicon{height:34px;width:34px;border-radius:11px;display:grid;place-items:center;background:#e84e1b;color:#fff;font-size:20px}
 .guest-orange .qr-brandtext small{font-size:10px;color:#ad553a;letter-spacing:1px}
 .guest-orange .qr-table-pill{margin-left:auto;padding:8px 10px;border:1px solid #ffdbc5;border-radius:30px;background:#fff;color:#a94d2d;font-size:11px;max-width:44%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -16,8 +16,8 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
 .guest-orange main.qr-main{max-width:790px;margin:0 auto;padding:17px 16px 34px}
 .guest-orange .qr-notice{padding:13px 15px;background:#fff8ea;border:1px solid #ffdb9a;border-radius:14px;font-size:12px;color:#895b1b;margin-bottom:16px;line-height:1.5}
 .guest-orange .qr-notice.is-online{background:#edf9f3;border-color:#cfecdb;color:#1a7653}
-.guest-orange .qr-tabs{display:grid;grid-template-columns:1fr 1fr;background:#efe8e4;padding:4px;border-radius:15px;margin-bottom:20px}
-.guest-orange .qr-tabs button{border:0;border-radius:11px;padding:11px 8px;background:transparent;color:#78685d;font-weight:750}
+.guest-orange .qr-tabs{display:grid;background:#efe8e4;padding:4px;border-radius:15px;margin-bottom:20px}
+.guest-orange .qr-tabs button{border:0;border-radius:11px;background:transparent;color:#78685d;font-weight:750}
 .guest-orange .qr-tabs button.active{background:white;color:#e84e1b;box-shadow:0 3px 10px #31170a12}
 .guest-orange .cart-badge{background:#e84e1b;color:#fff;padding:2px 7px;border-radius:999px;font-size:11px}
 .guest-orange .qr-section-head{margin-bottom:15px}
@@ -40,7 +40,7 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
 .guest-orange .qr-stepper button:hover{background:white}
 .guest-orange .qr-stepper span{min-width:22px;text-align:center;font-size:13px;font-weight:800}
 .guest-orange .qr-cart-list{display:grid;gap:11px;margin:14px 0}
-.guest-orange .qr-cart-card{display:flex;align-items:center;gap:12px;animation:qrIn .22s ease-out both}
+.guest-orange .qr-cart-card{animation:qrIn .22s ease-out both}
 .guest-orange .qr-cart-card .qr-food-art{width:64px;height:64px;flex-basis:64px}
 .guest-orange .qr-cart-info{flex:1;min-width:0}
 .guest-orange .qr-cart-info .qr-money{display:block;margin-top:6px}
@@ -70,7 +70,6 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
 .guest-orange .qr-order-action{height:56px;display:flex;justify-content:center}
 .guest-orange .morph-order{width:100%;min-width:56px;height:56px;position:relative;overflow:hidden;border:0;border-radius:16px;background:#e84e1b;color:white;font-weight:750;white-space:nowrap;box-shadow:0 8px 24px #e84e1b55;transition:width 320ms cubic-bezier(.2,.8,.2,1),border-radius 320ms cubic-bezier(.2,.8,.2,1),background-color .2s}
 .guest-orange .morph-order.placing{width:56px;border-radius:28px;cursor:progress;opacity:1}
-.guest-orange .morph-order.success{background:#23825f;opacity:1}
 .guest-orange .morph-order-content{display:flex;align-items:center;justify-content:center;gap:8px;transition:opacity .15s}
 .guest-orange .morph-order.placing .morph-order-content{opacity:0}
 .guest-orange .morph-spinner{display:none;position:absolute;top:50%;left:50%;width:25px;height:25px;border:3px solid #ffffff66;border-top-color:white;border-radius:50%;transform:translate(-50%,-50%);animation:qrSpin .7s linear infinite}
@@ -196,7 +195,6 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
 .guest-orange .qr-menu-card .qr-card-hit{
   position:absolute;
   inset:0;
-  z-index:1;
   width:100%;
   height:100%;
   padding:0;
@@ -234,7 +232,7 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
 /* Tắm Tráng 6 branding: let the longer Vietnamese app name fit narrow phones. */
 .guest-orange .qr-brandline{flex-wrap:wrap}
 .guest-orange .qr-brandicon{flex:0 0 34px}
-.guest-orange .qr-brandtext{font-size:clamp(14px,3.8vw,19px);min-width:0;overflow-wrap:anywhere}
+.guest-orange .qr-brandtext{font-size:clamp(14px,3.8vw,19px)}
 .guest-orange .qr-table-pill{min-width:0;flex-shrink:1}
 @media(max-width:360px){
   .guest-orange .qr-brandline{gap:6px}
@@ -257,7 +255,7 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
 .guest-orange .qr-dish-note textarea:focus{outline:2px solid #e88a67;border-color:#e88a67}
 .guest-orange .qr-menu-card .qr-card-hit{z-index:1}
 .guest-orange .qr-menu-card .qr-dish-note{z-index:4}
-.guest-orange .qr-cart-card .qr-cart-info{min-width:0;flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
+.guest-orange .qr-cart-card .qr-cart-info{flex:1;display:flex;flex-direction:column;align-items:flex-start;gap:5px}
 .guest-orange .qr-cart-card .qr-dish-note{margin-top:7px}
 .guest-orange .qr-cart-card .qr-stepper{flex-shrink:0;align-self:flex-start}
 .guest-orange .qr-bill-card{padding:0;overflow:hidden}
@@ -302,11 +300,6 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
  .guest-orange .qr-cart-card .qr-cart-info{min-width:0}
 }
 @media(prefers-reduced-motion:reduce){.guest-orange .qr-bill-chevron{transition:none}}
-
-
-/* FIX 2026-10-26: selected menu cards must remain VERTICAL on phones.
-   Legacy @media(max-width:480px) changed .qr-menu-card to flex-direction:row;
-   after per-dish notes were introduced, that squeezed titles into single letters. */
 .guest-orange .qr-menu-grid > .qr-menu-card{
   display:grid;
   grid-template-columns:minmax(0,1fr);

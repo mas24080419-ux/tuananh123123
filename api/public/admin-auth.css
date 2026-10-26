@@ -1,0 +1,26 @@
+/* MediQueue-inspired owner account gateway, scoped to authentication and security panel. */
+body.tt6-owner-login{background:linear-gradient(145deg,#ecf8f6,#fefaf3)!important}
+#login.tt6-auth-card{max-width:450px;margin:clamp(20px,8vh,90px) auto!important;padding:clamp(20px,4vw,32px)!important;border-radius:24px;border:1px solid #e5eee9;box-shadow:0 20px 50px #18595a16;background:white}
+.tt6-auth-logo{display:flex;align-items:center;gap:14px;margin-bottom:25px}
+.tt6-auth-logo img{width:66px;height:66px;object-fit:cover;border-radius:17px;box-shadow:0 5px 18px #177b7a17}
+.tt6-auth-logo span{display:grid;gap:5px;color:#164f4c}
+.tt6-auth-logo strong{font-size:23px;letter-spacing:-.7px}
+.tt6-auth-logo small,.tt6-auth-eyebrow{font-size:10px;letter-spacing:1.3px;font-weight:850;color:#529b92}
+.tt6-auth-card h1{font-size:25px!important;letter-spacing:-.7px}
+.tt6-auth-card label,.tt6-security-card label{display:block;margin:18px 0 7px;font-weight:750;font-size:12px;color:#375d63}
+#login.tt6-auth-card input{width:100%;min-height:46px;font-size:16px;margin:0!important;border:1px solid #dbe6e7;background:#fbfdfc;border-radius:11px;padding:11px 14px}
+.tt6-password-row{display:flex;align-items:center;position:relative;min-width:0}
+.tt6-password-row input{padding-right:67px!important;min-width:0}
+#login button.tt6-show-pass,button.tt6-show-pass{position:absolute;right:5px;top:50%;transform:translateY(-50%);min-height:36px!important;width:auto!important;padding:7px 10px!important;background:transparent!important;border:0!important;box-shadow:none!important;color:#137d76!important;font-size:12px!important;z-index:2}
+#login #loginButton{width:100%;margin-top:24px;min-height:47px!important;background:linear-gradient(125deg,#078b7e,#18a78f)!important;color:white!important;border:0;border-radius:12px;box-shadow:0 8px 24px #0c8e7c20}
+.tt6-auth-foot{font-size:11px;line-height:1.5;color:#8da1a1;margin:16px 0 0}
+.tt6-security-panel{padding:20px 0 40px;min-width:0}
+.tt6-security-card{width:100%;max-width:590px;padding:clamp(17px,3vw,28px);background:white;border:1px solid #e3eded;border-radius:20px;box-shadow:0 8px 25px #183e4908}
+.tt6-security-head{display:flex;gap:12px;align-items:flex-start;justify-content:space-between;flex-wrap:wrap}
+.tt6-security-head h2{margin:4px 0}
+.tt6-security-card input{width:100%;min-height:45px;font-size:16px;border:1px solid #dbe6e7;border-radius:11px;padding:11px 70px 11px 13px}
+.tt6-security-card button#savePassword{margin-top:15px;min-height:43px;background:#0c8e7c!important}
+.tt6-security-card #securityNotice{font-size:12px;min-height:20px}
+@media(max-width:760px){#login.tt6-auth-card{margin:18px 13px!important;padding:22px 18px!important}.tt6-auth-logo img{width:54px;height:54px}.tt6-security-panel{padding-top:13px}.tt6-security-card{padding:18px}}
+
+#dashboard.tt6-security-mode>:not(#security){display:none!important}#dashboard.tt6-security-mode #security{display:block!important;max-width:720px;margin:0 auto}

@@ -255,8 +255,7 @@ async function confirmPayment(orderId,providedMethod){
  } catch(e) {await c.query('ROLLBACK');throw e} finally {c.release()}
 }
 
-const publicDir=path.join(__dirname,'public');const mime={'.html':'text/html; charset=utf-8','.js':'text/javascript; charset=utf-8','.css':'text/css; charset=utf-8','.svg':'image/svg+xml; charset=utf-8'};
-function staticPage(req,res,p){const file=path.join(publicDir,p);if(!file.startsWith(publicDir+path.sep))return err(res,404,'Không tìm thấy trang.');fs.readFile(file,(e,data)=>{if(e)return err(res,404,'Không tìm thấy trang.');res.writeHead(200,{'Content-Type':mime[path.extname(p)]||'text/plain','Cache-Control':'no-store'});res.end(data)})}
+const serveStatic=require('./static-files')(path.join(__dirname,'public'));
 async function route(req,res){for(const [k,v]of Object.entries(securityHeaders))res.setHeader(k,v);const u=new URL(req.url,'http://localhost');const p=u.pathname;
 if(!sameOrigin(req,res))return;
 if(req.method==='GET'&&p==='/api/health'){let db='pilot';if(pool){try{await pool.query('SELECT 1');db='ready'}catch{db='unavailable'}}return send(res,db==='unavailable'?503:200,{ok:db!=='unavailable',mode,database:db,pilot:mode==='pilot',notice:mode==='pilot'?'BẢN THỬ NGHIỆM: đơn hàng lưu RAM và bị xóa khi server khởi động lại. Không dùng vận hành thật.':'Dữ liệu được lưu trên PostgreSQL.'})}
@@ -449,22 +448,7 @@ if(req.method==='GET'&&p==='/api/kds'){if(!await requireAuth(req,res))return;
  return send(res,200,{orders:visible})}
 if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!await requireAuth(req,res))return;const a=await identity(req);if(!canCook(a.role))return err(res,403,'Vai trò này không được cập nhật chế biến.');const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status,a.role)})}
 if(req.method==='GET'&&/^\/qr\/[0-9a-f]{48}\.svg$/.test(p)){if(!await requireAuth(req,res))return;if(!canSeeTables((await identity(req)).role))return err(res,403,'Không có quyền lấy QR bàn.');const t=p.slice(4,-4);if(!(await getTable(t)))return err(res,404,'Không tìm thấy bàn.');const origin=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;const svg=await QRCode.toString(origin+'/t/'+t,{type:'svg',margin:2,width:320,errorCorrectionLevel:'M'});res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'no-store'});res.end(svg);return}
-if(req.method==='GET'&&p.startsWith('/t/'))return staticPage(req,res,'guest.html');
-if(req.method==='GET'&&p==='/admin/payment')return staticPage(req,res,'payment.html');
-if(req.method==='GET'&&p==='/admin/users')return staticPage(req,res,'users.html');
-if(req.method==='GET'&&p==='/admin/core')return staticPage(req,res,'core.html');
-if(req.method==='GET'&&p==='/admin/operations')return staticPage(req,res,'operations.html');
-if(req.method==='GET'&&p==='/admin')return staticPage(req,res,'admin.html');
-if(req.method==='GET'&&(p==='/'||p==='/staff'))return staticPage(req,res,'staff.html');
-if(req.method==='GET'&&p==='/mediqueue-auth.css')return staticPage(req,res,'mediqueue-auth.css');
-if(req.method==='GET'&&p==='/finance-app.css')return staticPage(req,res,'finance-app.css');
-if(req.method==='GET'&&p==='/finance-charts.css')return staticPage(req,res,'finance-charts.css');
-if(req.method==='GET'&&p==='/finance-charts.js')return staticPage(req,res,'finance-charts.js');
-if(req.method==='GET'&&p==='/pos-sidebar.css')return staticPage(req,res,'pos-sidebar.css');
-if(req.method==='GET'&&p==='/pos-sidebar.js')return staticPage(req,res,'pos-sidebar.js');
-if(req.method==='GET'&&p==='/admin-minimal.css')return staticPage(req,res,'admin-minimal.css');
-if(req.method==='GET'&&p==='/tam-trang-6-logo.svg')return staticPage(req,res,'tam-trang-6-logo.svg');
-if(req.method==='GET'&&p==='/style.css')return staticPage(req,res,'style.css');
+if(await serveStatic(req,res,p))return;
 err(res,404,'Không có tài nguyên.');}
 async function main(){
  await init();
