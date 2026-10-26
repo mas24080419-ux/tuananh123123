@@ -226,8 +226,6 @@ $('#refresh').addEventListener('click',load);
 /* V11: show data first, allow a single accounting or stock form on demand. */
 (function quietOperations(){
  const actions=[
-  {section:'inventory',name:'Thêm nguyên liệu',form:'createItemForm'},
-  {section:'inventory',name:'Nhập / xuất kho',form:'stockForm'},
   {section:'recipes',name:'Sửa định mức',form:'recipeForm'}
  ];
  const toggles=new Map();
@@ -255,7 +253,7 @@ $('#refresh').addEventListener('click',load);
   form.addEventListener('reset',()=>setTimeout(()=>show(false),0));
   toggles.set(action.form,{button,show});
  }
- for(const sectionName of ['inventory','recipes']){
+ for(const sectionName of ['recipes']){
   const section=document.getElementById(sectionName);
   const row=document.createElement('div');row.className='ui-toolbar';
   for(const action of actions.filter(x=>x.section===sectionName))row.append(toggles.get(action.form).button);
@@ -278,9 +276,11 @@ $('#refresh').addEventListener('click',load);
   details.append(summary,chart);finance.append(details);
  }
  const cols=finance.querySelector('.columns');if(cols)cols.style.display='block';
- const inv=document.getElementById('inventory').querySelector('.columns');if(inv)inv.style.display='block';
+ const inv=document.getElementById('inventory').querySelector('.columns');if(inv){inv.classList.add('stock-entry-forms');inv.querySelectorAll(':scope > .panel').forEach(p=>p.classList.add('is-open'));}
  const recipe=document.getElementById('recipes').querySelector('.columns');if(recipe)recipe.style.display='block';
  const fromHash=location.hash.slice(1);
  const tab=document.querySelector('[data-section="'+fromHash+'"]');
  if(tab)tab.click();
 })();
+
+document.getElementById('inventoryShortcut')?.addEventListener('click',()=>{document.querySelector('[data-section="inventory"]').click();document.getElementById('inventory').scrollIntoView({behavior:'smooth',block:'start'});});

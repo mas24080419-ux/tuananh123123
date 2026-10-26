@@ -16,6 +16,7 @@
 <div class="stat"><small>NGUYÊN LIỆU CẦN NHẬP</small><strong class="orange" id="lowStock">—</strong><p>Theo ngưỡng tối thiểu đã cấu hình</p></div>
 </div>
 </section>
+<p><a class="sh-quicklink" href="#inventory" id="inventoryShortcut">＋ Thêm nguyên liệu / nhập kho →</a></p>
 <div class="tt6-app-actions" aria-label="Thao tác tài chính">
 <button type="button" id="quickIncome" class="tt6-finance-action is-income" aria-pressed="false"><span class="tt6-action-icon" aria-hidden="true">↓</span><span><b>Ghi khoản thu</b><small>Tiền vào</small></span></button>
 <button type="button" id="quickExpense" class="tt6-finance-action is-expense" aria-pressed="true"><span class="tt6-action-icon" aria-hidden="true">↑</span><span><b>Ghi khoản chi</b><small>Tiền ra</small></span></button>
@@ -67,15 +68,16 @@
 </details>
 </section>
 <section id="inventory" class="section">
+<div class="panel"><h2>Nguyên liệu &amp; tồn kho</h2><p>Tạo nguyên liệu ở bước 1, sau đó nhập số lượng tồn đầu kỳ hoặc ghi phiếu nhập mua ở bước 2.</p></div>
 <div class="columns">
-<div class="panel"><h2>Thêm nguyên liệu / hàng tồn</h2>
+<div class="panel"><h2>1. Thêm nguyên liệu / hàng tồn</h2>
 <form id="createItemForm" class="field">
 <label>Tên nguyên liệu<input name="name" maxlength="80" required placeholder="Ví dụ: Gạo, thịt bò, trà đào"></label>
 <div class="pair"><label>Đơn vị tính<input name="unit" maxlength="16" required placeholder="kg, lít, g, cái"></label>
 <label>Ngưỡng báo sắp hết<input name="reorderLevel" type="number" min="0" step=".001" value="0" required></label></div>
 <button type="submit">Tạo nguyên liệu</button></form>
 <p class="helper">Tạo nguyên liệu không tự sinh số lượng kho. Dùng “Tồn đầu kỳ” để nhập số liệu kiểm kê ban đầu.</p></div>
-<div class="panel"><h2>Nhập / xuất kho</h2><form id="stockForm" class="field">
+<div class="panel"><h2>2. Nhập / xuất kho</h2><form id="stockForm" class="field">
 <label>Nguyên liệu<select name="inventoryItemId" id="stockItem" required><option value="">Chọn nguyên liệu</option></select></label>
 <div class="pair"><label>Nghiệp vụ<select name="kind" id="stockKind" required><option value="purchase">Nhập mua (đồng thời ghi chi)</option><option value="opening">Tồn đầu kỳ</option><option value="adjustment_in">Điều chỉnh tăng</option><option value="adjustment_out">Điều chỉnh giảm / hao hụt</option></select></label>
 <label>Số lượng<input name="quantity" min=".001" max="1000000" step=".001" type="number" required></label></div>
