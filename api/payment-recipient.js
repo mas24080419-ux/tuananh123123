@@ -34,5 +34,41 @@ module.exports=function paymentRecipient({pool}){
   [bankBin,accountNumber,accountName,enabled]);
   return {bankBin:r.rows[0].bank_bin,accountNumber:r.rows[0].account_number,accountName:r.rows[0].account_name,enabled:r.rows[0].enabled,updatedAt:r.rows[0].updated_at};
  }
- return {get,publicRecipient,qrUrl,set};
+
+ // VietQR publicly exposes a bank directory; the customer never submits a banking PIN.
+ // Cache for a day, and retain a minimal verified list if the upstream is offline.
+ const bankFallback=[
+  ['970436','Vietcombank'],['970415','VietinBank'],['970418','BIDV'],['970405','Agribank'],
+  ['970422','MBBank'],['970407','Techcombank'],['970416','ACB'],['970432','VPBank'],
+  ['970423','TPBank'],['970403','Sacombank'],['970437','HDBank'],['970426','MSB'],
+  ['970441','VIB'],['970443','SHB'],['970448','OCB'],['970431','Eximbank'],
+  ['970449','LPBank'],['970438','BaoVietBank'],['970409','BacABank'],['970425','ABBANK']
+ ].map(([bin,name])=>({bin,name}));
+ let cachedBanks=null,cacheUntil=0;
+ async function banks(){
+  if(cachedBanks&&Date.now()<cacheUntil)return{banks:cachedBanks,source:'vietqr-cached'};
+  try{
+   const response=await fetch('https://api.vietqr.io/v2/banks',{
+     headers:{Accept:'application/json'},signal:AbortSignal.timeout(6500)
+   });
+   if(!response.ok)throw Error('Bank directory unavailable');
+   const info=await response.json();
+   if(!Array.isArray(info.data))throw Error('Bank directory malformed');
+   const unique=new Map();
+   for(const bank of info.data){
+    const bin=String(bank.bin||''),name=String(bank.shortName||bank.name||'').trim().slice(0,80);
+    if(!/^\d{6}$/.test(bin)||!name||Number(bank.transferSupported)===0)continue;
+    if(!unique.has(bin))unique.set(bin,{bin,name});
+   }
+   if(unique.size<15)throw Error('Bank directory incomplete');
+   cachedBanks=[...unique.values()].sort((a,b)=>a.name.localeCompare(b.name,'vi'));
+   cacheUntil=Date.now()+24*60*60*1000;
+   return {banks:cachedBanks,source:'vietqr'};
+  }catch{
+   const fallback=cachedBanks&&cachedBanks.length?cachedBanks:bankFallback;
+   return{banks:fallback,source:'fallback'};
+  }
+ }
+
+ return {get,publicRecipient,qrUrl,set,banks};
 };
