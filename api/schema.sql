@@ -187,3 +187,18 @@ CREATE TABLE IF NOT EXISTS merchant_payment_settings (
  enabled boolean NOT NULL DEFAULT true,
  updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+
+-- Owner credentials on Neon. Passwords are scrypt-hashed with independent random salt.
+-- A changed password increments auth_version and invalidates every existing owner cookie.
+CREATE TABLE IF NOT EXISTS owner_accounts (
+  id uuid PRIMARY KEY,
+  email text NOT NULL UNIQUE CHECK (email=lower(email) AND email ~ '^[^[:space:]@]+@[^[:space:]@]+\.[^[:space:]@]+$'),
+  password_salt text NOT NULL CHECK (password_salt ~ '^[0-9a-f]{32}$'),
+  password_hash text NOT NULL CHECK (password_hash ~ '^[0-9a-f]{128}$'),
+  auth_version integer NOT NULL DEFAULT 1 CHECK (auth_version > 0),
+  active boolean NOT NULL DEFAULT true,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  password_changed_at timestamptz
+);
