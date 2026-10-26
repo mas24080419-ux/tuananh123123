@@ -27,6 +27,7 @@ let tables=[], menu=[], orders=[], lines=[];
 const id=()=>crypto.randomUUID();
 const ops=require('./operations')({pool,id});
 const core=require('./core')({pool,id,randomToken:()=>crypto.randomBytes(24).toString('hex')});
+const staffAccounts=require('./staff-auth')({pool,id});
 const token=i=>crypto.createHmac('sha256',SESSION_SECRET).update('qr-table-'+i).digest('hex').slice(0,48);
 const authHash=s=>crypto.createHash('sha256').update(s).digest();
 const safeEq=(a,b)=>{const x=authHash(a),y=authHash(b);return crypto.timingSafeEqual(x,y)};
@@ -54,9 +55,35 @@ function loginCookie(role){
  const sig=crypto.createHmac('sha256',SESSION_SECRET).update(exp+'.'+role).digest('hex');
  return 'sh_session='+exp+'.'+role+'.'+sig+'; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=28800';
 }
-const session=req=>Boolean(sessionRole(req));
-const requireAuth=(req,res)=>{if(!session(req)){err(res,401,'Cần đăng nhập nhân viên.');return false}return true};
-const requireAdmin=(req,res)=>{if(sessionRole(req)!=='admin'){err(res,403,'Chỉ tài khoản chủ cửa hàng được phép truy cập.');return false}return true};
+const STAFF_ROLES=['manager','cashier','waiter','kitchen','bar'];
+function staffCookie(user){
+ const exp=String(Date.now()+8*60*60*1000),version=String(user.version);
+ const base=[exp,user.id,user.role,version].join('.');
+ const sig=crypto.createHmac('sha256',SESSION_SECRET).update('v2.'+base).digest('hex');
+ return 'sh_session=v2.'+base+'.'+sig+'; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=28800';
+}
+async function identity(req){
+ if(req._verified)return req._actor;
+ req._verified=true;req._actor=null;
+ const v=cookie(req);
+ if(v?.startsWith('v2.')){
+  const parts=v.split('.');
+  if(parts.length!==6)return null;
+  const [,expires,userId,role,ver,mac]=parts;
+  if(!/^\d+$/.test(expires)||Number(expires)<Date.now()||!STAFF_ROLES.includes(role)||!/^\d+$/.test(ver)||!/^[0-9a-f]{64}$/.test(mac))return null;
+  const expected=crypto.createHmac('sha256',SESSION_SECRET).update(['v2',expires,userId,role,ver].join('.')).digest('hex');
+  if(!safeEq(mac,expected))return null;
+  try{const user=await staffAccounts.activeUser(userId,role,ver);if(user)req._actor={role,userId:user.id,username:user.username,displayName:user.displayName}}catch{console.error('Staff session validation unavailable')}
+  return req._actor;
+ }
+ const role=sessionRole(req);
+ if(role)req._actor={role,legacy:true};
+ return req._actor;
+}
+const requireAuth=async(req,res)=>{if(!await identity(req)){err(res,401,'Cần đăng nhập.');return false}return true};
+const requireAdmin=async(req,res)=>{if((await identity(req))?.role!=='admin'){err(res,403,'Chỉ chủ cửa hàng có quyền truy cập.');return false}return true};
+const canSeeTables=role=>['admin','staff','manager','cashier','waiter'].includes(role);
+const canCook=role=>['admin','staff','manager','kitchen','bar'].includes(role);
 const input=async req=>{let s='';for await(const ch of req){s+=ch;if(s.length>18000)throw Object.assign(Error('Dữ liệu quá lớn'),{status:413})}try{return JSON.parse(s||'{}')}catch{throw Object.assign(Error('JSON không hợp lệ'),{status:400})}};
 const sameOrigin=(req,res)=>{if(!['POST','PATCH','PUT','DELETE'].includes(req.method))return true;const origin=req.headers.origin;if(!origin)return true;const host=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;if(origin!==host){err(res,403,'Nguồn yêu cầu không hợp lệ.');return false}return true};
 const clientIp=req=>(req.headers['x-forwarded-for']||req.socket.remoteAddress||'').split(',')[0].trim();
@@ -72,7 +99,7 @@ const note=String(body.note||'').slice(0,160);const m=await getMenu(),lookup=new
 if(!pool){const exists=orders.find(x=>x.table_id===t.id&&x.request_id===body.requestId);if(exists)return {id:exists.id,duplicate:true};const o={id:id(),table_id:t.id,request_id:body.requestId,note,payment_method:paymentMethod,payment_status:'unpaid',created_at:new Date().toISOString()};orders.push(o);for(const it of items)lines.push({id:id(),order_id:o.id,menu_item_id:it.id,name:it.name,quantity:it.qty,unit_price:it.price,station:it.station,note:it.note,status:'new',created_at:o.created_at});return {id:o.id,duplicate:false}}
 const c=await pool.connect();try{await c.query('BEGIN');const orderId=id();const o=await c.query('INSERT INTO dining_orders(id,table_id,request_id,note,payment_method) VALUES($1,$2,$3,$4,$5) ON CONFLICT(table_id,request_id) DO NOTHING RETURNING id',[orderId,t.id,body.requestId,note,paymentMethod]);if(!o.rowCount){const prev=await c.query('SELECT id FROM dining_orders WHERE table_id=$1 AND request_id=$2',[t.id,body.requestId]);await c.query('COMMIT');return {id:prev.rows[0].id,duplicate:true}}for(const it of items)await c.query('INSERT INTO dining_order_lines(id,order_id,menu_item_id,name,quantity,unit_price,station,note) VALUES($1,$2,$3,$4,$5,$6,$7,$8)',[id(),orderId,it.id,it.name,it.qty,it.price,it.station,it.note]);await ops.consume(c,orderId);await c.query('INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,$2,$3,$4::jsonb)',[orderId,'guest','order_created',JSON.stringify({table:t.name,item_count:items.length,payment_method:paymentMethod})]);await c.query('COMMIT');console.log('ORDER_COMMITTED',orderId,t.name,items.length);return {id:orderId,duplicate:false}}catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}}
 async function getOrders(){if(!pool)return orders.map(o=>({...o,table_name:tables.find(t=>t.id===o.table_id)?.name,items:lines.filter(l=>l.order_id===o.id)})).reverse();const q=await pool.query('SELECT o.id,o.created_at,o.note,o.payment_method,o.payment_status,t.name AS table_name,li.id AS line_id,li.name AS item_name,li.quantity,li.unit_price,li.station,li.note AS item_note,li.status FROM dining_orders o JOIN dining_tables t ON o.table_id=t.id LEFT JOIN dining_order_lines li ON li.order_id=o.id WHERE o.created_at > now()- interval \'7 days\' OR EXISTS (SELECT 1 FROM dining_order_lines pending WHERE pending.order_id=o.id AND pending.status IN (\'new\',\'preparing\',\'ready\')) ORDER BY o.created_at DESC');const map=new Map();for(const x of q.rows){let o=map.get(x.id);if(!o){o={id:x.id,table_name:x.table_name,note:x.note,payment_method:x.payment_method,payment_status:x.payment_status,created_at:x.created_at,items:[]};map.set(x.id,o)}if(x.line_id)o.items.push({id:x.line_id,name:x.item_name,quantity:x.quantity,unit_price:x.unit_price,station:x.station,note:x.item_note,status:x.status})}return [...map.values()]}
-async function updateLine(lineId,status){const allowed={new:['preparing','cancelled'],preparing:['ready','cancelled'],ready:['served'],served:[],cancelled:[]};if(!Object.values(allowed).flat().includes(status))throw Object.assign(Error('Trạng thái không hợp lệ.'),{status:400});if(!pool){const line=lines.find(x=>x.id===lineId);if(!line)throw Object.assign(Error('Không tìm thấy món.'),{status:404});if(!allowed[line.status].includes(status))throw Object.assign(Error('Chuyển trạng thái không hợp lệ.'),{status:409});line.status=status;return line}const c=await pool.connect();try{await c.query('BEGIN');const x=(await c.query('SELECT status FROM dining_order_lines WHERE id=$1 FOR UPDATE',[lineId])).rows[0];if(!x)throw Object.assign(Error('Không tìm thấy món.'),{status:404});if(!allowed[x.status].includes(status))throw Object.assign(Error('Chuyển trạng thái không hợp lệ.'),{status:409});const row=(await c.query('UPDATE dining_order_lines SET status=$2, updated_at=now() WHERE id=$1 RETURNING id,status',[lineId,status])).rows[0];if(status==='cancelled')await ops.restore(c,lineId,x.status);await c.query('INSERT INTO dining_audit(order_id,item_id,actor,action,detail) SELECT order_id,$1,$2,$3,$4::jsonb FROM dining_order_lines WHERE id=$1',[lineId,'staff','item_status_changed',JSON.stringify({from:x.status,to:status})]);await c.query('COMMIT');return row}catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}}
+async function updateLine(lineId,status,actorRole='staff'){const allowed={new:['preparing','cancelled'],preparing:['ready','cancelled'],ready:['served'],served:[],cancelled:[]};if(!Object.values(allowed).flat().includes(status))throw Object.assign(Error('Trạng thái không hợp lệ.'),{status:400});if(!pool){const line=lines.find(x=>x.id===lineId);if(!line)throw Object.assign(Error('Không tìm thấy món.'),{status:404});if(['kitchen','bar'].includes(actorRole)&&line.station!==actorRole)throw Object.assign(Error('Không thuộc trạm chế biến được phân công.'),{status:403});if(!allowed[line.status].includes(status))throw Object.assign(Error('Chuyển trạng thái không hợp lệ.'),{status:409});line.status=status;return line}const c=await pool.connect();try{await c.query('BEGIN');const x=(await c.query('SELECT status,station FROM dining_order_lines WHERE id=$1 FOR UPDATE',[lineId])).rows[0];if(!x)throw Object.assign(Error('Không tìm thấy món.'),{status:404});if(['kitchen','bar'].includes(actorRole)&&x.station!==actorRole)throw Object.assign(Error('Không thuộc trạm chế biến được phân công.'),{status:403});if(!allowed[x.status].includes(status))throw Object.assign(Error('Chuyển trạng thái không hợp lệ.'),{status:409});const row=(await c.query('UPDATE dining_order_lines SET status=$2, updated_at=now() WHERE id=$1 RETURNING id,status',[lineId,status])).rows[0];if(status==='cancelled')await ops.restore(c,lineId,x.status);await c.query('INSERT INTO dining_audit(order_id,item_id,actor,action,detail) SELECT order_id,$1,$2,$3,$4::jsonb FROM dining_order_lines WHERE id=$1',[lineId,'staff','item_status_changed',JSON.stringify({from:x.status,to:status})]);await c.query('COMMIT');return row}catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}}
 
 async function orderStatus(orderId,qrToken){
  const t=await getTable(qrToken);if(!t)return null;
@@ -213,15 +240,34 @@ if(req.method==='POST'&&p==='/api/admin/login'){
  if(!safeEq(String(b.password||''),ADMIN_PASSWORD))return err(res,401,'Mật khẩu quản trị không chính xác.');
  return send(res,200,{ok:true,role:'admin'},{'Set-Cookie':loginCookie('admin')});
 }
+if(req.method==='POST'&&p==='/api/users/login'){
+ if(!throttle(req,'staff-user-login',8))return err(res,429,'Đăng nhập quá nhiều lần.');
+ const b=await input(req),user=await staffAccounts.login(b.username,b.password);
+ return send(res,200,{ok:true,role:user.role,displayName:user.displayName},{'Set-Cookie':staffCookie(user)});
+}
 if(req.method==='POST'&&p==='/api/logout'){return send(res,200,{ok:true},{'Set-Cookie':'sh_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'})}
-if(req.method==='GET'&&p==='/api/me')return send(res,200,{staff:session(req),role:sessionRole(req)});
+if(req.method==='GET'&&p==='/api/me'){const a=await identity(req);return send(res,200,{staff:!!a,role:a?.role||null,username:a?.username||null,displayName:a?.displayName||null})}
 if(req.method==='GET'&&p.startsWith('/api/menu/')){const t=await getTable(p.slice('/api/menu/'.length));if(!t)return err(res,404,'QR không hợp lệ.');return send(res,200,{table:{name:t.name,zone:t.zone},items:await getMenu(),mode})}
 if(req.method==='POST'&&p==='/api/orders'){if(!throttle(req,'orders',25))return err(res,429,'Gửi món quá nhanh.');const a=await placeOrder(await input(req));return send(res,a.duplicate?200:201,a)}
 
 
 
+
+if(p==='/api/admin/users'||/^\/api\/admin\/users\/[0-9a-f-]{36}$/.test(p)){
+ if(!await requireAdmin(req,res))return;
+ if(req.method==='GET'&&p==='/api/admin/users')return send(res,200,{users:await staffAccounts.list()});
+ if(req.method==='POST'&&p==='/api/admin/users'){
+  if(!throttle(req,'staff-create',15))return err(res,429,'Thao tác quá nhanh.');
+  return send(res,201,{user:await staffAccounts.create(await input(req))});
+ }
+ if(req.method==='PATCH'){
+  if(!throttle(req,'staff-update',20))return err(res,429,'Thao tác quá nhanh.');
+  return send(res,200,{user:await staffAccounts.modify(p.split('/')[4],await input(req))});
+ }
+}
+
 if(p.startsWith('/api/admin/core/')){
- if(!requireAdmin(req,res))return;
+ if(!await requireAdmin(req,res))return;
  if(!throttle(req,'core-'+req.method,80))return err(res,429,'Quá nhiều thao tác quản trị.');
  const seg=p.split('/').filter(Boolean),domain=seg[3],resourceId=seg[4],action=seg[5];
  const body=['POST','PATCH','PUT'].includes(req.method)?await input(req):{};
@@ -274,50 +320,55 @@ if(p.startsWith('/api/admin/core/')){
 }
 
 if(req.method==='GET'&&p==='/api/admin/operations'){
- if(!requireAdmin(req,res))return;
+ if(!await requireAdmin(req,res))return;
  const range=adminDateRange(u.searchParams);
  return send(res,200,{...await ops.overview(range.from,range.to),range});
 }
 if(req.method==='POST'&&p==='/api/admin/inventory/items'){
- if(!requireAdmin(req,res))return;
+ if(!await requireAdmin(req,res))return;
  if(!throttle(req,'inventory',40))return err(res,429,'Thao tác quá nhanh.');
  return send(res,201,{item:await ops.createItem(await input(req))});
 }
 if(req.method==='PUT'&&p==='/api/admin/inventory/recipes'){
- if(!requireAdmin(req,res))return;
+ if(!await requireAdmin(req,res))return;
  if(!throttle(req,'recipe',40))return err(res,429,'Thao tác quá nhanh.');
  return send(res,200,{recipe:await ops.setRecipe(await input(req))});
 }
 if(req.method==='POST'&&p==='/api/admin/inventory/movements'){
- if(!requireAdmin(req,res))return;
+ if(!await requireAdmin(req,res))return;
  if(!throttle(req,'movement',40))return err(res,429,'Thao tác quá nhanh.');
  return send(res,201,{movement:await ops.move(await input(req))});
 }
 if(req.method==='POST'&&p==='/api/admin/finance/entries'){
- if(!requireAdmin(req,res))return;
+ if(!await requireAdmin(req,res))return;
  if(!throttle(req,'finance',40))return err(res,429,'Thao tác quá nhanh.');
  return send(res,201,{entry:await ops.entry(await input(req))});
 }
 if(req.method==='GET'&&p==='/api/admin/summary'){
- if(!requireAdmin(req,res))return;
+ if(!await requireAdmin(req,res))return;
  const range=adminDateRange(u.searchParams);
  return send(res,200,{...await adminReport(range.from,range.to),range});
 }
 if(req.method==='POST'&&/^\/api\/admin\/orders\/[0-9a-f-]{36}\/confirm-payment$/.test(p)){
- if(!requireAdmin(req,res))return;
+ if(!await requireAdmin(req,res))return;
  if(!throttle(req,'admin-payment',40))return err(res,429,'Thao tác quá nhanh.');
  const data=await input(req);
  if(data.confirm!==true)return err(res,400,'Cần xác nhận đã thực sự nhận đủ tiền.');
  return send(res,200,{payment:await confirmPayment(p.split('/')[4],data.paymentMethod)});
 }
-if(req.method==='GET'&&p==='/api/tables'){if(!requireAuth(req,res))return;return send(res,200,{tables:await getTables()})}
+if(req.method==='GET'&&p==='/api/tables'){if(!await requireAuth(req,res))return;if(!canSeeTables((await identity(req)).role))return err(res,403,'Vai trò này không được xem mã QR bàn.');return send(res,200,{tables:await getTables()})}
 if(req.method==='GET'&&p==='/api/order-status'){return err(res,400,'Vui lòng cung cấp mã đơn.')}if(req.method==='GET'&&p.startsWith('/api/order-status/')){if(!throttle(req,'status',120))return err(res,429,'Quá nhiều lần kiểm tra');const oid=p.split('/').at(-1);if(!/^[0-9a-f-]{36}$/.test(oid))return err(res,400,'Mã đơn không hợp lệ');const data=await orderStatus(oid,u.searchParams.get('token'));return data?send(res,200,data):err(res,404,'Không tìm thấy đơn, hãy hỏi nhân viên trước khi gửi lại')}
-if(req.method==='GET'&&p==='/api/history'){if(!requireAdmin(req,res))return;const limit=Math.min(100,Math.max(1,Number(u.searchParams.get('limit'))||50)),offset=Math.min(10000,Math.max(0,Number(u.searchParams.get('offset'))||0));return send(res,200,{orders:await history(limit,offset),persistent:!!pool})}
-if(req.method==='GET'&&p==='/api/kds'){if(!requireAuth(req,res))return;
- const visible=(await getOrders()).map(o=>({...o,items:o.items.map(({unit_price,...line})=>line)}));
+if(req.method==='GET'&&p==='/api/history'){if(!await requireAdmin(req,res))return;const limit=Math.min(100,Math.max(1,Number(u.searchParams.get('limit'))||50)),offset=Math.min(10000,Math.max(0,Number(u.searchParams.get('offset'))||0));return send(res,200,{orders:await history(limit,offset),persistent:!!pool})}
+if(req.method==='GET'&&p==='/api/kds'){if(!await requireAuth(req,res))return;
+ const actor=await identity(req);
+ const visible=(await getOrders()).map(o=>({...o,
+  payment_method:canSeeTables(actor.role)?o.payment_method:null,
+  payment_status:canSeeTables(actor.role)?o.payment_status:null,
+  items:o.items.filter(line=>actor.role==='kitchen'?line.station==='kitchen':actor.role==='bar'?line.station==='bar':true)
+  .map(({unit_price,...line})=>line)})).filter(o=>o.items.length);
  return send(res,200,{orders:visible})}
-if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!requireAuth(req,res))return;const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status)})}
-if(req.method==='GET'&&/^\/qr\/[0-9a-f]{48}\.svg$/.test(p)){if(!requireAuth(req,res))return;const t=p.slice(4,-4);if(!(await getTable(t)))return err(res,404,'Không tìm thấy bàn.');const origin=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;const svg=await QRCode.toString(origin+'/t/'+t,{type:'svg',margin:2,width:320,errorCorrectionLevel:'M'});res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'no-store'});res.end(svg);return}
+if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!await requireAuth(req,res))return;const a=await identity(req);if(!canCook(a.role))return err(res,403,'Vai trò này không được cập nhật chế biến.');const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status,a.role)})}
+if(req.method==='GET'&&/^\/qr\/[0-9a-f]{48}\.svg$/.test(p)){if(!await requireAuth(req,res))return;if(!canSeeTables((await identity(req)).role))return err(res,403,'Không có quyền lấy QR bàn.');const t=p.slice(4,-4);if(!(await getTable(t)))return err(res,404,'Không tìm thấy bàn.');const origin=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;const svg=await QRCode.toString(origin+'/t/'+t,{type:'svg',margin:2,width:320,errorCorrectionLevel:'M'});res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'no-store'});res.end(svg);return}
 if(req.method==='GET'&&p.startsWith('/t/'))return staticPage(req,res,'guest.html');
 if(req.method==='GET'&&p==='/admin/core')return staticPage(req,res,'core.html');
 if(req.method==='GET'&&p==='/admin/operations')return staticPage(req,res,'operations.html');
