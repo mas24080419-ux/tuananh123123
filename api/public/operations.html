@@ -167,29 +167,53 @@ tbody tr:last-child td{border-bottom:none!important}
 <main>
 <div class="top"><div><span class="sh-eyebrow">TẮM TRÁNG 6 / VẬN HÀNH CỬA HÀNG</span><h1>Thu–chi & kho</h1><p class="sh-page-caption">Sổ tiền và số lượng nguyên liệu thực tế. Chọn nghiệp vụ khi cần ghi nhận.</p></div><span class="tag"><span class="sh-dot"></span> Dữ liệu Neon</span></div>
 <div id="notice" class="notice hidden" role="status"></div>
-<section id="quick-entry" class="tt6-finance-entry" aria-labelledby="financeEntryHeading">
-<div class="tt6-finance-switch" role="group" aria-label="Chọn giao dịch thu hoặc chi">
-<button type="button" id="quickExpense" class="tt6-finance-action is-selected" aria-pressed="true"><span aria-hidden="true">−</span> Ghi khoản chi</button>
-<button type="button" id="quickIncome" class="tt6-finance-action" aria-pressed="false"><span aria-hidden="true">+</span> Ghi khoản thu</button>
-</div>
-<div class="panel tt6-quick-finance-panel"><div class="tt6-quick-finance-header"><div><span class="tt6-mini-eyebrow">NHẬP GIAO DỊCH</span><h2 id="financeEntryHeading">Ghi khoản chi</h2><p class="muted" id="financeEntryHelp">Ví dụ: điện nước, lương nhân viên, sửa chữa. Nhập nguyên liệu qua mục Tồn kho để không ghi chi phí hai lần.</p></div><span class="tt6-quick-finance-mark" aria-hidden="true">₫</span></div>
-<form class="field" id="financeForm">
-<div class="pair"><label>Loại giao dịch<select name="direction" required><option value="expense">Chi tiền</option><option value="income">Thu khác</option></select></label>
-<label>Phương thức<select name="paymentMethod" required><option value="cash">Tiền mặt</option><option value="bank_transfer">Chuyển khoản</option></select></label></div>
-<label>Danh mục<input name="category" autocomplete="off" placeholder="Ví dụ: Điện nước, Lương, Mua vật tư..." maxlength="60" required></label>
-<label>Số tiền (VND)<input name="amount" type="number" step="1" min="1" max="999999999999" required></label>
-<label>Diễn giải<textarea name="note" rows="2" maxlength="250" placeholder="Ghi rõ nội dung khoản thu/chi"></textarea></label>
-<button type="submit" id="financeSubmit">Lưu khoản chi vào sổ</button></form>
-<p class="helper">Dữ liệu được lưu trên Neon PostgreSQL và cập nhật biểu đồ. Khoản thu từ đơn QR đã xác nhận thanh toán không nhập lại tại đây.</p></div>
-</section>
-<form id="dateFilter" class="filters"><label>Từ ngày<input type="date" id="dateFrom" required></label><label>Đến ngày<input type="date" id="dateTo" required></label>
-<button type="submit">Áp dụng</button><button class="alt" type="button" id="refresh">↻ Tải lại</button><p class="muted">Theo thời điểm ghi nhận (UTC+7). Tồn kho luôn là số dư hiện tại.</p></form>
+<section class="tt6-wallet-hero" aria-label="Tổng quan thu chi">
+<div class="tt6-wallet-eyebrow"><span class="tt6-wallet-dot" aria-hidden="true"></span> SỔ TIỀN CỬA HÀNG</div>
 <div class="stats">
 <div class="stat"><small>TỔNG TIỀN VÀO</small><strong class="green" id="totalIn">—</strong><p>Đơn đã thanh toán + thu khác</p></div>
 <div class="stat"><small>TỔNG TIỀN RA</small><strong class="orange" id="totalOut">—</strong><p>Chi hoạt động + nhập nguyên liệu</p></div>
 <div class="stat"><small>CHÊNH LỆCH DÒNG TIỀN</small><strong id="netCash">—</strong><p>Không đồng nghĩa lợi nhuận kế toán</p></div>
 <div class="stat"><small>NGUYÊN LIỆU CẦN NHẬP</small><strong class="orange" id="lowStock">—</strong><p>Theo ngưỡng tối thiểu đã cấu hình</p></div>
 </div>
+</section>
+<div class="tt6-app-actions" aria-label="Thao tác tài chính">
+<button type="button" id="quickIncome" class="tt6-finance-action is-income" aria-pressed="false"><span class="tt6-action-icon" aria-hidden="true">↓</span><span><b>Ghi khoản thu</b><small>Tiền vào</small></span></button>
+<button type="button" id="quickExpense" class="tt6-finance-action is-expense" aria-pressed="true"><span class="tt6-action-icon" aria-hidden="true">↑</span><span><b>Ghi khoản chi</b><small>Tiền ra</small></span></button>
+</div>
+<section id="quick-entry" class="tt6-finance-entry" aria-labelledby="financeEntryHeading">
+<div id="financeBackdrop" class="tt6-finance-backdrop" aria-hidden="true"></div>
+<div class="panel tt6-quick-finance-panel" id="tt6-money-dialog" role="dialog" aria-labelledby="financeEntryHeading">
+<div class="tt6-money-handle" aria-hidden="true"></div>
+<button type="button" id="closeFinanceSheet" class="tt6-money-close" aria-label="Đóng biểu mẫu thu chi">✕</button><div class="tt6-quick-finance-header"><div><span class="tt6-mini-eyebrow">NHẬP GIAO DỊCH</span><h2 id="financeEntryHeading">Ghi khoản chi</h2><p class="muted" id="financeEntryHelp">Ví dụ: điện nước, lương nhân viên, sửa chữa. Nhập nguyên liệu qua mục Tồn kho để không ghi chi phí hai lần.</p></div><span class="tt6-quick-finance-mark" aria-hidden="true">₫</span></div>
+<form class="field" id="financeForm">
+<div class="pair"><label>Loại giao dịch<select name="direction" required><option value="expense">Chi tiền</option><option value="income">Thu khác</option></select></label>
+<label>Phương thức<select name="paymentMethod" required><option value="cash">Tiền mặt</option><option value="bank_transfer">Chuyển khoản</option></select></label></div>
+<label>Danh mục<input name="category" autocomplete="off" placeholder="Ví dụ: Điện nước, Lương, Mua vật tư..." maxlength="60" required></label>
+<label>Số tiền (VND)<input name="amount" type="number" step="1" min="1" max="999999999999" required></label>
+<label>Diễn giải<textarea name="note" rows="2" maxlength="250" placeholder="Ghi rõ nội dung khoản thu/chi"></textarea></label>
+<p class="tt6-form-feedback" id="financeFormNotice" role="alert" aria-live="assertive"></p>
+<button type="submit" id="financeSubmit">Lưu khoản chi vào sổ</button></form>
+<p class="helper">Dữ liệu được lưu trên Neon PostgreSQL và cập nhật biểu đồ. Khoản thu từ đơn QR đã xác nhận thanh toán không nhập lại tại đây.</p></div>
+</section>
+<button type="button" id="financeFab" class="tt6-finance-fab" aria-label="Ghi giao dịch mới">+</button>
+<div class="tt6-finance-toast" role="status" aria-live="polite" id="financeToast"></div>
+<details class="tt6-date-fold" id="tt6DateFold">
+<summary><span class="tt6-calendar-icon" aria-hidden="true">▦</span><span>Khoảng thời gian <small id="financePeriodCaption">Tháng hiện tại</small></span><span class="tt6-filter-chevron" aria-hidden="true">⌄</span></summary>
+<form id="dateFilter" class="filters"><label>Từ ngày<input type="date" id="dateFrom" required></label><label>Đến ngày<input type="date" id="dateTo" required></label>
+<button type="submit">Áp dụng</button><button class="alt" type="button" id="refresh">↻ Tải lại</button><p class="muted">Theo thời điểm ghi nhận (UTC+7). Tồn kho luôn là số dư hiện tại.</p></form>
+</details>
+<div class="sh-section-heading"><div><span class="sh-eyebrow">NGHIỆP VỤ QUẢN LÝ</span><span class="sh-headingline">Làm việc theo từng phân hệ</span></div><a class="sh-quicklink" href="/admin">← Về tổng quan</a></div>
+<div class="tabs" role="tablist"><button type="button" class="active" data-section="finance" role="tab" aria-selected="true">Thu–chi</button><button type="button" data-section="inventory" role="tab" aria-selected="false">Tồn kho</button><button type="button" data-section="recipes" role="tab" aria-selected="false">Định mức món</button><button type="button" data-section="history" role="tab" aria-selected="false">Lịch sử</button></div>
+<section id="finance" class="section active">
+<div class="columns">
+<div class="panel"><h2>Phân tích dòng tiền</h2><p class="muted">Màu xanh: tiền vào; màu cam: tiền ra. Theo ngày phát sinh.</p><div id="cashChart" class="bars"><div class="empty">Đang tải…</div></div>
+<div class="pair" style="margin-top:13px"><div><span class="muted">Tiền thu từ đơn QR đã xác nhận</span><h2 id="salesReceived">—</h2></div><div><span class="muted">Chi nhập nguyên liệu trong kỳ</span><h2 id="purchases">—</h2></div></div></div></div>
+<div class="panel"><h2>Sổ thu–chi</h2><p class="muted">200 khoản gần nhất trong khoảng ngày. Chi nhập hàng được ghi tự động.</p>
+<div class="sh-toolbar"><input id="opsLedgerSearch" type="search" placeholder="Tìm danh mục, diễn giải..." aria-label="Tìm khoản thu chi"><select id="opsLedgerDirection"><option value="all">Tất cả thu–chi</option><option value="income">Chỉ khoản thu</option><option value="expense">Chỉ khoản chi</option></select><button id="opsLedgerExport" class="alt" type="button">↓ Xuất CSV</button></div>
+<div id="opsLedgerCount" class="sh-info"></div><div id="opsLedgerMobile" class="tt6-ledger-mobile" aria-label="Giao dịch gần đây"></div>
+<button type="button" id="opsLedgerMore" class="tt6-ledger-more" hidden>Xem thêm giao dịch</button><div class="scroll tt6-ledger-table"><table><thead><tr><th>Thời gian</th><th>Thu/chi</th><th>Danh mục</th><th>Thanh toán</th><th>Số tiền</th><th>Ghi chú</th></tr></thead><tbody id="financeRows"></tbody></table></div></div>
+<details id="financeAnalyticsFold" class="tt6-analytics-fold">
+<summary><span class="tt6-fold-chart-icon" aria-hidden="true">◉</span><span><b>Phân tích tài chính</b><small>Biểu đồ tròn chi tiêu, cơ cấu thanh toán và dòng tiền</small></span><span aria-hidden="true" class="tt6-fold-chevron">⌄</span></summary>
 <section class="tt6-analytics" aria-labelledby="opsAnalyticsTitle">
  <div class="tt6-analytics-head"><div><span class="tt6-analytics-subhead">THU – CHI · BÁO CÁO THỰC TẾ</span><h2 id="opsAnalyticsTitle">Phân tích tài chính</h2><p>Thống kê theo khoảng ngày đang lọc; xem sổ giao dịch ở phần Thu–chi phía dưới.</p></div></div>
  <div class="tt6-analytics-panels">
@@ -200,15 +224,7 @@ tbody tr:last-child td{border-bottom:none!important}
  <div id="opsCashBars"><p class="tt6-chart-empty">Đang tải số liệu…</p></div></article>
  </div><p class="tt6-analytics-foot">Không tính đơn chưa thu tiền. Chi mua nguyên liệu chỉ ghi một lần trong sổ. Dòng tiền thuần không phải lợi nhuận kế toán.</p>
 </section>
-<div class="sh-section-heading"><div><span class="sh-eyebrow">NGHIỆP VỤ QUẢN LÝ</span><span class="sh-headingline">Làm việc theo từng phân hệ</span></div><a class="sh-quicklink" href="/admin">← Về tổng quan</a></div>
-<div class="tabs" role="tablist"><button type="button" class="active" data-section="finance" role="tab" aria-selected="true">Thu–chi</button><button type="button" data-section="inventory" role="tab" aria-selected="false">Tồn kho</button><button type="button" data-section="recipes" role="tab" aria-selected="false">Định mức món</button><button type="button" data-section="history" role="tab" aria-selected="false">Lịch sử</button></div>
-<section id="finance" class="section active">
-<div class="columns">
-<div class="panel"><h2>Phân tích dòng tiền</h2><p class="muted">Màu xanh: tiền vào; màu cam: tiền ra. Theo ngày phát sinh.</p><div id="cashChart" class="bars"><div class="empty">Đang tải…</div></div>
-<div class="pair" style="margin-top:13px"><div><span class="muted">Tiền thu từ đơn QR đã xác nhận</span><h2 id="salesReceived">—</h2></div><div><span class="muted">Chi nhập nguyên liệu trong kỳ</span><h2 id="purchases">—</h2></div></div></div></div>
-<div class="panel"><h2>Sổ thu–chi</h2><p class="muted">200 khoản gần nhất trong khoảng ngày. Chi nhập hàng được ghi tự động.</p>
-<div class="sh-toolbar"><input id="opsLedgerSearch" type="search" placeholder="Tìm danh mục, diễn giải..." aria-label="Tìm khoản thu chi"><select id="opsLedgerDirection"><option value="all">Tất cả thu–chi</option><option value="income">Chỉ khoản thu</option><option value="expense">Chỉ khoản chi</option></select><button id="opsLedgerExport" class="alt" type="button">↓ Xuất CSV</button></div>
-<div id="opsLedgerCount" class="sh-info"></div><div class="scroll"><table><thead><tr><th>Thời gian</th><th>Thu/chi</th><th>Danh mục</th><th>Thanh toán</th><th>Số tiền</th><th>Ghi chú</th></tr></thead><tbody id="financeRows"></tbody></table></div></div>
+</details>
 </section>
 <section id="inventory" class="section">
 <div class="columns">
