@@ -302,3 +302,115 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
  .guest-orange .qr-cart-card .qr-cart-info{min-width:0}
 }
 @media(prefers-reduced-motion:reduce){.guest-orange .qr-bill-chevron{transition:none}}
+
+
+/* FIX 2026-10-26: selected menu cards must remain VERTICAL on phones.
+   Legacy @media(max-width:480px) changed .qr-menu-card to flex-direction:row;
+   after per-dish notes were introduced, that squeezed titles into single letters. */
+.guest-orange .qr-menu-grid > .qr-menu-card{
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:auto auto auto;
+  gap:11px;
+  align-content:start;
+  align-items:stretch;
+  min-width:0;
+  width:100%;
+}
+.guest-orange .qr-menu-grid > .qr-menu-card .qr-menu-head{
+  display:flex;
+  flex:none;
+  width:100%;
+  min-width:0;
+  align-items:center;
+  gap:11px;
+}
+.guest-orange .qr-menu-grid > .qr-menu-card .qr-menu-head > div:last-child{
+  flex:1 1 auto;
+  min-width:0;
+}
+.guest-orange .qr-menu-grid > .qr-menu-card .qr-menu-head h3{
+  overflow-wrap:break-word;
+  word-break:normal;
+  font-size:14px;
+  line-height:1.4;
+}
+.guest-orange .qr-menu-grid > .qr-menu-card .qr-menu-bottom{
+  flex-direction:row;
+  align-items:center;
+  justify-content:space-between;
+  flex:none;
+  width:100%;
+  min-width:0;
+  gap:10px;
+  margin-top:0;
+}
+.guest-orange .qr-menu-grid > .qr-menu-card .qr-menu-bottom .qr-money{
+  font-size:15px;
+  flex:0 1 auto;
+  min-width:0;
+}
+.guest-orange .qr-menu-grid > .qr-menu-card .qr-menu-bottom .qr-stepper{
+  flex:0 0 auto;
+}
+.guest-orange .qr-menu-grid > .qr-menu-card .qr-dish-note{
+  grid-column:1 / -1;
+  width:100%;
+  max-width:100%;
+  min-width:0;
+  margin:0;
+  padding-top:3px;
+}
+.guest-orange .qr-menu-grid > .qr-menu-card .qr-dish-note textarea{
+  display:block;
+  width:100%;
+  box-sizing:border-box;
+}
+.guest-orange .qr-cart-card{
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  gap:12px;
+  min-width:0;
+}
+.guest-orange .qr-cart-card .qr-cart-main{
+  display:grid;
+  grid-template-columns:54px minmax(0,1fr) auto;
+  width:100%;
+  gap:11px;
+  align-items:center;
+  min-width:0;
+}
+.guest-orange .qr-cart-main .qr-food-art{
+  width:54px;
+  height:54px;
+  flex-basis:54px;
+}
+.guest-orange .qr-cart-card .qr-cart-info{
+  min-width:0;
+  width:100%;
+}
+.guest-orange .qr-cart-card > .qr-dish-note{
+  width:100%;
+  margin:0;
+  min-width:0;
+}
+.guest-orange .qr-cart-main .qr-stepper{
+  align-self:center;
+}
+@media(max-width:720px){
+  .guest-orange .qr-menu-grid{grid-template-columns:minmax(0,1fr)}
+}
+@media(max-width:350px){
+  .guest-orange .qr-cart-card .qr-cart-main{
+    grid-template-columns:44px minmax(0,1fr);
+  }
+  .guest-orange .qr-cart-main .qr-food-art{
+    width:44px;
+    height:44px;
+  }
+  .guest-orange .qr-cart-main .qr-stepper{
+    grid-column:1 / -1;
+    justify-self:end;
+  }
+}
