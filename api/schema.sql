@@ -160,3 +160,19 @@ CREATE TABLE IF NOT EXISTS pos_audit (
  created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_pos_audit_date ON pos_audit(created_at DESC);
+
+
+-- Named employee identities. Individual login sessions can be revoked by incrementing auth_version.
+CREATE TABLE IF NOT EXISTS staff_users (
+ id uuid PRIMARY KEY,
+ username text NOT NULL UNIQUE,
+ display_name text NOT NULL,
+ role text NOT NULL CHECK(role IN ('manager','cashier','waiter','kitchen','bar')),
+ password_salt text NOT NULL,
+ password_hash text NOT NULL,
+ auth_version int NOT NULL DEFAULT 1 CHECK(auth_version>0),
+ active boolean NOT NULL DEFAULT true,
+ created_at timestamptz NOT NULL DEFAULT now(),
+ updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_staff_users_active ON staff_users(active);
