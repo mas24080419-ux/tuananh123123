@@ -1,0 +1,71 @@
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7f8fa"><title>Tắm Tráng 6 · QR chuyển khoản</title><link rel="stylesheet" href="/admin-minimal.css">
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f7f8fa;color:#263847;font:14px Inter,system-ui,sans-serif}
+.wrap{max-width:870px;margin:0 auto;padding:22px 18px 60px}
+.top{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}
+a{color:#ce582f;text-decoration:none;font-weight:700;font-size:12px}
+h1{font-size:clamp(23px,4vw,31px);letter-spacing:-.7px;margin:20px 0 7px}
+p{color:#728493;font-size:13px;line-height:1.7}
+.card{background:white;border:1px solid #e6ebef;border-radius:16px;padding:21px;margin:16px 0;box-shadow:none}
+.field{display:grid;gap:14px}
+label{display:grid;gap:6px;color:#455c6c;font-size:12px;font-weight:750}
+input{font:inherit;border:1px solid #dfe5e9;border-radius:9px;padding:12px;font-size:14px;width:100%}
+button{padding:12px 17px;border:0;border-radius:9px;background:#df623e;color:#fff;font-weight:750;cursor:pointer}
+button:disabled{opacity:.6}.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.info{border-radius:11px;background:#f2f9f5;color:#336c53;padding:13px;font-size:12px}
+.error{background:#fff0f1;color:#a6293d}.status{margin:15px 0}
+.preview{display:grid;grid-template-columns:190px 1fr;gap:20px;align-items:center}
+.preview img{width:190px;height:auto;max-width:100%;border-radius:11px;background:#fff}
+.small{font-size:11px}
+@media(max-width:600px){.row,.preview{grid-template-columns:1fr}.card{padding:16px}}
+</style></head><body><div class="wrap"><header class="top"><strong style="font-size:17px">6 · Tắm Tráng 6</strong><nav><a href="/admin">Tổng quan</a> · <a href="/admin/operations">Thu–chi</a></nav></header>
+<h1>Cấu hình QR chuyển khoản</h1><p>Nhập chính xác ngân hàng, số tài khoản và tên người thụ hưởng. Sau khi lưu, khách chọn <b>Chuyển khoản</b> sẽ có QR theo số tiền đơn hàng.</p>
+<div id="notice" class="info status" role="status">Đang kiểm tra tài khoản quản trị...</div>
+<div class="card"><h2 style="margin-top:0">Tài khoản nhận tiền</h2>
+<form id="bankForm" class="field" autocomplete="off">
+<div class="row"><label>BIN ngân hàng (6 chữ số)<input id="bankBin" inputmode="numeric" name="bankBin" pattern="[0-9]{6}" minlength="6" maxlength="6" placeholder="Mã BIN ngân hàng" required><small class="small">Tra cứu BIN 6 số chính thức của ngân hàng.</small></label>
+<label>Số tài khoản nhận tiền<input name="accountNumber" type="text" id="bankAccount" inputmode="numeric" pattern="[0-9]{6,25}" minlength="6" maxlength="25" placeholder="Số tài khoản" required></label></div>
+<label>Tên chủ tài khoản nhận tiền<input id="bankName" name="accountName" minlength="2" maxlength="100" required placeholder="Tên hiển thị trên tài khoản ngân hàng"></label>
+<label style="display:flex;flex-direction:row;align-items:center;gap:9px"><input type="checkbox" style="width:18px" id="bankEnabled" checked> Bật QR thanh toán cho khách hàng</label>
+<button id="save" type="submit">Lưu cấu hình trên Neon</button>
+</form></div>
+<div class="card" id="previewCard" hidden><h2>Kiểm tra thông tin nhận tiền</h2><div class="preview"><img id="previewQr" alt="QR kiểm tra cấu hình ngân hàng" loading="lazy"><div><b id="previewName"></b><p id="previewDescription"></p><p class="small">Mã QR kiểm tra dùng số tiền thử 1.000đ. <strong>Đừng chuyển tiền để thử!</strong> Dùng ứng dụng ngân hàng quét và đối chiếu đúng tên, STK và ngân hàng, sau đó hủy thao tác.</p></div></div></div>
+<div class="info">QR chỉ điền sẵn người nhận, số tiền và nội dung chuyển khoản. Hệ thống không tự biết tiền đã về nếu chưa tích hợp đối soát ngân hàng; chỉ xác nhận “Đã thanh toán” sau khi kiểm tra giao dịch thực tế.</div>
+</div>
+<script>
+'use strict';
+const $=s=>document.querySelector(s);
+const show=(message,error=false)=>{$('#notice').textContent=message;$('#notice').className='info status'+(error?' error':'')};
+async function api(path,opts={}){
+ const r=await fetch(path,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...opts});
+ let j;try{j=await r.json()}catch{throw Error('Máy chủ trả về dữ liệu không hợp lệ')}
+ if(!r.ok)throw Error(j.error||'Không lưu được cấu hình');return j;
+}
+function display(bank){
+ const okay=bank&&bank.enabled;
+ $('#previewCard').hidden=!okay;
+ if(!okay)return;
+ const params=new URLSearchParams({amount:'1000',addInfo:'TT6 KIEM TRA',accountName:bank.account_name||bank.accountName});
+ const bin=bank.bank_bin||bank.bankBin,account=bank.account_number||bank.accountNumber;
+ $('#previewQr').src='https://img.vietqr.io/image/'+bin+'-'+account+'-compact2.png?'+params.toString();
+ $('#previewName').textContent=bank.account_name||bank.accountName;
+ $('#previewDescription').textContent='Ngân hàng BIN '+bin+' · STK '+account;
+}
+async function init(){
+ try{
+  const me=await api('/api/me');if(me.role!=='admin'){location.replace('/admin');return}
+  const r=await api('/api/admin/payment-settings');
+  if(r.payment){$('#bankBin').value=r.payment.bank_bin;$('#bankAccount').value=r.payment.account_number;$('#bankName').value=r.payment.account_name;$('#bankEnabled').checked=r.payment.enabled;display(r.payment);show('Đã tải cấu hình ngân hàng từ Neon.')}
+  else show('Chưa có tài khoản nhận tiền. Điền thông tin ngân hàng thực tế để bật QR.');
+ }catch(e){show(e.message,true)}
+}
+$('#bankForm').addEventListener('submit',async e=>{
+ e.preventDefault();const b=$('#save');b.disabled=true;
+ try{
+  const body={bankBin:$('#bankBin').value.trim(),accountNumber:$('#bankAccount').value.trim(),accountName:$('#bankName').value.trim(),enabled:$('#bankEnabled').checked};
+  const r=await api('/api/admin/payment-settings',{method:'PUT',body:JSON.stringify(body)});
+  display(r.payment);show('Đã lưu ngân hàng nhận tiền. Hãy kiểm tra thông tin bằng app ngân hàng trước khi nhận thanh toán thật.');
+ }catch(e){show(e.message,true)}finally{b.disabled=false}
+});
+init();
+</script></body></html>
