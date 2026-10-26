@@ -363,6 +363,10 @@ $('#refresh').addEventListener('click',load);
   const remaining=[...section.querySelectorAll(':scope > .panel')];
   // The ledger and the current inventory/recipe tables are the default starting point.
   for(const panel of remaining)section.insertBefore(panel,columns);
+  if(sectionName==='recipes'){
+   const list=columns.querySelector(':scope > .panel:not(.ui-hide-by-default)');
+   if(list)section.insertBefore(list,columns);
+  }
   section.insertBefore(row,columns);
  }
  // Move financial chart into an optional disclosure at the bottom.
