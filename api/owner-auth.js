@@ -25,6 +25,25 @@ module.exports=function ownerAuth({pool}){
   if(!user||!user.active||!match)throw fail('Email hoặc mật khẩu không chính xác.',401);
   return {id:user.id,email:user.email,version:user.auth_version,role:'admin'};
  }
+ async function activate(email,password){
+  if(!pool)throw fail('Kích hoạt tài khoản yêu cầu PostgreSQL.',503);
+  const normalized=String(email||'').trim().toLowerCase();
+  if(normalized!=='mas24080419@hsb.edu.vn')throw fail('Email không thuộc tài khoản quản trị được phép.',403);
+  if(typeof password!=='string'||password.length<10||password.length>128||!/[a-z]/i.test(password)||!/\d/.test(password))
+   throw fail('Mật khẩu khởi tạo cần ít nhất 10 ký tự, có chữ và số.');
+  const client=await pool.connect();
+  try{
+   await client.query('BEGIN');
+   // Serialise all first-owner attempts without locking other POS data.
+   await client.query('SELECT pg_advisory_xact_lock(728271199)');
+   const count=await client.query('SELECT EXISTS(SELECT 1 FROM owner_accounts) AS exists');
+   if(count.rows[0].exists)throw fail('Tài khoản quản trị đã được kích hoạt.',409);
+   const id=crypto.randomUUID(),salt=crypto.randomBytes(16).toString('hex'),digest=await hash(password,salt);
+   await client.query('INSERT INTO owner_accounts(id,email,password_salt,password_hash) VALUES($1,$2,$3,$4)',[id,normalized,salt,digest]);
+   await client.query('COMMIT');
+   return {id,email:normalized,version:1,role:'admin'};
+  }catch(e){await client.query('ROLLBACK');throw e}finally{client.release()}
+ }
  async function current(id,version){
   if(!pool||typeof id!=='string'||!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id))return null;
   const u=(await pool.query('SELECT id,email,auth_version,active FROM owner_accounts WHERE id=$1',[id])).rows[0];
@@ -46,5 +65,5 @@ module.exports=function ownerAuth({pool}){
    return {id:updated.rows[0].id,version:updated.rows[0].auth_version};
   }catch(error){await client.query('ROLLBACK');throw error}finally{client.release()}
  }
- return {exists,login,current,changePassword};
+ return {exists,login,current,changePassword,activate};
 };
