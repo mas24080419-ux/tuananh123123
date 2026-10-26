@@ -401,6 +401,7 @@ if(req.method==='GET'&&p==='/admin/operations')return staticPage(req,res,'operat
 if(req.method==='GET'&&p==='/admin')return staticPage(req,res,'admin.html');
 if(req.method==='GET'&&(p==='/'||p==='/staff'))return staticPage(req,res,'staff.html');
 if(req.method==='GET'&&p==='/admin-minimal.css')return staticPage(req,res,'admin-minimal.css');
+if(req.method==='GET'&&p==='/tam-trang-6-logo.svg')return staticPage(req,res,'tam-trang-6-logo.svg');
 if(req.method==='GET'&&p==='/style.css')return staticPage(req,res,'style.css');
 err(res,404,'Không có tài nguyên.');}
 async function main(){await init();http.createServer((req,res)=>route(req,res).catch(e=>{console.error('request failed',e.message);err(res,e.status||500,e.status?e.message:'Lỗi máy chủ')})).listen(PORT,'0.0.0.0',()=>console.log(`SalesHub ${mode} listening ${PORT}`))}main().catch(e=>{console.error('startup failed',e.message);process.exit(1)});
