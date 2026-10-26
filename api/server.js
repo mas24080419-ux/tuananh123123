@@ -29,6 +29,7 @@ const ops=require('./operations')({pool,id});
 const paymentRecipient=require('./payment-recipient')({pool});
 const core=require('./core')({pool,id,randomToken:()=>crypto.randomBytes(24).toString('hex')});
 const staffAccounts=require('./staff-auth')({pool,id});
+const ownerAccounts=require('./owner-auth')({pool});
 const token=i=>crypto.createHmac('sha256',SESSION_SECRET).update('qr-table-'+i).digest('hex').slice(0,48);
 const authHash=s=>crypto.createHash('sha256').update(s).digest();
 const safeEq=(a,b)=>{const x=authHash(a),y=authHash(b);return crypto.timingSafeEqual(x,y)};
@@ -63,10 +64,27 @@ function staffCookie(user){
  const sig=crypto.createHmac('sha256',SESSION_SECRET).update('v2.'+base).digest('hex');
  return 'sh_session=v2.'+base+'.'+sig+'; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=28800';
 }
+function ownerCookie(user){
+ const expires=String(Date.now()+8*60*60*1000),version=String(user.version);
+ const base=['v3',expires,user.id,version].join('.');
+ const mac=crypto.createHmac('sha256',SESSION_SECRET).update(base).digest('hex');
+ return 'sh_session='+base+'.'+mac+'; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=28800';
+}
 async function identity(req){
  if(req._verified)return req._actor;
  req._verified=true;req._actor=null;
  const v=cookie(req);
+ if(v?.startsWith('v3.')){
+  const parts=v.split('.');
+  if(parts.length!==5)return null;
+  const [,exp,userId,version,signature]=parts;
+  if(!/^\d+$/.test(exp)||Number(exp)<Date.now()||!/^\d+$/.test(version)||!/^[0-9a-f]{64}$/.test(signature))return null;
+  const message=['v3',exp,userId,version].join('.');
+  const valid=crypto.createHmac('sha256',SESSION_SECRET).update(message).digest('hex');
+  if(!safeEq(signature,valid))return null;
+  try{const user=await ownerAccounts.current(userId,version);if(user)req._actor={role:'admin',email:user.email,userId:user.id}}catch{console.error('Owner session validation failed')}
+  return req._actor;
+ }
  if(v?.startsWith('v2.')){
   const parts=v.split('.');
   if(parts.length!==6)return null;
@@ -78,6 +96,10 @@ async function identity(req){
   return req._actor;
  }
  const role=sessionRole(req);
+ if(role==='admin'){
+  // Legacy owner cookies are no longer accepted when the email owner exists.
+  try{if(await ownerAccounts.exists())return null}catch{return null}
+ }
  if(role)req._actor={role,legacy:true};
  return req._actor;
 }
@@ -239,11 +261,25 @@ if(!sameOrigin(req,res))return;
 if(req.method==='GET'&&p==='/api/health'){let db='pilot';if(pool){try{await pool.query('SELECT 1');db='ready'}catch{db='unavailable'}}return send(res,db==='unavailable'?503:200,{ok:db!=='unavailable',mode,database:db,pilot:mode==='pilot',notice:mode==='pilot'?'BẢN THỬ NGHIỆM: đơn hàng lưu RAM và bị xóa khi server khởi động lại. Không dùng vận hành thật.':'Dữ liệu được lưu trên PostgreSQL.'})}
 if(req.method==='POST'&&p==='/api/login'){if(!throttle(req,'login',8))return err(res,429,'Đăng nhập quá nhiều lần.');const b=await input(req);if(!safeEq(String(b.password||''),STAFF_PASSWORD))return err(res,401,'Mật khẩu không chính xác.');return send(res,200,{ok:true,role:'staff'},{'Set-Cookie':loginCookie('staff')})}
 if(req.method==='POST'&&p==='/api/admin/login'){
- if(!throttle(req,'admin-login',6))return err(res,429,'Đăng nhập quá nhiều lần.');
- if(!ADMIN_PASSWORD)return err(res,503,'Chưa cấu hình tài khoản quản trị.');
+ if(!throttle(req,'admin-login',6))return err(res,429,'Đăng nhập quá nhiều lần. Hãy thử lại sau.');
  const b=await input(req);
- if(!safeEq(String(b.password||''),ADMIN_PASSWORD))return err(res,401,'Mật khẩu quản trị không chính xác.');
+ // Once owner email is configured, all owner logins require verified email.
+ if(await ownerAccounts.exists()){
+  const owner=await ownerAccounts.login(b.email,b.password);
+  return send(res,200,{ok:true,role:'admin',email:owner.email},{'Set-Cookie':ownerCookie(owner)});
+ }
+ // Transitional fallback only if no email owner account has been provisioned.
+ if(!ADMIN_PASSWORD)return err(res,503,'Chưa cấu hình tài khoản quản trị.');
+ if(!safeEq(String(b.password||''),ADMIN_PASSWORD))return err(res,401,'Email hoặc mật khẩu không chính xác.');
  return send(res,200,{ok:true,role:'admin'},{'Set-Cookie':loginCookie('admin')});
+}
+if(req.method==='POST'&&p==='/api/admin/change-password'){
+ if(!throttle(req,'owner-password-change',8))return err(res,429,'Thao tác quá nhiều. Hãy thử lại sau.');
+ const actor=await identity(req);
+ if(actor?.role!=='admin'||!actor.userId)return err(res,401,'Cần đăng nhập tài khoản quản trị bằng email.');
+ const body=await input(req);
+ const changed=await ownerAccounts.changePassword(actor.userId,body.currentPassword,body.newPassword);
+ return send(res,200,{ok:true,message:'Đổi mật khẩu thành công. Mọi phiên cũ đã hết hiệu lực.'},{'Set-Cookie':ownerCookie(changed)});
 }
 if(req.method==='POST'&&p==='/api/users/login'){
  if(!throttle(req,'staff-user-login',8))return err(res,429,'Đăng nhập quá nhiều lần.');
@@ -251,7 +287,7 @@ if(req.method==='POST'&&p==='/api/users/login'){
  return send(res,200,{ok:true,role:user.role,displayName:user.displayName},{'Set-Cookie':staffCookie(user)});
 }
 if(req.method==='POST'&&p==='/api/logout'){return send(res,200,{ok:true},{'Set-Cookie':'sh_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'})}
-if(req.method==='GET'&&p==='/api/me'){const a=await identity(req);return send(res,200,{staff:!!a,role:a?.role||null,username:a?.username||null,displayName:a?.displayName||null})}
+if(req.method==='GET'&&p==='/api/me'){const a=await identity(req);return send(res,200,{staff:!!a,role:a?.role||null,username:a?.username||null,email:a?.email||null,displayName:a?.displayName||null})}
 if(req.method==='GET'&&p.startsWith('/api/menu/')){const t=await getTable(p.slice('/api/menu/'.length));if(!t)return err(res,404,'QR không hợp lệ.');return send(res,200,{table:{name:t.name,zone:t.zone},items:await getMenu(),mode})}
 if(req.method==='GET'&&p==='/api/payment/recipient'){
  const table=await getTable(u.searchParams.get('token')||'');
