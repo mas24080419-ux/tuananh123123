@@ -12,10 +12,10 @@ table{border-collapse:collapse;min-width:550px;width:100%;font-size:12px}th{text
 td{border-bottom:1px solid #eff1f4;padding:11px 12px}.scroll{overflow:auto}
 .alert{background:#f1faf4;border:1px solid #d2eddf;border-radius:12px;padding:12px;margin:10px 0 20px;color:#257b52;font-size:12px}.alert.error{background:#fff0f1;color:#b42e40;border-color:#f2cdd2}
 @media(max-width:800px){.cols{grid-template-columns:1fr}h1{font-size:23px}}
-</style></head><body><header><b>▣ SalesHub</b><nav><a href="/admin">Tổng quan</a><a href="/admin/core">Vận hành POS</a><a href="/admin/operations">Thu–chi / Kho</a></nav></header>
-<main><span class="tag">QUẢN TRỊ / RBAC</span><h1>Tài khoản và quyền nhân viên</h1><p>Nhân viên đăng nhập bằng tài khoản riêng trên trang bếp/POS. Khi khóa tài khoản, đổi mật khẩu hoặc đổi quyền, phiên cũ bị thu hồi.</p>
+</style><link rel="stylesheet" href="/admin-minimal.css"></head><body><header><b>▣ SalesHub</b><nav><a href="/admin">Tổng quan</a><a href="/admin/core">Vận hành POS</a><a href="/admin/operations">Thu–chi / Kho</a></nav></header>
+<main><span class="tag">QUẢN TRỊ / RBAC</span><h1>Nhân viên</h1><p>Tài khoản riêng, phân quyền và khóa truy cập trong một nơi.</p>
 <div id="notice" class="alert" role="status">Đang xác minh tài khoản quản trị...</div>
-<div class="cols"><div class="card"><h2>Cấp tài khoản mới</h2><form id="createUser">
+<div class="ui-toolbar" id="usersToolbar"><button id="showCreateUser" type="button">+ Thêm nhân viên</button></div><div class="cols" id="usersColumns"><div class="card" id="createUserCard"><h2>Cấp tài khoản mới</h2><form id="createUser">
 <label>Tên đăng nhập<input name="username" required minlength="3" maxlength="32" pattern="[a-z][a-z0-9._-]{2,31}" autocomplete="off" placeholder="vd: bep01"></label>
 <label>Tên hiển thị<input name="displayName" required minlength="2" maxlength="90" placeholder="Họ tên nhân viên"></label>
 <label>Vai trò<select name="role" required><option value="waiter">Phục vụ bàn</option><option value="cashier">Thu ngân</option><option value="kitchen">Nhân viên bếp</option><option value="bar">Nhân viên bar</option><option value="manager">Quản lý ca</option></select></label>
@@ -50,4 +50,25 @@ $('#createUser').addEventListener('submit',async e=>{
  try{await api('/api/admin/users',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(form)))});form.reset();msg('Tạo nhân viên thành công.');await load()}catch(error){msg(error.message,true)}finally{button.disabled=false}
 });
 (async()=>{try{const me=await api('/api/me');if(me.role!=='admin'){location.replace('/admin');return}await load();msg('Đã đồng bộ danh sách nhân viên từ Neon.')}catch(e){msg(e.message,true)}})();
+
+(function simplifiedStaff(){
+ const columns=document.getElementById('usersColumns');
+ const formPanel=document.getElementById('createUserCard');
+ const listPanel=columns.querySelector(':scope > .card:last-child');
+ const button=document.getElementById('showCreateUser');
+ columns.style.display='flex';columns.style.flexDirection='column';
+ formPanel.classList.add('ui-hide-by-default');
+ formPanel.style.width='100%';formPanel.style.maxWidth='670px';
+ listPanel.style.order='1';formPanel.style.order='2';
+ button.setAttribute('aria-expanded','false');
+ const show=open=>{
+  formPanel.classList.toggle('is-open',open);
+  button.textContent=open?'Đóng biểu mẫu':'+ Thêm nhân viên';
+  button.setAttribute('aria-expanded',String(open));
+  if(open)formPanel.scrollIntoView({behavior:'smooth',block:'nearest'});
+ };
+ button.addEventListener('click',()=>show(!formPanel.classList.contains('is-open')));
+ document.getElementById('createUser').addEventListener('reset',()=>setTimeout(()=>show(false),0));
+})();
+
 </script></body></html>
