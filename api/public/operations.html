@@ -136,12 +136,12 @@ tbody tr:last-child td{border-bottom:none!important}
 @media(max-width:370px){.cards,.stats{grid-template-columns:1fr!important}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 
-</style></head><body>
+</style><link rel="stylesheet" href="/admin-minimal.css"></head><body>
 <div class="shell"><aside><div class="brand"><span>S</span>SalesHub</div><nav>
-<a href="/admin">▦ Tổng quan</a><a href="/admin/core">▤ Vận hành POS</a><a href="/admin/users">♙ Nhân viên</a><a class="active" href="/admin/operations">▤ Thu–chi và kho</a><a href="/staff">⌁ Bếp / QR bàn</a></nav>
+<a href="/admin">▦ Tổng quan</a><a href="/admin/core">▤ Món & bàn</a><a href="/admin/users">♙ Nhân viên</a><a class="active" href="/admin/operations">▤ Thu–chi & kho</a><a href="/staff">⌁ Bếp & QR</a></nav>
 <div class="foot">Neon PostgreSQL<br>Chỉ quản trị viên được thao tác<br>Giá trị tồn kho chỉ là ước tính</div></aside>
 <main>
-<div class="top"><div><span class="sh-eyebrow">SALESHUB / VẬN HÀNH CỬA HÀNG</span><h1>Thu–chi & hàng tồn kho</h1><p class="sh-page-caption">Ghi nhận tiền thật, quản lý nguyên liệu, định mức từng món và theo dõi mọi biến động.</p></div><span class="tag"><span class="sh-dot"></span> Dữ liệu Neon</span></div>
+<div class="top"><div><span class="sh-eyebrow">SALESHUB / VẬN HÀNH CỬA HÀNG</span><h1>Thu–chi & kho</h1><p class="sh-page-caption">Sổ tiền và số lượng nguyên liệu thực tế. Chọn nghiệp vụ khi cần ghi nhận.</p></div><span class="tag"><span class="sh-dot"></span> Dữ liệu Neon</span></div>
 <div id="notice" class="notice hidden" role="status"></div>
 <form id="dateFilter" class="filters"><label>Từ ngày<input type="date" id="dateFrom" required></label><label>Đến ngày<input type="date" id="dateTo" required></label>
 <button type="submit">Áp dụng</button><button class="alt" type="button" id="refresh">↻ Tải lại</button><p class="muted">Theo thời điểm ghi nhận (UTC+7). Tồn kho luôn là số dư hiện tại.</p></form>
@@ -321,4 +321,64 @@ $('#recipeForm').addEventListener('submit',e=>{e.preventDefault();submit(e.curre
 $('#dateFilter').addEventListener('submit',e=>{e.preventDefault();load()});
 $('#refresh').addEventListener('click',load);
 (async()=>{try{const m=await api('/api/me');if(m.role!=='admin'){location.assign('/admin');return}await load()}catch(e){notice(e.message,'error')}})();
+
+/* V11: show data first, allow a single accounting or stock form on demand. */
+(function quietOperations(){
+ const actions=[
+  {section:'finance',name:'Ghi thu / chi',form:'financeForm'},
+  {section:'inventory',name:'Thêm nguyên liệu',form:'createItemForm'},
+  {section:'inventory',name:'Nhập / xuất kho',form:'stockForm'},
+  {section:'recipes',name:'Sửa định mức',form:'recipeForm'}
+ ];
+ const toggles=new Map();
+ for(const action of actions){
+  const section=document.getElementById(action.section);
+  const form=document.getElementById(action.form);
+  const panel=form?.closest('.panel');
+  if(!section||!panel)throw Error('Thiếu biểu mẫu '+action.form);
+  panel.classList.add('ui-hide-by-default');
+  const button=document.createElement('button');button.type='button';button.className='ui-quiet-action';
+  button.textContent='+ '+action.name;button.setAttribute('aria-expanded','false');
+  const show=(open)=>{
+   for(const other of actions.filter(x=>x.section===action.section&&x.form!==action.form)){
+    const node=document.getElementById(other.form)?.closest('.panel');
+    node?.classList.remove('is-open');
+    const oldButton=toggles.get(other.form)?.button;
+    if(oldButton){oldButton.textContent='+ '+other.name;oldButton.setAttribute('aria-expanded','false')}
+   }
+   panel.classList.toggle('is-open',open);
+   button.textContent=open?'Đóng biểu mẫu':'+ '+action.name;
+   button.setAttribute('aria-expanded',String(open));
+   if(open)panel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  };
+  button.addEventListener('click',()=>show(!panel.classList.contains('is-open')));
+  form.addEventListener('reset',()=>setTimeout(()=>show(false),0));
+  toggles.set(action.form,{button,show});
+ }
+ for(const sectionName of ['finance','inventory','recipes']){
+  const section=document.getElementById(sectionName);
+  const row=document.createElement('div');row.className='ui-toolbar';
+  for(const action of actions.filter(x=>x.section===sectionName))row.append(toggles.get(action.form).button);
+  const columns=section.querySelector('.columns');
+  const remaining=[...section.querySelectorAll(':scope > .panel')];
+  // The ledger and the current inventory/recipe tables are the default starting point.
+  for(const panel of remaining)section.insertBefore(panel,columns);
+  section.insertBefore(row,columns);
+ }
+ // Move financial chart into an optional disclosure at the bottom.
+ const finance=document.getElementById('finance');
+ const chart=finance.querySelector('.columns > .panel:not(.ui-hide-by-default)');
+ if(chart){
+  const details=document.createElement('details');details.className='ui-detail';
+  const summary=document.createElement('summary');summary.textContent='Biểu đồ dòng tiền';
+  details.append(summary,chart);finance.append(details);
+ }
+ const cols=finance.querySelector('.columns');if(cols)cols.style.display='block';
+ const inv=document.getElementById('inventory').querySelector('.columns');if(inv)inv.style.display='block';
+ const recipe=document.getElementById('recipes').querySelector('.columns');if(recipe)recipe.style.display='block';
+ const fromHash=location.hash.slice(1);
+ const tab=document.querySelector('[data-section="'+fromHash+'"]');
+ if(tab)tab.click();
+})();
+
 </script></body></html>
