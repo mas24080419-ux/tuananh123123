@@ -259,6 +259,10 @@ if(req.method==='GET'&&p==='/api/payment/recipient'){
  const recipient=await paymentRecipient.publicRecipient();
  return send(res,200,{configured:Boolean(recipient),recipient});
 }
+if(req.method==='GET'&&p==='/api/admin/payment-banks'){
+ if(!await requireAdmin(req,res))return;
+ return send(res,200,await paymentRecipient.banks());
+}
 if(p==='/api/admin/payment-settings'){
  if(!await requireAdmin(req,res))return;
  if(req.method==='GET')return send(res,200,{payment:await paymentRecipient.get()});
