@@ -344,3 +344,39 @@ body.tt6-owner-login #login{max-width:480px!important;margin:8vh auto!important;
  .tt6-mobile-header small{display:none}
  .tt6-mobile-bottom>a,.tt6-mobile-bottom>button{font-size:9px!important}
 }
+
+
+/* KDS has its own workflow and role security. Visually match the POS brand,
+   but DO NOT expose administrative sidebar links to kitchen/bar staff. */
+body.tt6-staff{background:#f5f8f9!important;color:#173743!important;font-family:Inter,system-ui,sans-serif}
+body.tt6-staff>main{max-width:1440px;margin:0 auto;padding:22px clamp(14px,3vw,32px)!important;box-sizing:border-box}
+body.tt6-staff .top{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:11px;padding:12px 16px!important;margin:0 0 14px;background:#fff;border:1px solid #e6eeef;border-radius:16px}
+body.tt6-staff .brand{font-size:clamp(17px,2.2vw,23px)!important;color:#173f45!important;display:flex;align-items:center;gap:10px}
+body.tt6-staff .brand .sh-brand-logo{width:42px;height:42px;object-fit:cover;border-radius:12px;flex:none}
+body.tt6-staff .card{border-radius:15px;border-color:#e2ebeb;background:white;box-shadow:0 6px 20px rgba(20,63,70,.04)}
+body.tt6-staff .btn{background:#0c817c;color:white;border-radius:11px;min-height:41px}
+body.tt6-staff .btn.secondary{background:#edf8f5;color:#08796e}
+body.tt6-staff .tab{background:#eaf4f1;color:#42776e;border-radius:11px;min-height:42px}
+body.tt6-staff .tab.on{background:#0b837c;color:white}
+body.tt6-staff .grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:13px}
+body.tt6-staff #kds,body.tt6-staff #qr,body.tt6-staff #app{min-width:0}
+body.tt6-staff #storageNotice{border-radius:12px}
+@media(max-width:760px){
+ body.tt6-staff>main{padding:9px 12px calc(20px + env(safe-area-inset-bottom,0px))!important}
+ body.tt6-staff .top{position:sticky;top:0;z-index:6;padding:10px 11px!important;border-radius:0 0 13px 13px;margin-bottom:12px}
+ body.tt6-staff .brand{font-size:17px!important}
+ body.tt6-staff .brand .sh-brand-logo{width:37px;height:37px}
+ body.tt6-staff #storageMode{font-size:10px;white-space:nowrap}
+ body.tt6-staff .between{display:flex;flex-wrap:wrap!important;gap:10px;align-items:center;min-width:0}
+ body.tt6-staff #app>.between>.row{display:flex;flex:1 1 auto;flex-wrap:wrap;gap:6px}
+ body.tt6-staff #app>.between>.row .tab{flex:1 1 auto;min-height:44px;padding:10px 12px}
+ body.tt6-staff .btn{min-height:44px}
+ body.tt6-staff #station{width:100%!important;max-width:100%;font-size:16px}
+ body.tt6-staff .grid{grid-template-columns:minmax(0,1fr)!important}
+ body.tt6-staff .card{padding:15px!important}
+ body.tt6-staff .row{flex-wrap:wrap}
+ body.tt6-staff input{font-size:16px}
+}
+@media print{
+ body.tt6-staff .top{position:static;box-shadow:none}
+}
