@@ -352,7 +352,7 @@ function changeQuantity(id, delta) {
 }
 function itemNoteField(p,placement) {
  const saved=escapeHTML(itemNotes.get(p.id)||'');
- return `<label class="qr-dish-note"><span>Ghi chú riêng cho ${escapeHTML(p.name)} <small>(không bắt buộc)</small></span><textarea data-item-note="${p.id}" data-placement="${placement}" maxlength="160" rows="2" placeholder="Ví dụ: không hành, ít cay, không đá…">${saved}</textarea></label>`;
+ return `<label class="qr-dish-note"><span>Ghi chú cho món <small>(không bắt buộc)</small></span><textarea data-item-note="${p.id}" data-placement="${placement}" maxlength="160" rows="2" placeholder="Ví dụ: không hành, ít cay, không đá…">${saved}</textarea></label>`;
 }
 function quantityUI(p, qty) {
   if (!qty) return `<button class="qr-add" data-item="${p.id}" data-delta="1" type="button" aria-label="Thêm ${escapeHTML(p.name)}">+</button>`;
@@ -397,7 +397,7 @@ function render() {
     </article>`).join('')}</div>`).join('') || '<p class="qr-empty">Chưa có món trong thực đơn.</p>';
   $('#cartList').innerHTML = [...cart.entries()].map(([id, qty]) => {
     const p = products.find(x => x.id === id);
-    return p ? `<article class="qr-cart-card"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div class="qr-cart-info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category)} · ${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small><span class="qr-money">${money(qty*p.price)}</span>${itemNoteField(p,'cart')}</div>${quantityUI(p, qty)}</article>` : '';
+    return p ? `<article class="qr-cart-card"><div class="qr-cart-main"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div class="qr-cart-info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category)} · ${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small><span class="qr-money">${money(qty*p.price)}</span></div>${quantityUI(p, qty)}</div>${itemNoteField(p,'cart')}</article>` : '';
   }).join('') || '<p class="qr-empty">Giỏ hàng trống. Quay lại thực đơn để chọn món.</p>';
   $('#cartCountBadge').textContent = count;
   $('#cartTitleCount').textContent = `${count} món`;
