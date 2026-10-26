@@ -26,6 +26,7 @@ const menuSeed=[
 let tables=[], menu=[], orders=[], lines=[];
 const id=()=>crypto.randomUUID();
 const ops=require('./operations')({pool,id});
+const core=require('./core')({pool,id,randomToken:()=>crypto.randomBytes(24).toString('hex')});
 const token=i=>crypto.createHmac('sha256',SESSION_SECRET).update('qr-table-'+i).digest('hex').slice(0,48);
 const authHash=s=>crypto.createHash('sha256').update(s).digest();
 const safeEq=(a,b)=>{const x=authHash(a),y=authHash(b);return crypto.timingSafeEqual(x,y)};
@@ -218,6 +219,60 @@ if(req.method==='GET'&&p.startsWith('/api/menu/')){const t=await getTable(p.slic
 if(req.method==='POST'&&p==='/api/orders'){if(!throttle(req,'orders',25))return err(res,429,'Gửi món quá nhanh.');const a=await placeOrder(await input(req));return send(res,a.duplicate?200:201,a)}
 
 
+
+if(p.startsWith('/api/admin/core/')){
+ if(!requireAdmin(req,res))return;
+ if(!throttle(req,'core-'+req.method,80))return err(res,429,'Quá nhiều thao tác quản trị.');
+ const seg=p.split('/').filter(Boolean),domain=seg[3],resourceId=seg[4],action=seg[5];
+ const body=['POST','PATCH','PUT'].includes(req.method)?await input(req):{};
+ const method=req.method;
+ const ok=(obj,status=200)=>send(res,status,obj);
+ if(domain==='catalog'){
+  if(method==='GET'&&!resourceId)return ok({items:await core.catalog()});
+  if(method==='POST'&&!resourceId)return ok({item:await core.saveMenu(body)},201);
+  if(method==='PATCH'&&resourceId&&!action)return ok({item:await core.saveMenu(body,resourceId)});
+  if(method==='PATCH'&&resourceId&&action==='availability')return ok({item:await core.menuAvailability(resourceId,body.active)});
+ }
+ if(domain==='tables'){
+  if(method==='GET'&&!resourceId)return ok({tables:await core.allTables()});
+  if(method==='POST'&&!resourceId)return ok({table:await core.createTable(body)},201);
+  if(method==='PATCH'&&resourceId&&!action)return ok({table:await core.updateTable(resourceId,body)});
+  if(method==='POST'&&resourceId&&action==='rotate-qr'){
+   if(body.confirm!==true)return err(res,400,'Phải xác nhận thay mã QR của bàn.');
+   return ok({table:await core.rotateTableToken(resourceId)});
+  }
+ }
+ if(domain==='suppliers'){
+  if(method==='GET'&&!resourceId)return ok({suppliers:await core.suppliers()});
+  if(method==='POST'&&!resourceId)return ok({supplier:await core.saveSupplier(body)},201);
+  if(method==='PATCH'&&resourceId)return ok({supplier:await core.saveSupplier(body,resourceId)});
+ }
+ if(domain==='customers'){
+  if(method==='GET'&&!resourceId)return ok({customers:await core.customers(u.searchParams.get('limit')||100)});
+  if(method==='POST'&&!resourceId)return ok({customer:await core.saveCustomer(body)},201);
+  if(method==='PATCH'&&resourceId)return ok({customer:await core.saveCustomer(body,resourceId)});
+ }
+ if(domain==='reservations'){
+  if(method==='GET'&&!resourceId){
+   const from=u.searchParams.get('from'),to=u.searchParams.get('to');
+   if(!from||!to||!Number.isFinite(Date.parse(from))||!Number.isFinite(Date.parse(to))||Date.parse(to)<=Date.parse(from)||Date.parse(to)-Date.parse(from)>366*86400000)return err(res,400,'Khoảng thời gian đặt bàn không hợp lệ');
+   return ok({reservations:await core.reservations(from,to)});
+  }
+  if(method==='POST'&&!resourceId)return ok({reservation:await core.makeReservation(body)},201);
+  if(method==='PATCH'&&resourceId&&action==='status')return ok({reservation:await core.setReservationStatus(resourceId,body.status)});
+ }
+ if(domain==='shift'){
+  if(method==='GET'&&!resourceId)return ok({shift:await core.currentShift()});
+  if(method==='POST'&&!resourceId&&body.action==='open')return ok({shift:await core.openShift(body.openingCash)},201);
+  if(method==='POST'&&!resourceId&&body.action==='close'){
+   if(body.confirm!==true)return err(res,400,'Cần xác nhận kiểm đếm tiền trước khi đóng ca.');
+   return ok({shift:await core.closeShift(body.countedCash,body.note)});
+  }
+ }
+ if(domain==='audit'&&method==='GET'&&!resourceId)return ok({events:await core.recentAudit(Number(u.searchParams.get('limit'))||100)});
+ return err(res,404,'Không tồn tại chức năng quản trị này.');
+}
+
 if(req.method==='GET'&&p==='/api/admin/operations'){
  if(!requireAdmin(req,res))return;
  const range=adminDateRange(u.searchParams);
@@ -264,6 +319,7 @@ if(req.method==='GET'&&p==='/api/kds'){if(!requireAuth(req,res))return;
 if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!requireAuth(req,res))return;const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status)})}
 if(req.method==='GET'&&/^\/qr\/[0-9a-f]{48}\.svg$/.test(p)){if(!requireAuth(req,res))return;const t=p.slice(4,-4);if(!(await getTable(t)))return err(res,404,'Không tìm thấy bàn.');const origin=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;const svg=await QRCode.toString(origin+'/t/'+t,{type:'svg',margin:2,width:320,errorCorrectionLevel:'M'});res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'no-store'});res.end(svg);return}
 if(req.method==='GET'&&p.startsWith('/t/'))return staticPage(req,res,'guest.html');
+if(req.method==='GET'&&p==='/admin/core')return staticPage(req,res,'core.html');
 if(req.method==='GET'&&p==='/admin/operations')return staticPage(req,res,'operations.html');
 if(req.method==='GET'&&p==='/admin')return staticPage(req,res,'admin.html');
 if(req.method==='GET'&&(p==='/'||p==='/staff'))return staticPage(req,res,'staff.html');
