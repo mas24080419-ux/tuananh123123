@@ -78,7 +78,7 @@ function setup(){
    advancedOpen)+
  '</nav></div>'+
  '<div class="tt6-side-bottom"><div class="tt6-side-user"><span class="tt6-side-avatar">QT</span><span class="tt6-side-user-label"><strong>Quản trị cửa hàng</strong><small>Dữ liệu lưu trên Neon</small></span>'+svg('settings')+'</div>'+
- '<span class="tt6-side-footnote">Giao diện theo mô hình MediQueue Premium Sidebar</span></div>';
+ '<span class="tt6-side-footnote">TẮM TRÁNG 6 · QUẢN LÝ CỬA HÀNG</span></div>';
  const overlay=document.createElement('button');
  overlay.id='tt6-side-overlay';
  overlay.type='button';
