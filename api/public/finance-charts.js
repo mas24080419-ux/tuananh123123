@@ -74,7 +74,7 @@
   if(!container)return;
   container.replaceChildren();
   const rows=Array.isArray(series)?series:[];
-  if(!rows.length){placeholder(container,'Không có kỳ báo cáo để hiển thị.');return}
+  if(!rows.length||rows.every(d=>!count(d.inflow)&&!count(d.outflow))){placeholder(container,'Chưa phát sinh khoản tiền vào hoặc tiền ra trong kỳ đã chọn.');return}
   const highest=Math.max(1,...rows.flatMap(d=>[count(d.inflow),count(d.outflow)]));
   const scroll=el('div','tt6-trend-scroll'),chart=el('div','tt6-trend-bars');
   chart.style.setProperty('--tt6-period-count',String(rows.length));
