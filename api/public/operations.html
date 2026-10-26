@@ -1,5 +1,5 @@
 <!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SalesHub · Thu–chi & Kho</title><meta name="theme-color" content="#112737">
+<title>Tắm Tráng 6 · Thu–chi & Kho</title><meta name="theme-color" content="#112737">
 <style>
 :root{font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;background:#f5f7fa;color:#1e303b}
 *{box-sizing:border-box}body{margin:0}button,input,select,textarea{font:inherit}button{cursor:pointer}
@@ -46,7 +46,7 @@ td b{font-weight:800}.pill{background:#e8f8ef;color:#1d8054;border-radius:50px;p
 @media(max-width:720px){.shell{display:block}aside{padding:13px;min-height:auto}.brand{font-size:18px;padding:0}nav{display:flex;gap:7px;overflow:auto;margin-top:13px}nav a{white-space:nowrap;padding:9px;font-size:11px}.foot{display:none}main{padding:15px}.stats{gap:8px}.stat{padding:13px}.stat strong{font-size:19px}.pair{grid-template-columns:1fr}}
 
 
-/* SalesHub POS UI V9 — researched patterns: POS report hierarchy, dense ledger, clear inventory alerts. */
+/* Tắm Tráng 6 POS UI V9 — researched patterns: POS report hierarchy, dense ledger, clear inventory alerts. */
 :root{--sh-bg:#F4F6F9;--sh-paper:#fff;--sh-line:#E7EBF0;--sh-ink:#182935;--sh-sub:#718596;--sh-primary:#EB653B;--sh-dark:#122635;--sh-teal:#087F71;--sh-shadow:0 8px 30px rgba(19,36,49,.045)}
 html{scroll-behavior:smooth}
 body{background:var(--sh-bg)!important;color:var(--sh-ink);-webkit-font-smoothing:antialiased}
@@ -137,11 +137,11 @@ tbody tr:last-child td{border-bottom:none!important}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 
 </style><link rel="stylesheet" href="/admin-minimal.css"></head><body>
-<div class="shell"><aside><div class="brand"><span>S</span>SalesHub</div><nav>
+<div class="shell"><aside><div class="brand"><span>6</span>Tắm Tráng 6</div><nav>
 <a href="/admin">▦ Tổng quan</a><a href="/admin/core">▤ Món & bàn</a><a href="/admin/users">♙ Nhân viên</a><a class="active" href="/admin/operations">▤ Thu–chi & kho</a><a href="/staff">⌁ Bếp & QR</a></nav>
 <div class="foot">Neon PostgreSQL<br>Chỉ quản trị viên được thao tác<br>Giá trị tồn kho chỉ là ước tính</div></aside>
 <main>
-<div class="top"><div><span class="sh-eyebrow">SALESHUB / VẬN HÀNH CỬA HÀNG</span><h1>Thu–chi & kho</h1><p class="sh-page-caption">Sổ tiền và số lượng nguyên liệu thực tế. Chọn nghiệp vụ khi cần ghi nhận.</p></div><span class="tag"><span class="sh-dot"></span> Dữ liệu Neon</span></div>
+<div class="top"><div><span class="sh-eyebrow">TẮM TRÁNG 6 / VẬN HÀNH CỬA HÀNG</span><h1>Thu–chi & kho</h1><p class="sh-page-caption">Sổ tiền và số lượng nguyên liệu thực tế. Chọn nghiệp vụ khi cần ghi nhận.</p></div><span class="tag"><span class="sh-dot"></span> Dữ liệu Neon</span></div>
 <div id="notice" class="notice hidden" role="status"></div>
 <form id="dateFilter" class="filters"><label>Từ ngày<input type="date" id="dateFrom" required></label><label>Đến ngày<input type="date" id="dateTo" required></label>
 <button type="submit">Áp dụng</button><button class="alt" type="button" id="refresh">↻ Tải lại</button><p class="muted">Theo thời điểm ghi nhận (UTC+7). Tồn kho luôn là số dư hiện tại.</p></form>
@@ -195,7 +195,7 @@ tbody tr:last-child td{border-bottom:none!important}
 </section>
 <section id="recipes" class="section">
 <div class="columns"><div class="panel"><h2>Thiết lập định mức mỗi món</h2>
-<p class="muted">Ví dụ một phần phở cần 0,15 kg thịt bò. Khi đơn QR được ghi nhận, SalesHub trừ nguyên liệu tương ứng.</p>
+<p class="muted">Ví dụ một phần phở cần 0,15 kg thịt bò. Khi đơn QR được ghi nhận, Tắm Tráng 6 trừ nguyên liệu tương ứng.</p>
 <form id="recipeForm" class="field">
 <label>Món trong thực đơn<select id="recipeMenu" name="menuItemId" required><option value="">Chọn món ăn</option></select></label>
 <label>Nguyên liệu<select id="recipeItem" name="inventoryItemId" required><option value="">Chọn nguyên liệu</option></select></label>
@@ -249,10 +249,10 @@ $('#opsLedgerSearch').addEventListener('input',redrawViews);
 $('#opsLedgerDirection').addEventListener('change',redrawViews);
 $('#opsStockSearch').addEventListener('input',redrawViews);
 $('#opsLowOnly').addEventListener('change',redrawViews);
-$('#opsLedgerExport').addEventListener('click',()=>downloadCsv('SalesHub_ThuChi_'+$('#dateFrom').value+'_'+$('#dateTo').value+'.csv',
+$('#opsLedgerExport').addEventListener('click',()=>downloadCsv('TamTrang6_ThuChi_'+$('#dateFrom').value+'_'+$('#dateTo').value+'.csv',
  ['Mã','Ngày','Loại','Danh mục','Số tiền VND','Phương thức','Nguồn','Diễn giải'],
  filteredLedger().map(x=>[x.id,x.created_at,x.direction,x.category,x.amount,x.payment_method,x.source,x.note])));
-$('#opsStockExport').addEventListener('click',()=>downloadCsv('SalesHub_TonKho.csv',
+$('#opsStockExport').addEventListener('click',()=>downloadCsv('TamTrang6_TonKho.csv',
  ['Mã','Tên','Đơn vị','Tồn','Ngưỡng cảnh báo','Đơn giá bình quân VND','Cần nhập'],
  filteredStock().map(x=>[x.id,x.name,x.unit,x.quantity,x.reorder_level,x.avg_unit_cost,x.low_stock?'Có':'Không'])));
 
