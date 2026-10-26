@@ -31,9 +31,9 @@ td button{font-size:11px;padding:7px 9px;margin:2px}
 .empty{text-align:center;padding:30px;color:#8c9ca7}.small{font-size:11px}
 @media(max-width:1020px){.split{grid-template-columns:1fr}}
 @media(max-width:760px){.shell{display:block}aside{position:static;height:auto;padding:14px}.brand{margin-bottom:7px;font-size:17px}aside nav{display:flex;overflow:auto;gap:5px}aside a{white-space:nowrap;font-size:11px;padding:10px}.foot{display:none}main{padding:17px 13px}.pair{grid-template-columns:1fr}.panel{padding:14px}}
-</style></head><body>
-<div class="shell"><aside><div class="brand"><span>S</span>SalesHub</div><nav><a href="/admin">▦ Tổng quan</a><a class="active" href="/admin/core">▤ Vận hành POS</a><a href="/admin/operations">▥ Thu–chi & kho</a><a href="/admin/users">♙ Nhân viên</a><a href="/staff">⌁ Màn hình bếp</a></nav><div class="foot">PostgreSQL trên Neon<br>Thay đổi được ghi audit<br>Chỉ tài khoản quản trị</div></aside>
-<main><span class="eyebrow">SALESHUB / BACKOFFICE V10</span><h1>Quản trị vận hành cửa hàng</h1><p class="muted">Quản lý dữ liệu thật cho bán hàng — thực đơn, bàn, nhà cung cấp, khách hàng, đặt bàn và ca thu ngân.</p>
+</style><link rel="stylesheet" href="/admin-minimal.css"></head><body>
+<div class="shell"><aside><div class="brand"><span>S</span>SalesHub</div><nav><a href="/admin">▦ Tổng quan</a><a class="active" href="/admin/core">▤ Món & bàn</a><a href="/admin/operations">▥ Thu–chi & kho</a><a href="/admin/users">♙ Nhân viên</a><a href="/staff">⌁ Màn hình bếp</a></nav><div class="foot">PostgreSQL trên Neon<br>Thay đổi được ghi audit<br>Chỉ tài khoản quản trị</div></aside>
+<main><span class="eyebrow">SALESHUB / BACKOFFICE V10</span><h1>Món, bàn và vận hành</h1><p class="muted">Chọn công việc cần làm. Danh sách hiển thị trước; biểu mẫu chỉ xuất hiện khi bạn bấm Thêm hoặc Sửa.</p>
 <div id="notice" class="notice" role="status">Đang xác minh quyền và tải dữ liệu từ Neon...</div>
 <div class="tabs" role="tablist">
 <button class="active" data-tab="menu">Thực đơn</button><button data-tab="tables">Bàn & QR</button><button data-tab="suppliers">Nhà cung cấp</button><button data-tab="customers">Khách hàng</button><button data-tab="reservations">Đặt bàn</button><button data-tab="shifts">Ca thu ngân</button><button data-tab="audit">Nhật ký</button></div>
@@ -153,4 +153,64 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===b.dataset.tab));
 }));
 (async()=>{try{const r=await fetch('/api/me',{credentials:'same-origin'});const me=await r.json();if(me.role!=='admin'){location.replace('/admin');return}await refresh()}catch(e){note('Không xác minh được quyền: '+e.message,true)}})();
+
+/* V11 progressive disclosure: preserve all original forms and connected APIs. */
+(function minimalCore(){
+ const actions=[
+  ['menu','Thêm món'],['tables','Thêm bàn'],['suppliers','Thêm nhà cung cấp'],
+  ['customers','Thêm khách hàng'],['reservations','Tạo đặt bàn']
+ ];
+ const registry=new Map();
+ for(const [sectionId,actionText] of actions){
+  const section=document.getElementById(sectionId);
+  const split=section?.querySelector('.split');
+  const panels=split?.querySelectorAll(':scope > .panel');
+  if(!panels||panels.length<2)throw Error('Thiếu vùng nghiệp vụ '+sectionId);
+  const formPanel=panels[0],listPanel=panels[1];
+  split.classList.add('ui-focus-stack');
+  formPanel.classList.add('ui-form-card');
+  listPanel.classList.add('ui-focused-list');
+  const row=document.createElement('div');row.className='ui-action-row';
+  const title=document.createElement('strong');title.textContent=sectionId==='tables'?'Danh sách bàn':sectionId==='menu'?'Thực đơn đang quản lý':sectionId==='reservations'?'Lịch đặt bàn':sectionId==='suppliers'?'Nhà cung cấp':'Khách hàng';title.className='sh-headingline';
+  const button=document.createElement('button');button.type='button';button.className='ui-form-toggle';button.textContent='+ '+actionText;
+  const toggle=open=>{
+   formPanel.classList.toggle('is-open',open);
+   button.textContent=open?'Đóng biểu mẫu':'+ '+actionText;
+   button.setAttribute('aria-expanded',String(open));
+   if(open)formPanel.scrollIntoView({behavior:'smooth',block:'nearest'});
+  };
+  button.addEventListener('click',()=>toggle(!formPanel.classList.contains('is-open')));
+  row.append(title,button);listPanel.prepend(row);
+  const form=formPanel.querySelector('form');
+  if(form)form.addEventListener('reset',()=>setTimeout(()=>toggle(false),0));
+  registry.set(sectionId,toggle);
+ }
+ document.addEventListener('click',ev=>{
+  const edit=ev.target.closest('[data-edit]');
+  if(!edit)return;
+  const sectionId=edit.closest('.section')?.id;
+  if(registry.has(sectionId))registry.get(sectionId)(true);
+ },true);
+ // Keep the three most frequent actions visible; group lower-frequency functions.
+ const tabs=document.querySelector('.tabs');
+ const extra=document.createElement('details');extra.className='ui-core-extra';
+ const label=document.createElement('summary');label.textContent='Khác';
+ const menu=document.createElement('div');
+ extra.append(label,menu);
+ const secondary=['suppliers','customers','shifts','audit'];
+ for(const code of secondary){
+  const el=tabs.querySelector('[data-tab="'+code+'"]');
+  if(!el)throw Error('Thiếu tab '+code);
+  menu.append(el);
+ }
+ tabs.append(extra);
+ document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{
+  extra.open=false;
+  if(secondary.includes(btn.dataset.tab)){label.textContent='Khác · '+btn.textContent.trim();}
+  else label.textContent='Khác';
+ }));
+ const start=location.hash.slice(1);
+ if(start&&document.querySelector('[data-tab="'+start+'"]'))document.querySelector('[data-tab="'+start+'"]').click();
+})();
+
 </script></body></html>
