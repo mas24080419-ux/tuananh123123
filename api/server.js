@@ -26,6 +26,7 @@ const menuSeed=[
 let tables=[], menu=[], orders=[], lines=[];
 const id=()=>crypto.randomUUID();
 const ops=require('./operations')({pool,id});
+const analytics=require('./finance-analytics')({pool});
 const paymentRecipient=require('./payment-recipient')({pool});
 const core=require('./core')({pool,id,randomToken:()=>crypto.randomBytes(24).toString('hex')});
 const staffAccounts=require('./staff-auth')({pool,id});
@@ -417,6 +418,11 @@ if(req.method==='POST'&&p==='/api/admin/finance/entries'){
  if(!await requireAdmin(req,res))return;
  if(!throttle(req,'finance',40))return err(res,429,'Thao tác quá nhanh.');
  return send(res,201,{entry:await ops.entry(await input(req))});
+}
+if(req.method==='GET'&&p==='/api/admin/analytics'){
+ if(!await requireAdmin(req,res))return;
+ const range=adminDateRange(u.searchParams);
+ return send(res,200,await analytics.overview(range.from,range.to));
 }
 if(req.method==='GET'&&p==='/api/admin/summary'){
  if(!await requireAdmin(req,res))return;
