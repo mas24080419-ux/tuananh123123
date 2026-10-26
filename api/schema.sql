@@ -90,3 +90,89 @@ CREATE TABLE IF NOT EXISTS finance_entries (
  created_at timestamptz NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS idx_finance_entries_date ON finance_entries(created_at DESC);
+
+
+-- SalesHub V10 / Backend-first — non-destructive, backwards-compatible.
+ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS sku text UNIQUE;
+ALTER TABLE menu_items ADD COLUMN IF NOT EXISTS description text NOT NULL DEFAULT '';
+ALTER TABLE dining_tables ADD COLUMN IF NOT EXISTS capacity int NOT NULL DEFAULT 4 CHECK (capacity BETWEEN 1 AND 30);
+ALTER TABLE dining_tables ADD COLUMN IF NOT EXISTS service_status text NOT NULL DEFAULT 'available'
+ CHECK (service_status IN ('available','occupied','reserved','cleaning'));
+CREATE TABLE IF NOT EXISTS suppliers (
+ id uuid PRIMARY KEY,
+ name text NOT NULL UNIQUE,
+ phone text NOT NULL DEFAULT '',
+ email text NOT NULL DEFAULT '',
+ address text NOT NULL DEFAULT '',
+ note text NOT NULL DEFAULT '',
+ active boolean NOT NULL DEFAULT true,
+ created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS customers (
+ id uuid PRIMARY KEY,
+ name text NOT NULL,
+ phone text UNIQUE,
+ email text NOT NULL DEFAULT '',
+ note text NOT NULL DEFAULT '',
+ created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE TABLE IF NOT EXISTS table_reservations (
+ id uuid PRIMARY KEY,
+ table_id uuid NOT NULL REFERENCES dining_tables(id),
+ customer_id uuid REFERENCES customers(id),
+ customer_name text NOT NULL,
+ customer_phone text NOT NULL DEFAULT '',
+ guests int NOT NULL CHECK(guests BETWEEN 1 AND 30),
+ reserved_at timestamptz NOT NULL,
+ duration_minutes int NOT NULL DEFAULT 120 CHECK(duration_minutes BETWEEN 30 AND 480),
+ status text NOT NULL DEFAULT 'confirmed'
+ CHECK (status IN ('confirmed','arrived','cancelled','completed','no_show')),
+ note text NOT NULL DEFAULT '',
+ created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_reservations_table_time ON table_reservations(table_id,reserved_at);
+CREATE INDEX IF NOT EXISTS idx_reservations_time ON table_reservations(reserved_at DESC);
+ALTER TABLE inventory_movements ADD COLUMN IF NOT EXISTS supplier_id uuid REFERENCES suppliers(id);
+ALTER TABLE inventory_movements ADD COLUMN IF NOT EXISTS invoice_reference text NOT NULL DEFAULT '';
+CREATE TABLE IF NOT EXISTS register_shifts (
+ id uuid PRIMARY KEY,
+ opened_by text NOT NULL DEFAULT 'admin',
+ opened_at timestamptz NOT NULL DEFAULT now(),
+ opening_cash bigint NOT NULL CHECK(opening_cash>=0),
+ status text NOT NULL DEFAULT 'open' CHECK(status IN ('open','closed')),
+ closed_at timestamptz,
+ closed_by text,
+ counted_cash bigint CHECK(counted_cash>=0),
+ expected_cash bigint,
+ variance bigint,
+ note text NOT NULL DEFAULT ''
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_only_one_open_register ON register_shifts((true)) WHERE status='open';
+
+CREATE TABLE IF NOT EXISTS pos_audit (
+ id uuid PRIMARY KEY,
+ actor text NOT NULL,
+ entity text NOT NULL,
+ entity_id uuid,
+ action text NOT NULL,
+ before_state jsonb,
+ after_state jsonb,
+ created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_pos_audit_date ON pos_audit(created_at DESC);
+
+
+-- Named employee identities. Individual login sessions can be revoked by incrementing auth_version.
+CREATE TABLE IF NOT EXISTS staff_users (
+ id uuid PRIMARY KEY,
+ username text NOT NULL UNIQUE,
+ display_name text NOT NULL,
+ role text NOT NULL CHECK(role IN ('manager','cashier','waiter','kitchen','bar')),
+ password_salt text NOT NULL,
+ password_hash text NOT NULL,
+ auth_version int NOT NULL DEFAULT 1 CHECK(auth_version>0),
+ active boolean NOT NULL DEFAULT true,
+ created_at timestamptz NOT NULL DEFAULT now(),
+ updated_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_staff_users_active ON staff_users(active);
