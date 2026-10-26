@@ -430,7 +430,7 @@ $('#refresh').addEventListener('click',load);
   form.addEventListener('reset',()=>setTimeout(()=>show(false),0));
   toggles.set(action.form,{button,show});
  }
- for(const sectionName of ['finance','inventory','recipes']){
+ for(const sectionName of ['inventory','recipes']){
   const section=document.getElementById(sectionName);
   const row=document.createElement('div');row.className='ui-toolbar';
   for(const action of actions.filter(x=>x.section===sectionName))row.append(toggles.get(action.form).button);
