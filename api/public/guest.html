@@ -100,6 +100,7 @@ const money = (v) => new Intl.NumberFormat('vi-VN', { style: 'currency', currenc
 const escapeHTML = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const tableToken = location.pathname.match(/^\/t\/([0-9a-f]{48})$/)?.[1] || null;
 const cart = new Map();
+const itemNotes = new Map(); // one note per dish, persisted on the order line
 let products = [], table = null, mode = 'pilot', sending = false, confirmed = false;
 let pendingPayload = null; // keep snapshot and requestId on ambiguous errors
 let currentView = 'menu';
@@ -203,7 +204,7 @@ async function refreshSavedOrders(all=false) {
 function startNewOrder() {
   if(sending||pendingPayload)return;
   confirmed=false;showError('');hidden('#confirmation',true);
-  cart.clear();note.value='';selectedPaymentMethod='cash';syncPaymentMethod();render();showView('menu');
+  cart.clear();itemNotes.clear();note.value='';selectedPaymentMethod='cash';syncPaymentMethod();render();showView('menu');
 }
 
 async function verifyRecentOrder() {
@@ -246,7 +247,7 @@ function restorePending() {
     pendingPayload = snapshot;
     if(snapshot.paymentMethod) selectedPaymentMethod = snapshot.paymentMethod;
     syncPaymentMethod();
-    cart.clear(); snapshot.items.forEach(it => cart.set(it.id, it.qty));
+    cart.clear();itemNotes.clear();snapshot.items.forEach(it => {cart.set(it.id,it.qty);if(it.note)itemNotes.set(it.id,String(it.note).slice(0,160))});
     note.value = snapshot.note || '';
     return true;
   } catch (_) { return false; }
@@ -281,8 +282,12 @@ function changeQuantity(id, delta) {
   if (sending || pendingPayload || confirmed) return;
   const qty = cart.get(id) || 0;
   const next = Math.max(0, Math.min(20, qty + delta));
-  if (next) cart.set(id, next); else cart.delete(id);
+  if (next) cart.set(id, next); else {cart.delete(id);itemNotes.delete(id);}
   showError(''); render();
+}
+function itemNoteField(p,placement) {
+ const saved=escapeHTML(itemNotes.get(p.id)||'');
+ return `<label class="qr-dish-note"><span>Ghi chú riêng cho ${escapeHTML(p.name)} <small>(không bắt buộc)</small></span><textarea data-item-note="${p.id}" data-placement="${placement}" maxlength="160" rows="2" placeholder="Ví dụ: không hành, ít cay, không đá…">${saved}</textarea></label>`;
 }
 function quantityUI(p, qty) {
   if (!qty) return `<button class="qr-add" data-item="${p.id}" data-delta="1" type="button" aria-label="Thêm ${escapeHTML(p.name)}">+</button>`;
@@ -299,6 +304,19 @@ function wireSteppers() {
     button.disabled = sending || Boolean(pendingPayload) || confirmed;
     button.addEventListener('click', () => changeQuantity(button.dataset.selectItem, 1));
   });
+  document.querySelectorAll('[data-item-note]').forEach(field=>{
+    field.disabled=sending || Boolean(pendingPayload) || confirmed;
+    field.addEventListener('input',()=>{
+      if(field.disabled)return;
+      const id=field.dataset.itemNote;
+      const value=field.value.slice(0,160);
+      if(value)itemNotes.set(id,value);else itemNotes.delete(id);
+      // Mirror the note in menu and cart without rerendering or losing focus.
+      document.querySelectorAll('[data-item-note]').forEach(other=>{
+        if(other!==field&&other.dataset.itemNote===id)other.value=value;
+      });
+    });
+  });
 }
 function render() {
   const {count, subtotal} = totalStats();
@@ -310,10 +328,11 @@ function render() {
       <button type="button" class="qr-card-hit" data-select-item="${p.id}" aria-label="Chọn ${escapeHTML(p.name)}, thêm một phần vào giỏ hàng" aria-controls="cartList"></button>
       <div class="qr-menu-head"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div><h3>${escapeHTML(p.name)}</h3><small>${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small></div></div>
       <div class="qr-menu-bottom"><span class="qr-money">${money(p.price)}</span>${quantityUI(p, cart.get(p.id)||0)}</div>
+      ${cart.get(p.id)?itemNoteField(p,'menu'):''}
     </article>`).join('')}</div>`).join('') || '<p class="qr-empty">Chưa có món trong thực đơn.</p>';
   $('#cartList').innerHTML = [...cart.entries()].map(([id, qty]) => {
     const p = products.find(x => x.id === id);
-    return p ? `<article class="qr-cart-card"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div class="qr-cart-info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category)} · ${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small><span class="qr-money">${money(qty*p.price)}</span></div>${quantityUI(p, qty)}</article>` : '';
+    return p ? `<article class="qr-cart-card"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div class="qr-cart-info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category)} · ${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small><span class="qr-money">${money(qty*p.price)}</span>${itemNoteField(p,'cart')}</div>${quantityUI(p, qty)}</article>` : '';
   }).join('') || '<p class="qr-empty">Giỏ hàng trống. Quay lại thực đơn để chọn món.</p>';
   $('#cartCountBadge').textContent = count;
   $('#cartTitleCount').textContent = `${count} món`;
@@ -379,7 +398,7 @@ async function submitOrder() {
   const animationStart = Date.now();
   if (!pendingPayload) pendingPayload = {
     token: tableToken,
-    items: [...cart].map(([id, qty]) => ({id, qty})),
+    items: [...cart].map(([id, qty]) => ({id, qty,note:(itemNotes.get(id)||'').trim().slice(0,160)})),
     requestId: newUUID(),
     paymentMethod: selectedPaymentMethod,
     note: note.value.trim().slice(0,160),
@@ -394,7 +413,7 @@ async function submitOrder() {
     void verifyRecentOrder();
     $('#confirmationText').textContent = `Mã đơn: #${order.id.slice(0,8)} · ${pendingPayload.items.reduce((n,it)=>n+it.qty,0)} món · ${table.name}.`;
     hidden('#confirmation', false);
-    pendingPayload = null; savePending(); cart.clear(); note.value = '';
+    pendingPayload = null; savePending(); cart.clear(); itemNotes.clear(); note.value = '';
     renderSavedOrders();
     // Keep loading visible long enough to perceive the original button-to-spinner morph.
     const remaining = Math.max(0, 500 - (Date.now() - animationStart));
