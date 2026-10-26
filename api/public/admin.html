@@ -151,16 +151,17 @@ tbody tr:last-child td{border-bottom:none!important}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important}}
 
 </style>
+<link rel="stylesheet" href="/admin-minimal.css">
 </head>
 <body>
 <div class="shell">
 <aside><div class="brand"><div class="brand-icon">S</div>SalesHub</div>
 <p class="side-sub">Không gian quản trị dành riêng cho chủ cửa hàng.</p>
-<a class="side-link on" href="/admin">▦ Tổng quan kinh doanh</a>
-<a class="side-link" href="/admin/operations">▤ Thu–chi và tồn kho</a>
-<a class="side-link" href="/admin/core">▦ Vận hành POS</a>
-<a class="side-link" href="/admin/users">♙ Nhân viên và phân quyền</a>
-<a class="side-link" href="/staff">⌁ Màn hình bếp và QR</a>
+<a class="side-link on" href="/admin">▦ Tổng quan</a>
+<a class="side-link" href="/admin/operations">▤ Thu–chi & kho</a>
+<a class="side-link" href="/admin/core">▦ Món & bàn</a>
+<a class="side-link" href="/admin/users">♙ Nhân viên</a>
+<a class="side-link" href="/staff">⌁ Bếp & QR</a>
 <p class="side-foot">Neon PostgreSQL<br>Báo cáo dựa trên dữ liệu đã lưu<br>Giờ Việt Nam (UTC+7)</p></aside>
 <div>
 <section id="login">
@@ -171,7 +172,7 @@ tbody tr:last-child td{border-bottom:none!important}
 <button type="submit" id="loginButton">Đăng nhập an toàn</button><p id="loginError" role="alert"></p></form>
 </section>
 <main id="dashboard" class="hidden">
-<div class="topbar"><div><span class="sh-eyebrow">TRUNG TÂM ĐIỀU HÀNH / OWNER CONSOLE</span><h1>Tổng quan kinh doanh</h1><p class="sh-page-caption">Theo dõi tình hình quán từ một nơi — QR Order, khoản đã thu, công nợ, chi phí và hàng tồn kho.</p></div>
+<div class="topbar"><div><span class="sh-eyebrow">TRUNG TÂM ĐIỀU HÀNH / OWNER CONSOLE</span><h1>Tổng quan</h1><p class="sh-page-caption">Các số liệu quan trọng của cửa hàng, cập nhật từ đơn hàng và dòng tiền đã xác nhận.</p></div>
 <div style="display:flex;gap:8px;align-items:center"><span class="tag">● Chủ cửa hàng</span><button type="button" class="alt" id="logout">Đăng xuất</button></div></div>
 <div id="notice" class="notice hidden" role="status"></div>
 <form class="filters" id="filterForm">
@@ -180,28 +181,25 @@ tbody tr:last-child td{border-bottom:none!important}
 <button type="submit">Áp dụng</button><button type="button" class="alt" id="today">Hôm nay</button><button type="button" class="alt" id="thisMonth">Tháng này</button>
 <p class="muted">Thời điểm tạo đơn dùng cho giá trị đơn; thời điểm xác nhận thanh toán dùng cho tiền thực thu.</p>
 </form>
-<div class="cards">
-<div class="card"><small>ĐƠN HÀNG TẠO TRONG KỲ</small><b id="totalOrders">—</b><p>Không tính là giao dịch đã thanh toán</p></div>
-<div class="card"><small>GIÁ TRỊ ĐƠN TRONG KỲ</small><b id="orderValue">—</b><p>Tổng các món chưa bị hủy</p></div>
+<div class="cards"><div class="card"><small>ĐƠN HÀNG TẠO TRONG KỲ</small><b id="totalOrders">—</b><p>Không tính là giao dịch đã thanh toán</p></div>
 <div class="card"><small>TIỀN ĐÃ THU TRONG KỲ</small><b class="ok" id="collected">—</b><p>Chỉ các khoản chủ cửa hàng xác nhận đã nhận</p></div>
 <div class="card"><small>CHƯA THU CỦA ĐƠN TRONG KỲ</small><b class="accent" id="outstanding">—</b><p><span id="unpaidOrders">—</span> đơn chưa xác nhận thu tiền</p></div>
+<div class="card"><small>DÒNG TIỀN THUẦN TRONG KỲ</small><b id="adminNetCash">—</b><p>Tiền vào trừ tiền ra, không phải lãi ròng</p></div></div>
+<details class="ui-detail" id="extraMetrics">
+<summary>Chỉ số chi tiết và tồn kho</summary><div class="cards"><div class="card"><small>GIÁ TRỊ ĐƠN TRONG KỲ</small><b id="orderValue">—</b><p>Tổng các món chưa bị hủy</p></div>
+<div class="card"><small>TỔNG TIỀN RA TRONG KỲ</small><b class="accent" id="adminExpenses">—</b><p>Chi vận hành và nhập nguyên liệu</p></div>
 <div class="card"><small>TIỀN MẶT ĐÃ THU</small><b id="paidCash">—</b><p>Theo ngày xác nhận thanh toán</p></div>
 <div class="card"><small>CHUYỂN KHOẢN ĐÃ THU</small><b id="paidTransfer">—</b><p>Chỉ ghi nhận sau khi đối soát</p></div>
 <div class="card"><small>ĐÃ THU – CHƯA RÕ PHƯƠNG THỨC</small><b id="paidUnknown">—</b><p>Dành cho dữ liệu lịch sử</p></div>
 <div class="card"><small>GIAO DỊCH XÁC NHẬN TRONG KỲ</small><b id="paidOrders">—</b><p>Số đơn được xác nhận thanh toán</p></div>
-</div>
-<div class="cards">
-<div class="card"><small>TỔNG TIỀN RA TRONG KỲ</small><b class="accent" id="adminExpenses">—</b><p>Chi vận hành và nhập nguyên liệu</p></div>
-<div class="card"><small>DÒNG TIỀN THUẦN TRONG KỲ</small><b id="adminNetCash">—</b><p>Tiền vào trừ tiền ra, không phải lãi ròng</p></div>
 <div class="card"><small>NGUYÊN LIỆU SẮP HẾT</small><b class="accent" id="adminLowStock">—</b><p>Theo ngưỡng cảnh báo được thiết lập</p></div>
-<div class="card"><small>GIÁ TRỊ HÀNG TỒN (ƯỚC TÍNH)</small><b id="adminInventoryValue">—</b><p>Đơn giá nhập bình quân × số lượng tồn</p></div>
-</div>
-<div class="notice"><a href="/admin/operations">Mở quản lý Thu–chi và tồn kho →</a> để ghi thu/chi, nhập nguyên liệu, kiểm kê kho và định mức cho từng món. Không có dữ liệu mẫu tự tạo.</div>
-<div class="two">
+<div class="card"><small>GIÁ TRỊ HÀNG TỒN (ƯỚC TÍNH)</small><b id="adminInventoryValue">—</b><p>Đơn giá nhập bình quân × số lượng tồn</p></div></div></details>
+<div class="ui-toolbar"><a class="sh-quicklink" href="/admin/operations">Quản lý thu–chi và kho</a> <a class="sh-quicklink" href="/admin/core">Quản lý món và bàn</a></div>
+<details class="ui-detail" id="expandedCharts"><summary>Biểu đồ doanh thu và món bán chạy</summary><div class="two">
 <div class="panel"><div class="panel-head"><div><h2>Tiền đã thu theo ngày</h2><p class="muted">Ngày xác nhận thu tiền, không phải ngày tạo đơn</p></div></div><div id="dailyChart" class="chart"><div class="empty">Đang tải…</div></div></div>
 <div class="panel"><div class="panel-head"><div><h2>Món được gọi nhiều</h2><p class="muted">Số lượng món đặt trong kỳ (chưa bị hủy)</p></div></div><div id="topItems" class="bar-list"><div class="empty">Đang tải…</div></div></div>
 </div>
-<div class="panel" style="margin-bottom:28px">
+</details><div class="panel" style="margin-bottom:28px">
 <div class="panel-head"><div><span class="sh-eyebrow">QUẢN LÝ GIAO DỊCH</span><h2>Đơn hàng và xác nhận thu tiền</h2><p class="muted">Tối đa 100 đơn mới nhất trong kỳ. Các khoản chưa đối soát không tính doanh thu thực thu.</p></div>
 <button id="refresh" type="button" class="alt">↻ Làm mới</button></div>
 <div class="sh-toolbar">
