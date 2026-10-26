@@ -20,7 +20,7 @@ button:disabled{opacity:.6}.row{display:grid;grid-template-columns:1fr 1fr;gap:1
 @media(max-width:600px){.row,.preview{grid-template-columns:1fr}.card{padding:16px}}
 </style><link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css">
 <script defer src="/pos-sidebar.js"></script>
-</head><body><div class="wrap"><header class="top"><strong class="sh-payment-brand"><img class="sh-brand-logo" src="/tam-trang-6-logo.svg" width="40" height="40" alt="">Tắm Tráng 6</strong><nav><a href="/admin">Tổng quan</a> · <a href="/admin/operations">Thu–chi</a></nav></header>
+</head><body><div class="shell"><aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside><main class="wrap tt6-payment-content"><header class="top"><strong class="sh-payment-brand"><img class="sh-brand-logo" src="/tam-trang-6-logo.svg" width="40" height="40" alt="">Tắm Tráng 6</strong><nav><a href="/admin">Tổng quan</a> · <a href="/admin/operations">Thu–chi</a></nav></header>
 <h1>Cấu hình QR chuyển khoản</h1><p>Chọn ngân hàng và nhập tài khoản nhận tiền. Hệ thống tự lấy mã ngân hàng để tạo QR đúng số tiền đơn hàng. <b>Không yêu cầu mã PIN, OTP hay mật khẩu ngân hàng.</b></p>
 <div id="notice" class="info status" role="status">Đang kiểm tra tài khoản quản trị...</div>
 <div class="card"><h2 style="margin-top:0">Tài khoản nhận tiền</h2>
@@ -33,7 +33,7 @@ button:disabled{opacity:.6}.row{display:grid;grid-template-columns:1fr 1fr;gap:1
 </form></div>
 <div class="card" id="previewCard" hidden><h2>Kiểm tra thông tin nhận tiền</h2><div class="preview"><img id="previewQr" alt="QR kiểm tra cấu hình ngân hàng" loading="lazy"><div><b id="previewName"></b><p id="previewDescription"></p><p class="small">Mã QR kiểm tra dùng số tiền thử 1.000đ. <strong>Đừng chuyển tiền để thử!</strong> Dùng ứng dụng ngân hàng quét và đối chiếu đúng tên, STK và ngân hàng, sau đó hủy thao tác.</p></div></div></div>
 <div class="info">QR chỉ điền sẵn người nhận, số tiền và nội dung chuyển khoản. Hệ thống không tự biết tiền đã về nếu chưa tích hợp đối soát ngân hàng; chỉ xác nhận “Đã thanh toán” sau khi kiểm tra giao dịch thực tế.</div>
-</div>
+</main></div>
 <script>
 'use strict';
 const $=s=>document.querySelector(s);
