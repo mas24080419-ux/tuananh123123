@@ -67,6 +67,8 @@ module.exports=function operations({pool,id}){
   const quantity=qty(b.quantity),unitCost=b.kind==='purchase'?cost(b.unitCost):0,note=cleaned(b.note,250);
   if(b.kind==='purchase'&&unitCost===0)throw bad('Đơn giá nhập phải lớn hơn 0.');
   const payment=b.kind==='purchase'?pay(b.paymentMethod):null;
+  const supplierId=b.kind==='purchase'&&b.supplierId?checkId(b.supplierId,'Mã nhà cung cấp'):null;
+  const invoiceRef=cleaned(b.invoiceReference,80);
   if(b.kind!=='purchase'&&!note)throw bad('Phải có lý do khi tạo tồn đầu kỳ hoặc điều chỉnh.');
   return transaction(async c=>{
    const r=await c.query("SELECT id,quantity,avg_unit_cost FROM inventory_items WHERE id=$1 AND active=true FOR UPDATE",[b.inventoryItemId]);
@@ -81,7 +83,7 @@ module.exports=function operations({pool,id}){
    const avg=b.kind==='purchase'?Math.round((before*Number(item.avg_unit_cost)+expense)/after):Number(item.avg_unit_cost);
    const movementId=id();
    await c.query("UPDATE inventory_items SET quantity=$2,avg_unit_cost=$3 WHERE id=$1",[item.id,after,avg]);
-   await c.query("INSERT INTO inventory_movements(id,inventory_item_id,delta,kind,unit_cost,note,request_id) VALUES($1,$2,$3,$4,$5,$6,$7)",[movementId,item.id,delta,b.kind,unitCost,note,b.requestId]);
+   await c.query("INSERT INTO inventory_movements(id,inventory_item_id,delta,kind,unit_cost,note,request_id,supplier_id,invoice_reference) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9)",[movementId,item.id,delta,b.kind,unitCost,note,b.requestId,supplierId,invoiceRef]);
    if(b.kind==='purchase')await c.query("INSERT INTO finance_entries(id,request_id,direction,category,amount,payment_method,note,source,inventory_movement_id) VALUES($1,$2,'expense','Nhập nguyên liệu',$3,$4,$5,'stock_purchase',$6)",[id(),b.requestId,expense,payment,note,movementId]);
    return {id:movementId,quantity:after,expense,duplicate:false};
   });
