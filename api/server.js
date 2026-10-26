@@ -273,6 +273,14 @@ if(req.method==='POST'&&p==='/api/admin/login'){
  if(!safeEq(String(b.password||''),ADMIN_PASSWORD))return err(res,401,'Email hoặc mật khẩu không chính xác.');
  return send(res,200,{ok:true,role:'admin'},{'Set-Cookie':loginCookie('admin')});
 }
+if(req.method==='POST'&&p==='/api/admin/activate-owner'){
+ if(!throttle(req,'owner-first-activation',5))return err(res,429,'Thao tác quá nhiều lần.');
+ const actor=await identity(req);
+ if(actor?.role!=='admin'||!actor.legacy)return err(res,403,'Chỉ phiên quản trị hiện tại được kích hoạt email lần đầu.');
+ if(await ownerAccounts.exists())return err(res,409,'Tài khoản email đã được kích hoạt.');
+ const b=await input(req),owner=await ownerAccounts.activate(b.email,b.newPassword);
+ return send(res,201,{ok:true,role:'admin',email:owner.email},{'Set-Cookie':ownerCookie(owner)});
+}
 if(req.method==='POST'&&p==='/api/admin/change-password'){
  if(!throttle(req,'owner-password-change',8))return err(res,429,'Thao tác quá nhiều. Hãy thử lại sau.');
  const actor=await identity(req);
@@ -287,7 +295,7 @@ if(req.method==='POST'&&p==='/api/users/login'){
  return send(res,200,{ok:true,role:user.role,displayName:user.displayName},{'Set-Cookie':staffCookie(user)});
 }
 if(req.method==='POST'&&p==='/api/logout'){return send(res,200,{ok:true},{'Set-Cookie':'sh_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'})}
-if(req.method==='GET'&&p==='/api/me'){const a=await identity(req);return send(res,200,{staff:!!a,role:a?.role||null,username:a?.username||null,email:a?.email||null,displayName:a?.displayName||null})}
+if(req.method==='GET'&&p==='/api/me'){const a=await identity(req);return send(res,200,{staff:!!a,role:a?.role||null,username:a?.username||null,email:a?.email||null,needsOwnerSetup:Boolean(a?.role==='admin'&&a?.legacy),displayName:a?.displayName||null})}
 if(req.method==='GET'&&p.startsWith('/api/menu/')){const t=await getTable(p.slice('/api/menu/'.length));if(!t)return err(res,404,'QR không hợp lệ.');return send(res,200,{table:{name:t.name,zone:t.zone},items:await getMenu(),mode})}
 if(req.method==='GET'&&p==='/api/payment/recipient'){
  const table=await getTable(u.searchParams.get('token')||'');
