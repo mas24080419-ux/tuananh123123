@@ -97,3 +97,16 @@ main{padding:18px 13px 28px!important}
 #finance .columns:not(:has(.is-open)),#inventory .columns:not(:has(.is-open)),#recipes .columns:not(:has(.is-open)){display:none!important}
 #finance .columns:has(.is-open),#inventory .columns:has(.is-open),#recipes .columns:has(.is-open){margin:0 0 12px!important}
 #finance>.panel,#inventory>.panel,#recipes>.panel{margin-bottom:12px!important}
+
+
+/* Tắm Tráng 6 palm-beach brand icon, shared between admin/POS/finance/staff settings. */
+.shell>aside .brand img.sh-brand-logo,.shell>aside .brand img.brand-icon,
+#login .brand img.sh-brand-logo,#login .brand img.brand-icon{
+ display:inline-block!important;object-fit:cover!important;object-position:center!important;
+ width:40px!important;height:40px!important;min-width:40px!important;flex:0 0 40px!important;
+ padding:0!important;margin:0!important;border:0!important;background:#fff!important;
+ border-radius:11px!important;box-shadow:0 1px 4px rgba(17,40,58,.10)!important
+}
+.sh-payment-brand{display:inline-flex;align-items:center;gap:10px;font-size:17px!important}
+.sh-payment-brand img.sh-brand-logo{display:block;object-fit:cover;width:38px;height:38px;min-width:38px;border-radius:11px;background:white}
+@media(max-width:760px){.shell>aside .brand img.sh-brand-logo,.shell>aside .brand img.brand-icon{width:34px!important;height:34px!important;min-width:34px!important;flex-basis:34px!important}}
