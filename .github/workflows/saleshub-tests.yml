@@ -1,0 +1,21 @@
+name: SalesHub automated tests
+on:
+  push:
+    branches:
+      - 'perf/**'
+  pull_request:
+    branches:
+      - saleshub-v3-preview
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check all JavaScript files
+        run: find api -name '*.js' -type f -print0 | xargs -0 -n 1 node --check
+      - name: Run server and frontend regression tests
+        run: node --test api/test/*.test.js
