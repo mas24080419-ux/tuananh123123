@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#112638"><title>Tắm Tráng 6 | Đơn hàng</title>
+<link rel="stylesheet" href="/admin.css">
+<link rel="stylesheet" href="/admin-minimal.css">
+<link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
+<script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
+<link rel="stylesheet" href="/admin-auth.css"><link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/mediqueue-auth.css?v=tt6-centered-20261026">
+<link rel="stylesheet" href="/finance-charts.css?v=tt6-finance-v1">
+<script src="/finance-charts.js?v=tt6-finance-v1"></script>
+</head>
+<body class="tt6-owner-login">
+<div class="shell">
+<aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside>
+<div>
+<section id="login" class="tt6-mqn-login" aria-labelledby="authTitle">
+<div class="mqn-layout">
+  <section class="mqn-auth" aria-labelledby="authTitle">
+    <div class="mqn-brand tt6-centered-brand"><img class="tt6-mqn-brand-logo" src="/tam-trang-6-logo.svg" width="54" height="54" alt=""><span><b>Tắm Tráng 6</b><small>BEACH POS · QUẢN TRỊ</small></span></div>
+    <div class="mqn-topline"><span>CỔNG QUẢN TRỊ TẮM TRÁNG 6</span><span class="mqn-security">BẢO MẬT TÀI KHOẢN</span></div>
+    <div class="mqn-stage">
+      <div class="mqn-card">
+        <div class="mqn-face front">
+          <div class="mqn-main">
+            <div class="mqn-icon" aria-hidden="true">✦</div>
+            <h2 id="authTitle">Chào mừng trở lại</h2>
+            <p class="mqn-description">Đăng nhập bằng tài khoản chủ cửa hàng để tiếp tục quản lý Tắm Tráng 6.</p>
+            <form id="loginForm" autocomplete="on">
+              <label class="mqn-field" for="adminEmail"><span>Địa chỉ email</span><span class="mqn-input"><input id="adminEmail" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" placeholder="Nhập địa chỉ email" required maxlength="254"></span></label>
+              <label class="mqn-field" for="password"><span>Mật khẩu</span><span class="mqn-input"><input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Nhập mật khẩu"><button type="button" class="mqn-show-pass" data-visibility="password" aria-label="Hiện mật khẩu">Hiện</button></span></label>
+              <p id="loginError" class="mqn-error" role="alert" aria-live="polite"></p>
+              <button class="mqn-submit" type="submit" id="loginButton">Đăng nhập</button>
+            </form>
+            <p class="mqn-note">Chỉ tài khoản đã được cấp quyền quản trị mới có thể truy cập trang này.</p>
+          </div>
+          <div class="mqn-footer"><p><strong>Truy cập được kiểm soát</strong><br>Phiên đăng nhập được xác minh trên máy chủ.</p><span class="mqn-secure-mark" aria-hidden="true">✓</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="mqn-smallprint">Không chia sẻ mật khẩu hay mã OTP. Để đổi mật khẩu, hãy mở mục Bảo mật sau khi đăng nhập.</p>
+  </section>
+</div>
+</section>
+<main id="dashboard" class="hidden">
+<div class="topbar"><div><span class="sh-eyebrow">TRUNG TÂM ĐIỀU HÀNH / OWNER CONSOLE</span><h1>Đơn hàng</h1><p class="sh-page-caption">Tra cứu đơn hàng, xác nhận tiền đã nhận và xuất danh sách đơn.</p></div>
+<div style="display:flex;gap:8px;align-items:center"><span class="tag">● Chủ cửa hàng</span><button type="button" class="alt" id="changePassBtn">Đổi mật khẩu</button><button type="button" class="alt" id="logout">Đăng xuất</button></div></div>
+<div id="notice" class="notice hidden" role="status"></div>
+
+
+<form class="filters" id="filterForm">
+<label>Từ ngày<input type="date" id="from" required></label>
+<label>Đến ngày<input type="date" id="to" required></label>
+<button type="submit">Áp dụng</button><button type="button" class="alt" id="today">Hôm nay</button><button type="button" class="alt" id="thisMonth">Tháng này</button>
+<p class="muted">Thời điểm tạo đơn dùng cho giá trị đơn; thời điểm xác nhận thanh toán dùng cho tiền thực thu.</p>
+</form>
+<div class="cards"><div class="card"><small>ĐƠN HÀNG TẠO TRONG KỲ</small><b id="totalOrders">—</b><p>Không tính là giao dịch đã thanh toán</p></div>
+<div class="card"><small>TIỀN ĐÃ THU TRONG KỲ</small><b class="ok" id="collected">—</b><p>Chỉ các khoản chủ cửa hàng xác nhận đã nhận</p></div>
+<div class="card"><small>CHƯA THU CỦA ĐƠN TRONG KỲ</small><b class="accent" id="outstanding">—</b><p><span id="unpaidOrders">—</span> đơn chưa xác nhận thu tiền</p></div>
+</div>
+
+<details class="ui-detail" id="extraMetrics">
+<summary>Chỉ số chi tiết</summary><div class="cards"><div class="card"><small>GIÁ TRỊ ĐƠN TRONG KỲ</small><b id="orderValue">—</b><p>Tổng các món chưa bị hủy</p></div>
+
+<div class="card"><small>TIỀN MẶT ĐÃ THU</small><b id="paidCash">—</b><p>Theo ngày xác nhận thanh toán</p></div>
+<div class="card"><small>CHUYỂN KHOẢN ĐÃ THU</small><b id="paidTransfer">—</b><p>Chỉ ghi nhận sau khi đối soát</p></div>
+<div class="card"><small>ĐÃ THU – CHƯA RÕ PHƯƠNG THỨC</small><b id="paidUnknown">—</b><p>Dành cho dữ liệu lịch sử</p></div>
+<div class="card"><small>GIAO DỊCH XÁC NHẬN TRONG KỲ</small><b id="paidOrders">—</b><p>Số đơn được xác nhận thanh toán</p></div>
+
+</div></details>
+<div class="ui-toolbar"><a class="sh-quicklink" href="/admin/operations">Quản lý thu–chi</a> <a class="sh-quicklink" href="/admin/core">Quản lý món và bàn</a></div>
+<details class="ui-detail" id="expandedCharts"><summary>Biểu đồ doanh thu và món bán chạy</summary><div class="two">
+<div class="panel"><div class="panel-head"><div><h2>Tiền đã thu theo ngày</h2><p class="muted">Ngày xác nhận thu tiền, không phải ngày tạo đơn</p></div></div><div id="dailyChart" class="chart"><div class="empty">Đang tải…</div></div></div>
+<div class="panel"><div class="panel-head"><div><h2>Món được gọi nhiều</h2><p class="muted">Số lượng món đặt trong kỳ (chưa bị hủy)</p></div></div><div id="topItems" class="bar-list"><div class="empty">Đang tải…</div></div></div>
+</div>
+</details><div class="panel" style="margin-bottom:28px">
+<div class="panel-head"><div><span class="sh-eyebrow">QUẢN LÝ GIAO DỊCH</span><h2>Đơn hàng và xác nhận thu tiền</h2><p class="muted">Tối đa 100 đơn mới nhất trong kỳ. Các khoản chưa đối soát không tính doanh thu thực thu.</p></div>
+<button id="refresh" type="button" class="alt">↻ Làm mới</button></div>
+<div class="sh-toolbar">
+<input type="search" id="adminOrderSearch" placeholder="Tìm mã đơn hoặc tên bàn..." aria-label="Tìm trong danh sách đơn đã tải">
+<select id="adminPaymentFilter" aria-label="Lọc theo trạng thái thanh toán"><option value="all">Mọi trạng thái</option><option value="unpaid">Chưa thu</option><option value="paid">Đã thanh toán</option><option value="refunded">Đã hoàn tiền</option></select>
+<select id="adminMethodFilter" aria-label="Lọc phương thức thanh toán"><option value="all">Mọi phương thức</option><option value="cash">Tiền mặt</option><option value="bank_transfer">Chuyển khoản</option><option value="unknown">Chưa xác định</option></select>
+<button type="button" class="alt" id="adminExportOrders">↓ Xuất CSV</button></div>
+<p class="sh-info" id="adminOrderCount">Đang tải dữ liệu...</p>
+<div class="notice">Chỉ bấm <strong>Đã nhận tiền</strong> sau khi nhận đủ tiền mặt hoặc kiểm tra giao dịch chuyển khoản thực tế. Chọn chuyển khoản không có nghĩa khách đã trả tiền.</div>
+<div class="table-scroll"><table class="data-table"><thead><tr><th>Đơn hàng</th><th>Bàn</th><th>Phương thức</th><th>Tiền hàng</th><th>Trạng thái</th><th>Xác nhận</th></tr></thead><tbody id="orders"><tr><td colspan="6" class="empty">Đang tải dữ liệu…</td></tr></tbody></table></div>
+</div>
+<section id="security" class="tt6-security-panel hidden" aria-labelledby="securityTitle">
+<div class="tt6-security-card">
+<div class="tt6-security-head"><div><span class="sh-eyebrow">BẢO MẬT TÀI KHOẢN</span><h2 id="securityTitle">Đổi mật khẩu quản trị</h2><p class="muted">Để bảo vệ doanh thu và thông tin cửa hàng, hãy sử dụng mật khẩu mới có ít nhất 12 ký tự.</p></div><button class="alt" type="button" id="closeSecurity">Đóng</button></div>
+<form id="passwordForm" autocomplete="off">
+<label for="currentPassword">Mật khẩu hiện tại</label><div class="tt6-password-row"><input type="password" id="currentPassword" autocomplete="current-password" required><button type="button" class="tt6-show-pass" data-visibility="currentPassword">Hiện</button></div>
+<label for="newPassword">Mật khẩu mới</label><div class="tt6-password-row"><input type="password" id="newPassword" autocomplete="new-password" required minlength="12" maxlength="128"><button type="button" class="tt6-show-pass" data-visibility="newPassword">Hiện</button></div>
+<label for="confirmPassword">Nhập lại mật khẩu mới</label><div class="tt6-password-row"><input type="password" id="confirmPassword" autocomplete="new-password" required minlength="12" maxlength="128"><button type="button" class="tt6-show-pass" data-visibility="confirmPassword">Hiện</button></div>
+<p class="muted">Mật khẩu mới nên có chữ, số và ký tự đặc biệt. Sau khi đổi, mọi phiên cũ sẽ hết hiệu lực.</p>
+<p id="securityNotice" role="status" aria-live="polite"></p><button type="submit" id="savePassword">Lưu mật khẩu mới</button>
+</form></div></section>
+</main></div></div>
+<script src="/orders.js"></script>
+</body></html>

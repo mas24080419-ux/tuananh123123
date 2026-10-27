@@ -47,35 +47,21 @@
 </div>
 </section>
 <main id="dashboard" class="hidden">
-<div class="topbar"><div><span class="sh-eyebrow">TRUNG TÂM ĐIỀU HÀNH / OWNER CONSOLE</span><h1>Tổng quan</h1><p class="sh-page-caption">Các số liệu quan trọng của cửa hàng, cập nhật từ đơn hàng và dòng tiền đã xác nhận.</p></div>
+<div class="topbar"><div><span class="sh-eyebrow">TRUNG TÂM ĐIỀU HÀNH / OWNER CONSOLE</span><h1>Tổng quan</h1><p class="sh-page-caption">Biểu đồ thu–chi của cửa hàng theo khoảng thời gian đã chọn.</p></div>
 <div style="display:flex;gap:8px;align-items:center"><span class="tag">● Chủ cửa hàng</span><button type="button" class="alt" id="changePassBtn">Đổi mật khẩu</button><button type="button" class="alt" id="logout">Đăng xuất</button></div></div>
 <div id="notice" class="notice hidden" role="status"></div>
-<div class="tt6-home-money-actions" aria-label="Thao tác ghi thu và chi">
-<a href="/admin/operations?type=expense#quick-entry" class="tt6-money-action expense"><span aria-hidden="true">−</span><span>Ghi khoản chi</span></a>
-<a href="/admin/operations?type=income#quick-entry" class="tt6-money-action income"><span aria-hidden="true">+</span><span>Ghi khoản thu</span></a>
-<small>Ghi trực tiếp vào sổ thu–chi và cập nhật biểu đồ tài chính.</small>
-</div>
+
 
 <form class="filters" id="filterForm">
 <label>Từ ngày<input type="date" id="from" required></label>
 <label>Đến ngày<input type="date" id="to" required></label>
 <button type="submit">Áp dụng</button><button type="button" class="alt" id="today">Hôm nay</button><button type="button" class="alt" id="thisMonth">Tháng này</button>
-<p class="muted">Thời điểm tạo đơn dùng cho giá trị đơn; thời điểm xác nhận thanh toán dùng cho tiền thực thu.</p>
+<p class="muted">Báo cáo theo thời điểm ghi nhận tiền, múi giờ Việt Nam.</p>
 </form>
-<div class="cards"><div class="card"><small>ĐƠN HÀNG TẠO TRONG KỲ</small><b id="totalOrders">—</b><p>Không tính là giao dịch đã thanh toán</p></div>
-<div class="card"><small>TIỀN ĐÃ THU TRONG KỲ</small><b class="ok" id="collected">—</b><p>Chỉ các khoản chủ cửa hàng xác nhận đã nhận</p></div>
-<div class="card"><small>CHƯA THU CỦA ĐƠN TRONG KỲ</small><b class="accent" id="outstanding">—</b><p><span id="unpaidOrders">—</span> đơn chưa xác nhận thu tiền</p></div>
-<div class="card"><small>DÒNG TIỀN THUẦN TRONG KỲ</small><b id="adminNetCash">—</b><p>Tiền vào trừ tiền ra, không phải lãi ròng</p></div></div>
 <section class="tt6-analytics" id="financeAnalytics" aria-labelledby="tt6FinanceTitle">
- <div class="tt6-analytics-head"><div><span class="tt6-analytics-subhead">BÁO CÁO TÀI CHÍNH · DỮ LIỆU THỰC TẾ</span><h2 id="tt6FinanceTitle">Phân tích thu – chi</h2><p>Biểu đồ cập nhật theo khoảng ngày đang chọn phía trên.</p></div><a class="tt6-analytics-action" href="/admin/operations">Mở sổ thu–chi</a></div>
- <div class="tt6-analytics-summary">
-  <div class="tt6-analytics-kpi income"><small>TỔNG TIỀN VÀO</small><strong id="faIncome">—</strong><small>Đã thu + thu khác</small></div>
-  <div class="tt6-analytics-kpi expense"><small>TỔNG TIỀN RA</small><strong id="faOutflow">—</strong><small>Chi đã ghi sổ</small></div>
-  <div class="tt6-analytics-kpi"><small>DÒNG TIỀN THUẦN</small><strong id="faNet">—</strong><small>Thu trừ chi, không phải lãi</small></div>
-  
- </div>
+ <div class="tt6-analytics-head"><div><span class="tt6-analytics-subhead">BÁO CÁO TÀI CHÍNH · DỮ LIỆU THỰC TẾ</span><h2 id="tt6FinanceTitle">Phân tích thu – chi</h2><p>Biểu đồ cập nhật theo khoảng ngày đang chọn phía trên.</p></div></div>
  <div class="tt6-analytics-panels">
-  <article class="tt6-analytics-card"><h3>Chi phí theo danh mục</h3><p class="tt6-chart-desc">Tỷ trọng các khoản chi thực tế. Bấm một danh mục để xem giao dịch.</p><div id="faExpensePie"><p class="tt6-chart-empty">Đang tải số liệu…</p></div></article>
+  <article class="tt6-analytics-card"><h3>Chi phí theo danh mục</h3><p class="tt6-chart-desc">Tỷ trọng các khoản chi thực tế theo danh mục.</p><div id="faExpensePie"><p class="tt6-chart-empty">Đang tải số liệu…</p></div></article>
   <article class="tt6-analytics-card"><h3>Cơ cấu tiền nhận được</h3><p class="tt6-chart-desc">Tiền mặt, chuyển khoản, khoản thu khác theo phương thức đã ghi nhận.</p><div id="faPaymentPie"><p class="tt6-chart-empty">Đang tải số liệu…</p></div></article>
   <article class="tt6-analytics-card wide"><h3>Xu hướng dòng tiền</h3><p class="tt6-chart-desc">Tiền vào và tiền ra theo ngày hoặc tháng, dựa trên thời điểm giao dịch.</p>
    <div class="tt6-trend-legend"><span><i></i>Tiền vào</span><span><i class="expense-key"></i>Tiền ra</span></div>
@@ -83,32 +69,6 @@
   </article>
  </div><p class="tt6-analytics-foot">Số tiền nhận từ đơn hàng chỉ tính khi được xác nhận đã thanh toán. Dòng tiền thuần không phải lợi nhuận kế toán.</p>
 </section>
-<details class="ui-detail" id="extraMetrics">
-<summary>Chỉ số chi tiết</summary><div class="cards"><div class="card"><small>GIÁ TRỊ ĐƠN TRONG KỲ</small><b id="orderValue">—</b><p>Tổng các món chưa bị hủy</p></div>
-<div class="card"><small>TỔNG TIỀN RA TRONG KỲ</small><b class="accent" id="adminExpenses">—</b><p>Các khoản chi đã ghi sổ</p></div>
-<div class="card"><small>TIỀN MẶT ĐÃ THU</small><b id="paidCash">—</b><p>Theo ngày xác nhận thanh toán</p></div>
-<div class="card"><small>CHUYỂN KHOẢN ĐÃ THU</small><b id="paidTransfer">—</b><p>Chỉ ghi nhận sau khi đối soát</p></div>
-<div class="card"><small>ĐÃ THU – CHƯA RÕ PHƯƠNG THỨC</small><b id="paidUnknown">—</b><p>Dành cho dữ liệu lịch sử</p></div>
-<div class="card"><small>GIAO DỊCH XÁC NHẬN TRONG KỲ</small><b id="paidOrders">—</b><p>Số đơn được xác nhận thanh toán</p></div>
-
-</div></details>
-<div class="ui-toolbar"><a class="sh-quicklink" href="/admin/operations">Quản lý thu–chi</a> <a class="sh-quicklink" href="/admin/core">Quản lý món và bàn</a></div>
-<details class="ui-detail" id="expandedCharts"><summary>Biểu đồ doanh thu và món bán chạy</summary><div class="two">
-<div class="panel"><div class="panel-head"><div><h2>Tiền đã thu theo ngày</h2><p class="muted">Ngày xác nhận thu tiền, không phải ngày tạo đơn</p></div></div><div id="dailyChart" class="chart"><div class="empty">Đang tải…</div></div></div>
-<div class="panel"><div class="panel-head"><div><h2>Món được gọi nhiều</h2><p class="muted">Số lượng món đặt trong kỳ (chưa bị hủy)</p></div></div><div id="topItems" class="bar-list"><div class="empty">Đang tải…</div></div></div>
-</div>
-</details><div class="panel" style="margin-bottom:28px">
-<div class="panel-head"><div><span class="sh-eyebrow">QUẢN LÝ GIAO DỊCH</span><h2>Đơn hàng và xác nhận thu tiền</h2><p class="muted">Tối đa 100 đơn mới nhất trong kỳ. Các khoản chưa đối soát không tính doanh thu thực thu.</p></div>
-<button id="refresh" type="button" class="alt">↻ Làm mới</button></div>
-<div class="sh-toolbar">
-<input type="search" id="adminOrderSearch" placeholder="Tìm mã đơn hoặc tên bàn..." aria-label="Tìm trong danh sách đơn đã tải">
-<select id="adminPaymentFilter" aria-label="Lọc theo trạng thái thanh toán"><option value="all">Mọi trạng thái</option><option value="unpaid">Chưa thu</option><option value="paid">Đã thanh toán</option><option value="refunded">Đã hoàn tiền</option></select>
-<select id="adminMethodFilter" aria-label="Lọc phương thức thanh toán"><option value="all">Mọi phương thức</option><option value="cash">Tiền mặt</option><option value="bank_transfer">Chuyển khoản</option><option value="unknown">Chưa xác định</option></select>
-<button type="button" class="alt" id="adminExportOrders">↓ Xuất CSV</button></div>
-<p class="sh-info" id="adminOrderCount">Đang tải dữ liệu...</p>
-<div class="notice">Chỉ bấm <strong>Đã nhận tiền</strong> sau khi nhận đủ tiền mặt hoặc kiểm tra giao dịch chuyển khoản thực tế. Chọn chuyển khoản không có nghĩa khách đã trả tiền.</div>
-<div class="table-scroll"><table class="data-table"><thead><tr><th>Đơn hàng</th><th>Bàn</th><th>Phương thức</th><th>Tiền hàng</th><th>Trạng thái</th><th>Xác nhận</th></tr></thead><tbody id="orders"><tr><td colspan="6" class="empty">Đang tải dữ liệu…</td></tr></tbody></table></div>
-</div>
 <section id="security" class="tt6-security-panel hidden" aria-labelledby="securityTitle">
 <div class="tt6-security-card">
 <div class="tt6-security-head"><div><span class="sh-eyebrow">BẢO MẬT TÀI KHOẢN</span><h2 id="securityTitle">Đổi mật khẩu quản trị</h2><p class="muted">Để bảo vệ doanh thu và thông tin cửa hàng, hãy sử dụng mật khẩu mới có ít nhất 12 ký tự.</p></div><button class="alt" type="button" id="closeSecurity">Đóng</button></div>

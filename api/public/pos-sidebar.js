@@ -62,6 +62,7 @@ function setup(){
  '<div class="tt6-side-scroller"><span class="tt6-side-section-label">ĐIỀU HƯỚNG</span>'+
  '<nav class="tt6-side-nav" aria-label="Các chức năng Tắm Tráng 6">'+
  link('/admin','Tổng quan','home')+
+ link('/admin/orders','Đơn hàng','wallet')+
  link('/admin/core','Món & bàn','table')+
  link('/admin/operations','Thu–chi','wallet')+
  link('/staff','Màn hình bếp / Bar','chef')+

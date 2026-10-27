@@ -28,8 +28,8 @@ function request(url, headers = {}) {
     }).on('error', reject);
   });
 }
-test('all seven pages and every referenced local stylesheet/script are served', async () => {
-  const routes = ['/', '/admin', '/admin/operations', '/admin/core', '/admin/users', '/admin/payment', '/t/test-table'];
+test('all admin pages and every referenced local stylesheet/script are served', async () => {
+  const routes = ['/', '/admin', '/admin/orders', '/admin/operations', '/admin/core', '/admin/users', '/admin/payment', '/t/test-table'];
   for (const route of routes) {
     const response = await request(route);
     assert.equal(response.status, 200, route);
