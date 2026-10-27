@@ -6,10 +6,11 @@ module.exports=({pool,id})=>{
  function access(actor,area){if(!canAccess(actor,area))throw fail('Không có quyền thao tác khu vực này.',403);if(!pool)throw fail('Chức năng này yêu cầu PostgreSQL.',503)}
  async function list(actor,area){
   access(actor,area);
-  return {area,name:areas[area].name,services:areas[area].services,receipts:(await pool.query("SELECT r.id,r.service,r.quantity,r.created_at,f.amount,f.payment_method,f.note,coalesce(s.display_name,'Chủ cửa hàng') AS employee FROM area_receipts r JOIN finance_entries f ON f.id=r.finance_entry_id LEFT JOIN staff_users s ON s.id=r.staff_user_id WHERE r.area=$1 AND (r.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date ORDER BY r.created_at DESC LIMIT 100",[area])).rows};
+  return {area,name:areas[area].name,services:area==='equipment'?{float:areas.equipment.services.float}:areas[area].services,serviceNames:areas[area].services,receipts:(await pool.query("SELECT r.id,r.service,r.quantity,r.created_at,f.amount,f.payment_method,f.note,coalesce(s.display_name,'Chủ cửa hàng') AS employee FROM area_receipts r JOIN finance_entries f ON f.id=r.finance_entry_id LEFT JOIN staff_users s ON s.id=r.staff_user_id WHERE r.area=$1 AND (r.created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date=(now() AT TIME ZONE 'Asia/Ho_Chi_Minh')::date ORDER BY r.created_at DESC LIMIT 100",[area])).rows};
  }
  async function create(actor,area,b){
   access(actor,area);
+  if(b.service==='locker')throw fail('Tiền thuê tủ được ghi tự động 30.000đ khi cho thuê trên sơ đồ tủ. Không ghi thêm phiếu thu thủ công.');
   const service=b.service,quantity=Number(b.quantity),amount=Number(b.amount),method=b.paymentMethod,note=String(b.note||'').trim();
   if(!Object.hasOwn(areas[area].services,service)||!Number.isInteger(quantity)||quantity<1||quantity>10000||!Number.isSafeInteger(amount)||amount<1||amount>999999999999||!['cash','bank_transfer'].includes(method)||note.length>250||!uuid(b.requestId))throw fail('Kiểm tra dịch vụ, số lượng, tổng tiền và phương thức thanh toán.');
   const c=await pool.connect();

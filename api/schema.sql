@@ -241,3 +241,8 @@ CREATE TABLE IF NOT EXISTS locker_rentals (
 );
 CREATE UNIQUE INDEX IF NOT EXISTS idx_locker_one_active ON locker_rentals(locker_code) WHERE ended_at IS NULL;
 CREATE INDEX IF NOT EXISTS idx_locker_rentals_date ON locker_rentals(created_at DESC);
+
+-- Fixed locker fee; existing historical rentals are not backfilled.
+ALTER TABLE locker_rentals ADD COLUMN IF NOT EXISTS charged_amount bigint CHECK(charged_amount=30000);
+ALTER TABLE locker_rentals ADD COLUMN IF NOT EXISTS payment_method text CHECK(payment_method IN ('cash','bank_transfer'));
+ALTER TABLE locker_rentals ADD COLUMN IF NOT EXISTS finance_entry_id uuid UNIQUE REFERENCES finance_entries(id);

@@ -22,7 +22,7 @@ api('/api/me').then(function(j){if(j.staff)enter(j.role,j.workArea)});setInterva
 
 async function loadArea(){
  try{var result=await api('/api/area/receipts');el('areaTitle').textContent=result.name;var selected=el('areaService').value;el('areaService').innerHTML=Object.entries(result.services).map(function(x){return '<option value="'+esc(x[0])+'">'+esc(x[1])+'</option>'}).join('');if(result.services[selected])el('areaService').value=selected;
- el('areaReceipts').innerHTML=result.receipts.map(function(r){return '<article class="area-receipt"><div><b>'+esc(result.services[r.service])+' × '+esc(r.quantity)+'</b><p>'+esc(new Date(r.created_at).toLocaleTimeString('vi-VN'))+' · '+esc(r.employee)+' · '+(r.payment_method==='cash'?'Tiền mặt':'Chuyển khoản')+'</p><p>'+esc(r.note)+'</p></div><strong>'+Number(r.amount).toLocaleString('vi-VN')+' đ</strong></article>'}).join('')||'<p>Chưa có phiếu thu hôm nay.</p>';
+ el('areaReceipts').innerHTML=result.receipts.map(function(r){return '<article class="area-receipt"><div><b>'+esc((result.serviceNames||result.services)[r.service])+' × '+esc(r.quantity)+'</b><p>'+esc(new Date(r.created_at).toLocaleTimeString('vi-VN'))+' · '+esc(r.employee)+' · '+(r.payment_method==='cash'?'Tiền mặt':'Chuyển khoản')+'</p><p>'+esc(r.note)+'</p></div><strong>'+Number(r.amount).toLocaleString('vi-VN')+' đ</strong></article>'}).join('')||'<p>Chưa có phiếu thu hôm nay.</p>';
  }catch(e){el('areaFeedback').textContent=e.message;if(e.status===401||e.status===403){el('areaReceiptForm').querySelector('button[type=submit]').disabled=true}}
 }
 el('areaRefresh').onclick=loadArea;

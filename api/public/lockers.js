@@ -13,13 +13,13 @@ function draw(){
  $('#lockerGrid').innerHTML=list.map(l=>'<button type="button" class="locker-tile'+(l.rental_id?' occupied':'')+'" data-locker="'+l.code+'" aria-label="Tủ '+l.code+' — '+(l.rental_id?'đang thuê':'trống')+'"><span class="locker-mark" aria-hidden="true">✓</span><span class="locker-number">'+l.code+'</span><span class="locker-status"><i class="dot '+(l.rental_id?'busy':'free')+'"></i>'+(l.rental_id?'Đang thuê':'Trống')+'</span><span class="locker-person">'+(l.rental_id?esc(l.customer_name):'Chạm để thuê')+'</span></button>').join('')||'<p class="empty-grid">Không tìm thấy tủ phù hợp. Thử đổi bộ lọc hoặc từ khóa.</p>';
  $('#lockerGrid').querySelectorAll('[data-locker]').forEach(b=>b.addEventListener('click',()=>openLocker(b.dataset.locker)));
 }
-async function load(){if(loading||!authorized)return;loading=true;$('#refreshLockers').disabled=true;try{lockers=(await api('/api/lockers')).lockers;draw();$('#syncStatus').textContent='Đã đồng bộ '+new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});notice('');}catch(e){notice(e.message,true);$('#syncStatus').textContent='Chưa đồng bộ';if(e.status===401||e.status===403){authorized=false;$('#lockerContent').hidden=true;$('#accessGate').hidden=false;$('#accessGate h2').textContent='Phiên đăng nhập hoặc quyền truy cập đã thay đổi.';if($('#lockerDialog').open)$('#lockerDialog').close();}}finally{loading=false;$('#refreshLockers').disabled=false}}
+async function load(){if(loading||!authorized)return;loading=true;$('#refreshLockers').disabled=true;try{const result=await api('/api/lockers');lockers=result.lockers;$('#rentalPrice').textContent=Number(result.rentalFee||30000).toLocaleString('vi-VN')+'đ / tủ';draw();$('#syncStatus').textContent='Đã đồng bộ '+new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit'});notice('');}catch(e){notice(e.message,true);$('#syncStatus').textContent='Chưa đồng bộ';if(e.status===401||e.status===403){authorized=false;$('#lockerContent').hidden=true;$('#accessGate').hidden=false;$('#accessGate h2').textContent='Phiên đăng nhập hoặc quyền truy cập đã thay đổi.';if($('#lockerDialog').open)$('#lockerDialog').close();}}finally{loading=false;$('#refreshLockers').disabled=false}}
 function openLocker(code){
  selected=lockers.find(x=>x.code===code);if(!selected)return;
  pending=null;feedback('');$('#rentForm').reset();$('#dialogTitle').textContent='Tủ '+code;
  $('#dialogEyebrow').textContent=selected.rental_id?'THÔNG TIN KHÁCH THUÊ':'CHO THUÊ TỦ';
  $('#rentForm').hidden=!!selected.rental_id;$('#occupiedDetails').hidden=!selected.rental_id;$('#returnConfirmation').hidden=true;$('#startReturn').hidden=false;
- if(selected.rental_id){$('#renterName').textContent=selected.customer_name;$('#renterPhone').textContent=selected.customer_phone;$('#renterPhone').href='tel:'+selected.customer_phone;$('#rentedAt').textContent=new Date(selected.created_at).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'});$('#renterNote').textContent=selected.note||'Không có ghi chú';}
+ if(selected.rental_id){$('#renterName').textContent=selected.customer_name;$('#renterPhone').textContent=selected.customer_phone;$('#renterPhone').href='tel:'+selected.customer_phone;$('#rentedAt').textContent=new Date(selected.created_at).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'});$('#renterFee').textContent=selected.charged_amount?Number(selected.charged_amount).toLocaleString('vi-VN')+'đ · '+(selected.payment_method==='bank_transfer'?'Chuyển khoản':'Tiền mặt'):'Lượt thuê cũ — chưa có phiếu thu tự động';$('#renterNote').textContent=selected.note||'Không có ghi chú';}
  $('#lockerDialog').showModal();if(!selected.rental_id)$('#customerName').focus();
 }
 function closeDialog(){if(!saving){$('#lockerDialog').close();pending=null;selected=null}}
@@ -31,9 +31,9 @@ document.querySelectorAll('[data-status]').forEach(b=>b.addEventListener('click'
 $('#lockerSearch').addEventListener('input',draw);$('#refreshLockers').addEventListener('click',load);
 $('#rentForm').addEventListener('submit',async e=>{
  e.preventDefault();if(saving||!selected)return;
- if(!pending){pending={...Object.fromEntries(new FormData(e.currentTarget)),requestId:crypto.randomUUID()};}
+ if(!pending){pending={...Object.fromEntries(new FormData(e.currentTarget)),confirmPayment:true,requestId:crypto.randomUUID()};}
  saving=true;$('#rentButton').disabled=true;$('#closeDialog').disabled=true;feedback('Đang lưu lượt thuê…');
- try{const result=await api('/api/lockers/'+selected.code+'/rent','POST',pending);$('#lockerDialog').close();pending=null;await load();notice(result.ended?'Lượt thuê này đã kết thúc. Sơ đồ tủ đã được cập nhật.':'Đã ghi nhận khách thuê tủ.');}
+ try{const result=await api('/api/lockers/'+selected.code+'/rent','POST',pending);$('#lockerDialog').close();pending=null;await load();notice(result.ended?'Lượt thuê này đã kết thúc. Sơ đồ tủ đã được cập nhật.':'Đã cho thuê tủ và tự ghi thu 30.000đ vào sổ Thu–chi.');}
  catch(error){feedback(error.message+(error.status?'':' Bấm lại sẽ kiểm tra cùng lượt thuê, không tạo lượt mới.'));if(error.status&&error.status<500)pending=null;await load();}
  finally{saving=false;$('#rentButton').disabled=false;$('#closeDialog').disabled=false;}
 });

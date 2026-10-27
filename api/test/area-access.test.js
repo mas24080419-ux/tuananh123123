@@ -23,6 +23,7 @@ test('reject cross-area reads and writes before querying storage',async()=>{
  await assert.rejects(service.list(actor,'restroom'),{status:403});
  await assert.rejects(service.create(actor,'restroom',{}),{status:403});
  await assert.rejects(service.create(actor,'equipment',{service:'restroom'}),{status:400});
+ await assert.rejects(service.create(actor,'equipment',{service:'locker'}),{status:400});
 });
 test('receipt and income are one transaction; write failure rolls back',async()=>{
  const statements=[];
