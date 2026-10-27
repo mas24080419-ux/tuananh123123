@@ -246,3 +246,11 @@ CREATE INDEX IF NOT EXISTS idx_locker_rentals_date ON locker_rentals(created_at 
 ALTER TABLE locker_rentals ADD COLUMN IF NOT EXISTS charged_amount bigint CHECK(charged_amount=30000);
 ALTER TABLE locker_rentals ADD COLUMN IF NOT EXISTS payment_method text CHECK(payment_method IN ('cash','bank_transfer'));
 ALTER TABLE locker_rentals ADD COLUMN IF NOT EXISTS finance_entry_id uuid UNIQUE REFERENCES finance_entries(id);
+
+-- Server-priced float service variants.
+CREATE TABLE IF NOT EXISTS float_receipt_details (
+ receipt_id uuid PRIMARY KEY REFERENCES area_receipts(id),
+ float_type text NOT NULL CHECK(float_type IN ('child_vest','black_adult','child_float')),
+ unit_price integer NOT NULL,
+ CHECK((float_type IN ('child_vest','child_float') AND unit_price=20000) OR (float_type='black_adult' AND unit_price=30000))
+);

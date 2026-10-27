@@ -2,6 +2,7 @@ var orders=[],view='kds';function el(x){return document.getElementById(x)};funct
 async function api(url,opts){var o=opts||{},r=await fetch(url,{credentials:'same-origin',method:o.method||'GET',headers:{'Content-Type':'application/json'},body:o.body?JSON.stringify(o.body):undefined});var j=await r.json();if(!r.ok){var e=new Error(j.error||'Lỗi kết nối');e.status=r.status;throw e}return j}
 var assignedArea=null,areaPending=null;
 function enter(role,workArea){
+ if(workArea==='equipment'){location.replace('/staff/lockers');return}
  document.body.classList.remove('tt6-staff-auth');
  el('login').classList.add('hidden');el('app').classList.remove('hidden');
  el('qrTab').classList.toggle('hidden',role==='kitchen'||role==='bar');

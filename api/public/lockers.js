@@ -44,7 +44,7 @@ $('#confirmReturn').addEventListener('click',async()=>{
  try{await api('/api/lockers/'+selected.code+'/release','POST',{rentalId:selected.rental_id,confirm:true});$('#lockerDialog').close();await load();notice('Đã nhận trả tủ '+selected.code+'. Tủ sẵn sàng cho khách tiếp theo.');}
  catch(e){feedback(e.message);await load();}finally{saving=false;$('#confirmReturn').disabled=false;$('#closeDialog').disabled=false;}
 });
-(async()=>{try{const me=await api('/api/me');if(me.role!=='admin'&&me.workArea!=='equipment'){ $('#accessGate h2').textContent=me.staff?'Tài khoản này chưa được phân công quản lý tủ đồ.':'Đăng nhập để quản lý tủ đồ';return;}authorized=true;$('#backLink').href=me.role==='admin'?'/admin':'/staff';$('#accessGate').hidden=true;$('#lockerContent').hidden=false;await load();}catch(e){$('#accessGate h2').textContent='Chưa kết nối được máy chủ.';$('#accessGate p').textContent=e.message;}})();
+(async()=>{try{const me=await api('/api/me');if(me.role!=='admin'&&me.workArea!=='equipment'){ $('#accessGate h2').textContent=me.staff?'Tài khoản này chưa được phân công quản lý tủ đồ.':'Đăng nhập để quản lý tủ đồ';return;}authorized=true;$('#backLink').href='/admin';$('#backLink').hidden=me.role!=='admin';$('#accessGate').hidden=true;$('#lockerContent').hidden=false;await load();}catch(e){$('#accessGate h2').textContent='Chưa kết nối được máy chủ.';$('#accessGate p').textContent=e.message;}})();
 setInterval(()=>{if(!document.hidden&&!$('#lockerDialog').open)load()},10000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('#lockerDialog').open)load()});
 
@@ -53,3 +53,5 @@ $('#legacyFeeForm').addEventListener('submit',async e=>{
  try{await api('/api/lockers/'+selected.code+'/collect','POST',{rentalId:selected.rental_id,paymentMethod:$('#legacyPaymentMethod').value,confirmPayment:true});$('#lockerDialog').close();await load();notice('Đã ghi thu 30.000đ cho lượt thuê cũ.');}
  catch(error){$('#legacyFeeFeedback').textContent=error.message;}finally{saving=false;$('#legacyFeeButton').disabled=false;$('#closeDialog').disabled=false;}
 });
+
+$('#workLogout').addEventListener('click',async()=>{try{await api('/api/logout','POST',{})}finally{location.assign('/staff')}});
