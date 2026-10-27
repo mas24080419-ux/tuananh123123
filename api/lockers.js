@@ -40,5 +40,22 @@ module.exports=({pool,id})=>{
    return {id:rental.id};
   });
  }
- return {list,rent,release};
+ async function collect(actor,code,b){
+  access(actor);
+  if(!validCode(code)||!uuid(b.rentalId)||b.confirmPayment!==true||!['cash','bank_transfer'].includes(b.paymentMethod))throw fail('Xác nhận đã nhận đủ 30.000đ và chọn phương thức thanh toán.');
+  return transact(async c=>{
+   await c.query('SELECT code FROM lockers WHERE code=$1 FOR UPDATE',[code]);
+   const rental=(await c.query('SELECT id,request_id,finance_entry_id,payment_method FROM locker_rentals WHERE id=$1 AND locker_code=$2 FOR UPDATE',[b.rentalId,code])).rows[0];
+   if(!rental)throw fail('Không tìm thấy lượt thuê.',404);
+   if(rental.finance_entry_id){if(rental.payment_method!==b.paymentMethod)throw fail('Lượt thuê đã ghi thu bằng phương thức khác. Kiểm tra sổ Thu–chi.',409);return {id:rental.id,amount:30000,already:true};}
+   const financeId=id();
+   const income=await c.query("INSERT INTO finance_entries(id,request_id,direction,category,amount,payment_method,note,source) VALUES($1,$2,'income','Thuê tủ đồ',30000,$3,$4,'manual') ON CONFLICT(request_id) DO NOTHING RETURNING id",[financeId,rental.request_id,b.paymentMethod,'Thuê tủ '+code+' (lượt cũ)']);
+   if(!income.rowCount)throw fail('Lượt thuê này đã có mã phiếu thu. Kiểm tra sổ Thu–chi.',409);
+   await c.query("INSERT INTO area_receipts(id,request_id,area,service,quantity,staff_user_id,finance_entry_id) VALUES($1,$2,'equipment','locker',1,$3,$4)",[id(),rental.request_id,actor.role==='admin'?null:actor.userId,financeId]);
+   await c.query('UPDATE locker_rentals SET charged_amount=30000,payment_method=$2,finance_entry_id=$3 WHERE id=$1',[rental.id,b.paymentMethod,financeId]);
+   await c.query("INSERT INTO pos_audit(id,actor,entity,entity_id,action,after_state) VALUES($1,$2,'locker_rental',$3,'fee_recorded',$4::jsonb)",[id(),actor.userId||'admin',rental.id,JSON.stringify({locker:code,amount:30000,paymentMethod:b.paymentMethod,financeId})]);
+   return {id:rental.id,amount:30000};
+  });
+ }
+ return {list,rent,release,collect};
 };

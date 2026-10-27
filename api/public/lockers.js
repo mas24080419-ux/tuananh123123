@@ -18,7 +18,7 @@ function openLocker(code){
  selected=lockers.find(x=>x.code===code);if(!selected)return;
  pending=null;feedback('');$('#rentForm').reset();$('#dialogTitle').textContent='Tủ '+code;
  $('#dialogEyebrow').textContent=selected.rental_id?'THÔNG TIN KHÁCH THUÊ':'CHO THUÊ TỦ';
- $('#rentForm').hidden=!!selected.rental_id;$('#occupiedDetails').hidden=!selected.rental_id;$('#returnConfirmation').hidden=true;$('#startReturn').hidden=false;
+ $('#rentForm').hidden=!!selected.rental_id;$('#occupiedDetails').hidden=!selected.rental_id;$('#returnConfirmation').hidden=true;$('#startReturn').hidden=false;$('#legacyFeeForm').hidden=!selected.rental_id||!!selected.charged_amount;$('#legacyFeeFeedback').textContent='';
  if(selected.rental_id){$('#renterName').textContent=selected.customer_name;$('#renterPhone').textContent=selected.customer_phone;$('#renterPhone').href='tel:'+selected.customer_phone;$('#rentedAt').textContent=new Date(selected.created_at).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'});$('#renterFee').textContent=selected.charged_amount?Number(selected.charged_amount).toLocaleString('vi-VN')+'đ · '+(selected.payment_method==='bank_transfer'?'Chuyển khoản':'Tiền mặt'):'Lượt thuê cũ — chưa có phiếu thu tự động';$('#renterNote').textContent=selected.note||'Không có ghi chú';}
  $('#lockerDialog').showModal();if(!selected.rental_id)$('#customerName').focus();
 }
@@ -47,3 +47,9 @@ $('#confirmReturn').addEventListener('click',async()=>{
 (async()=>{try{const me=await api('/api/me');if(me.role!=='admin'&&me.workArea!=='equipment'){ $('#accessGate h2').textContent=me.staff?'Tài khoản này chưa được phân công quản lý tủ đồ.':'Đăng nhập để quản lý tủ đồ';return;}authorized=true;$('#backLink').href=me.role==='admin'?'/admin':'/staff';$('#accessGate').hidden=true;$('#lockerContent').hidden=false;await load();}catch(e){$('#accessGate h2').textContent='Chưa kết nối được máy chủ.';$('#accessGate p').textContent=e.message;}})();
 setInterval(()=>{if(!document.hidden&&!$('#lockerDialog').open)load()},10000);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&!$('#lockerDialog').open)load()});
+
+$('#legacyFeeForm').addEventListener('submit',async e=>{
+ e.preventDefault();if(saving||!selected?.rental_id)return;saving=true;$('#legacyFeeButton').disabled=true;$('#closeDialog').disabled=true;$('#legacyFeeFeedback').textContent='Đang ghi thu…';
+ try{await api('/api/lockers/'+selected.code+'/collect','POST',{rentalId:selected.rental_id,paymentMethod:$('#legacyPaymentMethod').value,confirmPayment:true});$('#lockerDialog').close();await load();notice('Đã ghi thu 30.000đ cho lượt thuê cũ.');}
+ catch(error){$('#legacyFeeFeedback').textContent=error.message;}finally{saving=false;$('#legacyFeeButton').disabled=false;$('#closeDialog').disabled=false;}
+});

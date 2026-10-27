@@ -443,7 +443,7 @@ if(p==='/api/lockers'&&req.method==='GET'){
  if(!await requireAuth(req,res))return;
  return send(res,200,await lockerService.list(await identity(req)));
 }
-const lockerAction=p.match(/^\/api\/lockers\/([AB](?:[1-9]|[12][0-9]|30))\/(rent|release)$/);
+const lockerAction=p.match(/^\/api\/lockers\/([AB](?:[1-9]|[12][0-9]|30))\/(rent|release|collect)$/);
 if(lockerAction&&req.method==='POST'){
  if(!await requireAuth(req,res))return;
  const actor=await identity(req);

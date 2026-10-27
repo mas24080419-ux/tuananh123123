@@ -61,3 +61,11 @@ test('failed income or rental write rolls back; unconfirmed payments are rejecte
  await assert.rejects(service.rent(actor,'A1',{...body(),confirmPayment:false}),{status:400});
  await assert.rejects(service.rent(actor,'A1',{...body(),paymentMethod:'fake'}),{status:400});
 });
+test('legacy fee retries cannot charge a rental twice and remain area restricted',async()=>{
+ const rentalId=randomUUID(),calls=[];
+ const c={query:async(sql)=>{calls.push(sql);return {rows:sql.startsWith('SELECT id,request_id')?[{id:rentalId,finance_entry_id:randomUUID(),payment_method:'cash'}]:[]}},release(){}};
+ const service=make({pool:{connect:async()=>c},id:randomUUID});
+ assert.deepEqual(await service.collect(actor,'A1',{rentalId,confirmPayment:true,paymentMethod:'cash'}),{id:rentalId,amount:30000,already:true});
+ assert(!calls.some(x=>x.startsWith('INSERT')));
+ await assert.rejects(service.collect({...actor,workArea:'restroom'},'A1',{rentalId,confirmPayment:true,paymentMethod:'cash'}),{status:403});
+});
