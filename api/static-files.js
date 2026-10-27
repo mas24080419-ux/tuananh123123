@@ -2,7 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const crypto = require('node:crypto');
-const {gzipSync} = require('node:zlib');
+const {gzipSync, brotliCompressSync, constants} = require('node:zlib');
 
 // Only explicit pages and public CSS/JS/images are routable; server source is never exposed.
 const pages = new Map([
@@ -21,7 +21,8 @@ module.exports = function staticFiles(publicDir) {
   function load(name) {
     if (!cache.has(name)) {
       const pending = fs.promises.readFile(path.join(publicDir, name)).then(data => ({
-        data, gzip: gzipSync(data),
+        data,
+        variants: Object.create(null),
         etag: 'W/"' + crypto.createHash('sha256').update(data).digest('hex') + '"'
       })).catch(error => { cache.delete(name); throw error; });
       cache.set(name, pending);
@@ -45,13 +46,26 @@ module.exports = function staticFiles(publicDir) {
         res.writeHead(304, headers); res.end(); return true;
       }
     }
-    const gzip = (req.headers['accept-encoding'] || '').split(',').some(value => {
-      const [encoding, ...params] = value.trim().toLowerCase().split(';');
-      const q = params.find(param => param.trim().startsWith('q='));
-      return encoding === 'gzip' && (!q || Number(q.trim().slice(2)) > 0);
-    });
-    const body = gzip ? file.gzip : file.data;
-    if (gzip) headers['Content-Encoding'] = 'gzip';
+    // Compress each variant only if requested. Browser assets are cached per process.
+    const accepted = new Map();
+    for (const part of (req.headers['accept-encoding'] || '').toLowerCase().split(',')) {
+      const [name, ...params] = part.split(';').map(s => s.trim());
+      if (!name) continue;
+      const q = params.find(p => p.startsWith('q='));
+      const quality = q ? Number(q.slice(2)) : 1;
+      accepted.set(name, Number.isFinite(quality) && quality >= 0 && quality <= 1 ? quality : 0);
+    }
+    const allows = encoding => (accepted.get(encoding) ?? accepted.get('*') ?? 0) > 0;
+    const encoding = allows('br') ? 'br' : allows('gzip') ? 'gzip' : null;
+    let body = file.data;
+    if (encoding === 'br') {
+      body = file.variants.br ||= brotliCompressSync(file.data, {
+        params: {[constants.BROTLI_PARAM_QUALITY]: 5}
+      });
+    } else if (encoding === 'gzip') {
+      body = file.variants.gzip ||= gzipSync(file.data);
+    }
+    if (encoding) headers['Content-Encoding'] = encoding;
     headers['Content-Length'] = body.length;
     res.writeHead(200, headers); res.end(body); return true;
   };

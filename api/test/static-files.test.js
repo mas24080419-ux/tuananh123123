@@ -4,7 +4,7 @@ const assert = require('node:assert/strict');
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
-const {gunzipSync} = require('node:zlib');
+const {gunzipSync,brotliDecompressSync} = require('node:zlib');
 const vm = require('node:vm');
 const dir = path.join(__dirname, '../public');
 const serve = require('../static-files')(dir);
@@ -60,5 +60,33 @@ test('server modules, schema and traversal requests are never public', async () 
 test('all public scripts remain valid classic JavaScript', () => {
   for (const file of fs.readdirSync(dir).filter(f => f.endsWith('.js'))) {
     new vm.Script(fs.readFileSync(path.join(dir,file),'utf8'),{filename:file});
+  }
+});
+
+test('assets prefer Brotli, respect rejected encodings, and preserve ETag semantics', async () => {
+  const plain = await request('/lockers.css');
+  const br = await request('/lockers.css', {'Accept-Encoding':'gzip;q=0.4, br'});
+  assert.equal(br.status,200);
+  assert.equal(br.headers['content-encoding'],'br');
+  assert.deepEqual(brotliDecompressSync(br.body),plain.body);
+  assert(br.body.length < plain.body.length,'Brotli must reduce CSS transfer size');
+  assert.equal(br.headers.vary,'Accept-Encoding');
+  const gzip = await request('/lockers.css', {'Accept-Encoding':'br;q=0, gzip;q=1'});
+  assert.equal(gzip.headers['content-encoding'],'gzip');
+  assert.deepEqual(gunzipSync(gzip.body),plain.body);
+  const identity = await request('/lockers.css', {'Accept-Encoding':'br;q=0,gzip;q=0'});
+  assert.equal(identity.headers['content-encoding'],undefined);
+  assert.deepEqual(identity.body,plain.body);
+  const etag = await request('/lockers.css', {'Accept-Encoding':'br','If-None-Match':plain.headers.etag});
+  assert.equal(etag.status,304);
+  assert.equal(etag.body.length,0);
+});
+test('owner screens load shared owner script before page-specific logic', async () => {
+  for (const url of ['/admin','/admin/orders']) {
+    const page=(await request(url)).body.toString();
+    const scripts=[...page.matchAll(/<script[^>]*src="([^"]+)"/g)].map(m=>m[1]);
+    const shared=scripts.findIndex(s=>s.startsWith('/owner-shared.js'));
+    const pageScript=scripts.findIndex(s=>s.startsWith(url==='/admin'?'/admin.js':'/orders.js'));
+    assert(shared>=0&&pageScript>shared,url);
   }
 });
