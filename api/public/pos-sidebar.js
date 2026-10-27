@@ -63,6 +63,7 @@ function setup(){
  '<nav class="tt6-side-nav" aria-label="Các chức năng Tắm Tráng 6">'+
  link('/admin','Tổng quan','home')+
  link('/admin/orders','Đơn hàng','wallet')+
+ link('/staff/lockers','Tủ đồ','box')+
  link('/admin/core','Món & bàn','table')+
  link('/admin/operations','Thu–chi','wallet')+
  link('/staff','Màn hình bếp / Bar','chef')+

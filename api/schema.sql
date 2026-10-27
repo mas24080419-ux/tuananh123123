@@ -217,3 +217,27 @@ CREATE TABLE IF NOT EXISTS area_receipts (
  CHECK((area='equipment' AND service IN ('float','locker')) OR (area='restroom' AND service='restroom'))
 );
 CREATE INDEX IF NOT EXISTS idx_area_receipts_area_date ON area_receipts(area,created_at DESC);
+
+-- Locker map A1-A30 / B1-B30 and rental history.
+CREATE TABLE IF NOT EXISTS lockers (
+ code text PRIMARY KEY CHECK(code ~ '^[AB]([1-9]|[12][0-9]|30)$'),
+ zone text NOT NULL CHECK(zone IN ('A','B')),
+ position integer NOT NULL CHECK(position BETWEEN 1 AND 30),
+ UNIQUE(zone,position),CHECK(code=zone||position::text)
+);
+INSERT INTO lockers(code,zone,position) SELECT zone||n::text,zone,n FROM unnest(ARRAY['A','B']) AS zone CROSS JOIN generate_series(1,30) AS n ON CONFLICT DO NOTHING;
+CREATE TABLE IF NOT EXISTS locker_rentals (
+ id uuid PRIMARY KEY,
+ request_id uuid NOT NULL UNIQUE,
+ locker_code text NOT NULL REFERENCES lockers(code),
+ customer_name text NOT NULL CHECK(length(trim(customer_name)) BETWEEN 2 AND 90),
+ customer_phone text NOT NULL CHECK(customer_phone ~ '^\+?[0-9]{8,15}$'),
+ note text NOT NULL DEFAULT '' CHECK(length(note)<=250),
+ opened_by uuid,
+ closed_by uuid,
+ created_at timestamptz NOT NULL DEFAULT now(),
+ ended_at timestamptz,
+ CHECK(ended_at IS NULL OR ended_at>=created_at)
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_locker_one_active ON locker_rentals(locker_code) WHERE ended_at IS NULL;
+CREATE INDEX IF NOT EXISTS idx_locker_rentals_date ON locker_rentals(created_at DESC);

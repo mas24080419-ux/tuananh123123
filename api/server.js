@@ -31,6 +31,7 @@ const paymentRecipient=require('./payment-recipient')({pool});
 const core=require('./core')({pool,id,randomToken:()=>crypto.randomBytes(24).toString('hex')});
 const staffAccounts=require('./staff-auth')({pool,id});
 const areaReceipts=require('./area-receipts')({pool,id});
+const lockerService=require('./lockers')({pool,id});
 const {areas:serviceAreas,canAccess:canAccessArea,canUseDining}=require('./area-access');
 const ownerAccounts=require('./owner-auth')({pool});
 const token=i=>crypto.createHmac('sha256',SESSION_SECRET).update('qr-table-'+i).digest('hex').slice(0,48);
@@ -437,6 +438,19 @@ if(req.method==='POST'&&/^\/api\/admin\/orders\/[0-9a-f-]{36}\/confirm-payment$/
  const data=await input(req);
  if(data.confirm!==true)return err(res,400,'Cần xác nhận đã thực sự nhận đủ tiền.');
  return send(res,200,{payment:await confirmPayment(p.split('/')[4],data.paymentMethod)});
+}
+if(p==='/api/lockers'&&req.method==='GET'){
+ if(!await requireAuth(req,res))return;
+ return send(res,200,await lockerService.list(await identity(req)));
+}
+const lockerAction=p.match(/^\/api\/lockers\/([AB](?:[1-9]|[12][0-9]|30))\/(rent|release)$/);
+if(lockerAction&&req.method==='POST'){
+ if(!await requireAuth(req,res))return;
+ const actor=await identity(req);
+ if(!canAccessArea(actor,'equipment'))return err(res,403,'Không có quyền quản lý tủ đồ.');
+ if(!throttle(req,'locker-action',40))return err(res,429,'Thao tác quá nhanh.');
+ const result=await lockerService[lockerAction[2]](actor,lockerAction[1],await input(req));
+ return send(res,200,result);
 }
 if(p==='/api/area/receipts'){
  if(!await requireAuth(req,res))return;

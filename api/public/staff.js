@@ -6,7 +6,7 @@ function enter(role,workArea){
  el('login').classList.add('hidden');el('app').classList.remove('hidden');
  el('qrTab').classList.toggle('hidden',role==='kitchen'||role==='bar');
  if(role==='kitchen'||role==='bar'){el('station').value=role;el('station').disabled=true;}
- if(workArea){assignedArea=workArea;view='area';el('kdsTab').classList.add('hidden');el('qrTab').classList.add('hidden');el('kds').classList.add('hidden');el('qr').classList.add('hidden');el('areaWorkspace').classList.remove('hidden');loadArea();return}
+ if(workArea){el('lockerAppLink').hidden=workArea!=='equipment';assignedArea=workArea;view='area';el('kdsTab').classList.add('hidden');el('qrTab').classList.add('hidden');el('kds').classList.add('hidden');el('qr').classList.add('hidden');el('areaWorkspace').classList.remove('hidden');loadArea();return}
  refresh();
 }
 el('staffShowPassword').onclick=function(){var p=el('pwd'),v=p.type==='password';p.type=v?'text':'password';this.textContent=v?'Ẩn':'Hiện';this.setAttribute('aria-label',v?'Ẩn mật khẩu':'Hiện mật khẩu')};
