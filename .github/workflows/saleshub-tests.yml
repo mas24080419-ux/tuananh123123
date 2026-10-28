@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - 'perf/**'
+      - saleshub-v3-preview
   pull_request:
     branches:
       - saleshub-v3-preview
