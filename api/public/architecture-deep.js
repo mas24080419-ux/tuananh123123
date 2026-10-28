@@ -6,6 +6,7 @@
  const services={
   guest:{name:'Khách / QR',tag:'CLIENT',kind:'client',summary:'Khách dùng trình duyệt mở link bàn từ QR để xem món và gửi order.',paths:['/t/:token','GET /api/menu/:token','POST /api/orders'],steps:['Trình duyệt đọc QR trên bàn và nhận token của bàn','Tải thực đơn qua API và gửi requestId cùng món đã chọn','Backend kiểm tra token, món và số lượng; khách không có quyền truy cập các API quản trị'],tables:[]},
   cart:{name:'Đang chọn món · Giỏ QR',tag:'BROWSER CART',kind:'client',summary:'Theo dõi các phiên QR có món trong giỏ trên điện thoại trước khi khách xác nhận. Dữ liệu trạng thái do trình duyệt báo về và chỉ giữ tạm trong RAM.',paths:['api/public/guest.js → cart Map','window.saleshubQrActivity()','POST /api/qr/presence','api/qr-presence.js'],steps:['Khách mở thực đơn, phiên được ghi nhận là đang xem','Khi thay đổi giỏ, frontend gửi trạng thái selecting và tổng số phần','Backend thống kê số phiên đang chọn và số phần tạm theo từng bàn, không lưu giỏ vào PostgreSQL','Khách bấm xác nhận: chuyển sang submitting; backend xử lý POST /api/orders riêng','Chỉ sau khi HTTP trả thành công mới ghi nhận ordered trên phiên; số đơn đã lưu nằm trong PostgreSQL','Khi khách rời trang, thông tin tạm tự hết hạn sau khoảng 55 giây'],tables:['process memory: qrPresence (tạm)']},
+  stafforder:{name:'Nhân viên gọi món',tag:'STAFF POS',kind:'client',summary:'Gọi món và kiểm soát đơn qua quyền Phục vụ, Thu ngân, Quản lý.',paths:['/staff/orders','POST /api/staff/orders','GET /api/staff/orders','POST /api/staff/orders/:id/confirm-payment'],steps:['Đăng nhập nhân viên, kiểm tra quyền tại server','Chọn bàn và món đang còn trong kho','Lưu đơn và trừ kho trong transaction PostgreSQL','Bếp Bar nhận món; nhân viên cập nhật đơn','Thu ngân hoặc quản lý xác nhận đã nhận đủ tiền'],tables:['staff_users','dining_orders','dining_order_lines','dining_audit']},
   staff:{name:'Nhân viên / Bếp / Bar',tag:'STAFF',kind:'client',summary:'Giao diện nội bộ dành cho các vai trò theo tài khoản và khu vực.',paths:['/staff','/staff/lockers','GET /api/kds','GET /api/lockers'],steps:['Đăng nhập và nhận cookie phiên HttpOnly','Backend kiểm tra role / work_area tại mỗi request','Nhân viên bếp/bar đổi trạng thái món; khu vực thiết bị xử lý phao và tủ'],tables:[]},
   owner:{name:'Chủ cửa hàng',tag:'OWNER',kind:'client',summary:'Điều hành toàn bộ hệ thống qua giao diện quản trị; dữ liệu giám sát chỉ chủ cửa hàng mới được đọc.',paths:['/admin','/admin/architecture','/admin/inventory','/admin/operations'],steps:['Xác thực chủ qua session HMAC và dữ liệu owner_accounts','Truy cập API quản trị và số liệu tổng hợp','Xem sự kiện DB đã commit và telemetry API đã chuẩn hóa trên bản đồ'],tables:['owner_accounts']},
   http:{name:'HTTP Router / Render',tag:'server.js',kind:'gateway',summary:'Node.js HTTP server trên Render. Nhận HTTPS, định tuyến request, trả JSON và phục vụ giao diện tĩnh.',paths:['api/server.js','api/static-files.js'],steps:['Nhận HTTP request qua web service Render','Kiểm tra same-origin và giới hạn tần suất theo nhóm endpoint','Định tuyến theo method + URL; không có API gateway riêng được xác minh','Trả HTTP status và response; ghi thời gian API vào bộ nhớ tiến trình'],tables:[]},
@@ -26,7 +27,8 @@
  const nodes=[
   {id:'guest',label:'Khách gọi món',subtitle:'QR / trình duyệt',kind:'client',x:25,y:100,w:190},
    {id:'cart',label:'Đang chọn món',subtitle:'Giỏ hàng · trước đặt đơn',kind:'client',x:25,y:230,w:190},
-  {id:'staff',label:'Nhân viên / Bếp',subtitle:'KDS / dịch vụ',kind:'client',x:25,y:350,w:190},
+  {id:'stafforder',label:'Nhân viên gọi món',subtitle:'POS / quản lý đơn',kind:'client',x:25,y:350,w:190},
+  {id:'staff',label:'Bếp / Bar / Dịch vụ',subtitle:'KDS / dịch vụ',kind:'client',x:25,y:460,w:190},
   {id:'owner',label:'Chủ cửa hàng',subtitle:'Quản trị / báo cáo',kind:'client',x:25,y:575,w:190},
   {id:'http',label:'Render · HTTP Router',subtitle:'server.js · API',kind:'gateway',x:265,y:285,w:215},
   {id:'auth',label:'Session & RBAC',subtitle:'HMAC / role / work area',kind:'gateway',x:265,y:450,w:215},
@@ -44,15 +46,15 @@
   {id:'app',label:'Architecture UI',subtitle:'event log / inspector',kind:'observe',x:1370,y:525,w:210}
  ];
  const edges=[
-  ['guest','http','orders'],['guest','cart','orders'],['cart','http','orders'],['staff','http','kds'],['owner','http','admin'],['http','validate','access'],
-  ['http','auth','access'],['validate','orders','orders'],['auth','kds','kds'],['auth','inventory','inventory'],
+  ['guest','http','orders'],['guest','cart','orders'],['cart','http','orders'],['staff','http','kds'],['stafforder','http','stafforder'],['owner','http','admin'],['http','validate','access'],
+  ['http','auth','access'],['validate','orders','orders'],['auth','orders','stafforder'],['auth','kds','kds'],['auth','inventory','inventory'],
   ['auth','finance','finance'],['auth','rental','rental'],['auth','admin','admin'],
   ['orders','inventory','orders'],['orders','kds','orders'],
   ['orders','tx','orders'],['kds','tx','kds'],['inventory','tx','inventory'],['finance','tx','finance'],
   ['rental','tx','rental'],['admin','tx','admin'],['tx','pg','database'],['pg','audit','database'],
   ['audit','stream','observe'],['stream','app','observe'],['owner','app','observe']
  ];
- const filters=[['all','Tất cả'],['orders','QR Order'],['cart','Đang chọn món'],['kds','Bếp / Bar'],['inventory','Kho'],['finance','Thu–chi'],['rental','Phao & Tủ'],['admin','Quản trị'],['access','API / Quyền'],['database','PostgreSQL'],['observe','Giám sát']];
+ const filters=[['all','Tất cả'],['orders','QR Order'],['stafforder','Nhân viên gọi món'],['cart','Đang chọn món'],['kds','Bếp / Bar'],['inventory','Kho'],['finance','Thu–chi'],['rental','Phao & Tủ'],['admin','Quản trị'],['access','API / Quyền'],['database','PostgreSQL'],['observe','Giám sát']];
  const colors={client:'#53c8ed',gateway:'#5fe0ad',module:'#f6c74f',database:'#a998ff',observe:'#ffa361'};
  let selected='orders',filter='all',scale=1,source=null,timer=null,last=null,view='events',followLive=true,focusedTrace=null,hasSnapshot=false;
  function node(id){return nodes.find(n=>n.id===id)}
