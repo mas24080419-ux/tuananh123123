@@ -6,6 +6,8 @@ const path=require('node:path');
 const dir=path.join(__dirname,'../public');
 const html=fs.readFileSync(path.join(dir,'core.html'),'utf8');
 const controller=fs.readFileSync(path.join(dir,'core.js'),'utf8');
+const customerHtml=fs.readFileSync(path.join(dir,'customers.html'),'utf8');
+const customerController=fs.readFileSync(path.join(dir,'customers.js'),'utf8');
 const navigation=fs.readFileSync(path.join(dir,'pos-sidebar.js'),'utf8');
 
 test('booking tab, create form and list are absent on desktop and mobile',()=>{
@@ -22,20 +24,22 @@ test('backoffice no longer fetches or renders bookings when the page loads',()=>
  }
  assert(controller.includes("api('catalog')"));
  assert(controller.includes("api('tables')"));
- assert(controller.includes("api('customers?limit=150')"));
+ assert(!controller.includes("api('customers?limit=150')"),'Core should not fetch customer PII when opening menu or QR');
+ assert(customerController.includes("api('?limit=150')"),'Separate customer page loads saved customers');
  assert(controller.includes("api('audit?limit=100')"));
 });
-test('menu, QR, customers and audit screens remain accessible',()=>{
- for(const tab of ['menu','tables','customers','audit']){
+test('menu, QR and audit remain in core; customers have a dedicated page',()=>{
+ for(const tab of ['menu','tables','audit']){
   assert(html.includes('data-tab="'+tab+'"'),'missing tab '+tab);
   assert(html.includes('id="'+tab+'"'),'missing section '+tab);
  }
- for(const id of ['menuForm','menuRows','tableForm','tableRows','customerForm','auditRows']){
-  assert(html.includes('id="'+id+'"'),'missing form / view '+id);
- }
- for(const anchor of ["'/admin/core#customers'","'/admin/core#audit'"]){
-  assert(navigation.includes(anchor),'missing sidebar link '+anchor);
- }
+ assert(!html.includes('data-tab="customers"'));
+ for(const id of ['menuForm','menuRows','tableForm','tableRows','auditRows'])
+  assert(html.includes('id="'+id+'"'),'missing core control '+id);
+ for(const id of ['customerForm','customerRows','customerSearch'])
+  assert(customerHtml.includes('id="'+id+'"'),'missing customer control '+id);
+ assert(navigation.includes("'/admin/customers'"));
+ assert(navigation.includes("'/admin/core#audit'"));
  assert(controller.includes("window.TT6MenuMobile.render(data.catalog)"));
 });
 
@@ -48,7 +52,7 @@ test('supplier management is removed from desktop/mobile nav and backoffice UI',
   assert(!controller.includes(token),'Supplier page code remains: '+token);
  }
  assert(controller.includes("api('catalog')"),'Catalog must continue to load');
- assert(controller.includes("api('customers?limit=150')"),'Customers must continue to load');
+ assert(customerController.includes("api('?limit=150')"),'Customer data must load on its own page');
 });
 
 test('cashier shifts are absent from desktop/mobile and do not run background shift calls',()=>{
@@ -61,7 +65,8 @@ test('cashier shifts are absent from desktop/mobile and do not run background sh
  for(const token of ["api('shift')",'data.shift','shiftStatus','openShiftForm','closeShiftForm',"'customers','shifts','audit'"]){
   assert(!controller.includes(token),'Shift controller remains: '+token);
  }
- for(const token of ["api('catalog')","api('tables')","api('customers?limit=150')","api('audit?limit=100')"]){
+ for(const token of ["api('catalog')","api('tables')","api('audit?limit=100')"]){
   assert(controller.includes(token),'Unrelated backoffice API missing: '+token);
  }
+ assert(customerController.includes("api('?limit=150')"),'Customer page must still fetch existing records');
 });
