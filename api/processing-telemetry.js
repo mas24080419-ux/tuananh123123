@@ -6,7 +6,7 @@ module.exports=function processingTelemetry({now=()=>new Date().toISOString(),pu
  const active=new Map(),recent=[];
  const allowed=new Set(['http','auth','validate','orders','kds','inventory','finance','rental','admin','tx','pg','audit','stream']);
  const exportTrace=t=>({id:t.id,module:t.module,method:t.method,route:t.route,state:t.state,status:t.status,
-  count:t.count,createdAt:t.createdAt,finishedAt:t.finishedAt,durationMs:t.durationMs,
+  count:t.count,readOnly:t.readOnly,createdAt:t.createdAt,finishedAt:t.finishedAt,durationMs:t.durationMs,
   steps:t.steps.map(x=>({...x}))});
  const emit=(t,type)=>publish({type,trace:exportTrace(t)});
  function mark(req,node,label,count){
@@ -20,11 +20,13 @@ module.exports=function processingTelemetry({now=()=>new Date().toISOString(),pu
   emit(t,'step');return true;
  }
  function start(req,res,target){
-  if(!target||!['POST','PATCH','PUT','DELETE'].includes(req.method))return;
+  if(!target)return;
+  const readOnly=req.method==='GET'&&['/api/kds','/api/admin/inventory','/api/admin/analytics','/api/admin/summary','/api/lockers'].includes(target.route);
+  if(!readOnly&&!['POST','PATCH','PUT','DELETE'].includes(req.method))return;
   const t={id:crypto.randomUUID(),module:target.module,method:target.method,route:target.route,
-   count:null,state:'running',status:null,started:process.hrtime.bigint(),createdAt:now(),finishedAt:null,durationMs:null,steps:[]};
+   count:null,readOnly,state:'running',status:null,started:process.hrtime.bigint(),createdAt:now(),finishedAt:null,durationMs:null,steps:[]};
   req._flowTrace=t;active.set(t.id,t);
-  mark(req,'http','HTTP request đã tiếp nhận');
+  mark(req,'http',readOnly?'Đã tiếp nhận yêu cầu đọc dữ liệu':'HTTP request đã tiếp nhận');
   let closed=false;
   const done=aborted=>{
    if(closed)return;closed=true;
