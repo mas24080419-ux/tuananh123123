@@ -202,7 +202,9 @@
  }
  replay.addEventListener('click',()=>{
   const selected=document.querySelector('#deepTraceList [data-trace-id].is-focused')?.dataset.traceId;
-  const trace=known.get(selected)||known.get(lastTrace)||[...known.values()].at(-1);
+  const latest=[...known.values()].filter(t=>t.steps?.length).sort((a,b)=>
+   Date.parse(b.finishedAt||b.createdAt||0)-Date.parse(a.finishedAt||a.createdAt||0));
+  const trace=known.get(selected)||known.get(lastTrace)||latest.find(t=>t.method==='POST'&&t.module==='orders')||latest[0];
   if(!trace?.steps?.length){bar.textContent='Chưa có trace để phát lại';return}
   if(!followEnabled())$('deepFollow')?.click();
   stopPlayback();store(trace);addFrames(trace,0,true);
