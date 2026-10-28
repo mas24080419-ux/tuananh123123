@@ -9,7 +9,7 @@
 <main><span class="eyebrow">TẮM TRÁNG 6 / BACKOFFICE V10</span><h1>Món, bàn và vận hành</h1><p class="muted">Chọn công việc cần làm. Danh sách hiển thị trước; biểu mẫu chỉ xuất hiện khi bạn bấm Thêm hoặc Sửa.</p>
 <div id="notice" class="notice" role="status">Đang xác minh quyền và tải dữ liệu từ Neon...</div>
 <div class="tabs" role="tablist">
-<button class="active" data-tab="menu">Thực đơn</button><button data-tab="tables">Bàn & QR</button><button data-tab="suppliers">Nhà cung cấp</button><button data-tab="customers">Khách hàng</button><button data-tab="shifts">Ca thu ngân</button><button data-tab="audit">Nhật ký</button></div>
+<button class="active" data-tab="menu">Thực đơn</button><button data-tab="tables">Bàn & QR</button><button data-tab="customers">Khách hàng</button><button data-tab="shifts">Ca thu ngân</button><button data-tab="audit">Nhật ký</button></div>
 <section class="section active" id="menu"><div class="split">
 <div class="panel"><h2 class="tt6-menu-desktop-title">Tạo hoặc sửa món</h2><div class="tt6-menu-sheet-heading"><span class="tt6-menu-sheet-handle" aria-hidden="true"></span><h2 id="menuSheetTitle">Thêm món</h2><button id="menuSheetClose" class="tt6-menu-close" type="button" aria-label="Đóng bảng chỉnh sửa món"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><form id="menuForm" class="fields">
 <input type="hidden" name="id"><label>Tên món<input name="name" required maxlength="100"></label>
@@ -30,13 +30,6 @@
 <div class="panel"><h2>Thêm bàn mới</h2><form id="tableForm" class="fields"><label>Tên bàn<input name="name" required maxlength="50" placeholder="Bàn 07"></label><div class="pair"><label>Khu vực<input name="zone" maxlength="50" value="Tầng 1"></label><label>Sức chứa<input type="number" name="capacity" min="1" max="30" value="4" required></label></div><button type="submit">Tạo bàn + QR bảo mật</button></form>
 <p class="muted">Mã QR mới sử dụng token ngẫu nhiên. Đổi QR sẽ vô hiệu hóa mã cũ; chỉ làm khi đã thay tem QR tại bàn.</p></div>
 <div class="panel"><h2>Trạng thái bàn / QR</h2><div class="scroll"><table><thead><tr><th>Bàn</th><th>Khu vực</th><th>Sức chứa</th><th>Tình trạng</th><th>QR</th><th>Thao tác</th></tr></thead><tbody id="tableRows"></tbody></table></div></div></div></section>
-<section class="section" id="suppliers"><div class="split">
-<div class="panel"><h2>Hồ sơ nhà cung cấp</h2><form id="supplierForm" class="fields">
-<input name="id" type="hidden"><label>Tên nhà cung cấp<input name="name" required maxlength="120"></label>
-<div class="pair"><label>Số điện thoại<input name="phone" maxlength="32"></label><label>Email<input name="email" type="email" maxlength="120"></label></div>
-<label>Địa chỉ<input name="address" maxlength="200"></label><label>Ghi chú<textarea name="note" rows="2" maxlength="250"></textarea></label>
-<button type="submit">Lưu nhà cung cấp</button><button type="reset" class="secondary">Hủy chỉnh sửa</button></form></div>
-<div class="panel"><h2>Danh sách nhà cung cấp</h2><div class="scroll"><table><thead><tr><th>Tên</th><th>Liên hệ</th><th>Địa chỉ</th><th>Thao tác</th></tr></thead><tbody id="supplierRows"></tbody></table></div></div></div></section>
 <section class="section" id="customers"><div class="split">
 <div class="panel"><h2>Hồ sơ khách hàng</h2><form id="customerForm" class="fields"><input name="id" type="hidden">
 <label>Tên khách<input name="name" required maxlength="100"></label>

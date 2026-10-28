@@ -11,7 +11,7 @@ const js=fs.readFileSync(path.join(__dirname,'../public/menu-mobile.js'),'utf8')
 const core=fs.readFileSync(path.join(__dirname,'../public/core.js'),'utf8');
 
 test('mobile restaurant menu is accessible, responsive and reuses original backend forms',()=>{
- for(const id of ['mobileMenuApp','mobileMenuAdd','mobileMenuFilters','mobileMenuSearch','mobileMenuList','menuSheetBackdrop','menuSheetClose','menuForm','menuRows','tableRows','supplierRows']){
+ for(const id of ['mobileMenuApp','mobileMenuAdd','mobileMenuFilters','mobileMenuSearch','mobileMenuList','menuSheetBackdrop','menuSheetClose','menuForm','menuRows','tableRows']){
   assert(html.includes('id="'+id+'"'),id);
  }
  assert(html.indexOf('/menu-mobile.js')<html.indexOf('/core.js?v='),'mobile view module must load before the controller');

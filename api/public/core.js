@@ -17,11 +17,11 @@ const empty=(cols,msg)=>'<tr><td colspan="'+cols+'" class="empty">'+esc(msg)+'</
 async function refresh(){
  if(busy)return;busy=true;
  try{
-  const [catalog,tables,suppliers,customers,shift,audit]=await Promise.all([
-   api('catalog'),api('tables'),api('suppliers'),api('customers?limit=150'),
+  const [catalog,tables,customers,shift,audit]=await Promise.all([
+   api('catalog'),api('tables'),api('customers?limit=150'),
    api('shift'),api('audit?limit=100')
   ]);
-  data={catalog:catalog.items,tables:tables.tables,suppliers:suppliers.suppliers,customers:customers.customers,shift:shift.shift,audit:audit.events};
+  data={catalog:catalog.items,tables:tables.tables,customers:customers.customers,shift:shift.shift,audit:audit.events};
   render();note('Đã đồng bộ dữ liệu quản trị từ PostgreSQL.');
  }catch(e){note(e.message,true)}finally{busy=false}
 }
@@ -30,7 +30,6 @@ function render(){
  if(window.TT6MenuMobile)window.TT6MenuMobile.render(data.catalog);
  $('#tableRows').innerHTML=data.tables.map(t=>'<tr><td><b>'+esc(t.name)+'</b></td><td>'+esc(t.zone)+'</td><td>'+t.capacity+'</td><td><select data-table-status="'+esc(t.id)+'"><option value="available" '+(t.service_status==='available'?'selected':'')+'>Trống</option><option value="occupied" '+(t.service_status==='occupied'?'selected':'')+'>Có khách</option><option value="reserved" '+(t.service_status==='reserved'?'selected':'')+'>Đã đặt</option><option value="cleaning" '+(t.service_status==='cleaning'?'selected':'')+'>Đang dọn</option></select></td><td><a href="/t/'+esc(t.token)+'" target="_blank" rel="noopener">Mở QR</a><div class="muted">'+(t.active?'QR hoạt động':'QR đang khóa')+'</div></td><td><button data-table-active="'+esc(t.id)+'" class="secondary">'+(t.active?'Khóa QR':'Mở QR')+'</button><button data-table-rotate="'+esc(t.id)+'" class="secondary">Đổi QR</button></td></tr>').join('')||empty(6,'Chưa có bàn.');
  const setRows=(id,rows,cols)=>{$(id).innerHTML=rows||empty(cols,'Chưa có dữ liệu.')};
- setRows('#supplierRows',data.suppliers.map(s=>'<tr><td><b>'+esc(s.name)+'</b></td><td>'+esc(s.phone)+'<div class="muted">'+esc(s.email)+'</div></td><td>'+esc(s.address)+'</td><td><button data-edit="supplier" data-id="'+esc(s.id)+'" class="secondary">Sửa</button></td></tr>').join(''),4);
  setRows('#customerRows',data.customers.map(x=>'<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.phone)+'</td><td>'+esc(x.email)+'</td><td><button data-edit="customer" data-id="'+esc(x.id)+'" class="secondary">Sửa</button></td></tr>').join(''),4);
  setRows('#auditRows',data.audit.map(a=>'<tr><td>'+esc(stamp(a.created_at))+'</td><td>'+esc(a.actor)+'</td><td>'+esc(a.entity)+'</td><td>'+esc(a.action)+'</td><td>'+esc(a.entity_id||'')+'</td></tr>').join(''),5);
  const shift=data.shift;
@@ -39,8 +38,8 @@ function render(){
  $('#openShiftForm').classList.toggle('hidden',Boolean(shift&&shift.status==='open'));
  $('#closeShiftForm').classList.toggle('hidden',!shift||shift.status!=='open');
  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{
-  const kind=b.dataset.edit,item=(kind==='menu'?data.catalog:kind==='supplier'?data.suppliers:data.customers).find(x=>x.id===b.dataset.id);
-  const form=$('#'+(kind==='menu'?'menuForm':kind==='supplier'?'supplierForm':'customerForm'));
+  const kind=b.dataset.edit,item=(kind==='menu'?data.catalog:data.customers).find(x=>x.id===b.dataset.id);
+  const form=$('#'+(kind==='menu'?'menuForm':'customerForm'));
   if(!item)return;
   for(const [name,v]of Object.entries(item)){const control=form.elements.namedItem(name);if(control)control.value=v??''}
   if(kind==='menu')document.getElementById('menuSheetTitle').textContent='Chỉnh sửa món';
@@ -71,7 +70,6 @@ async function saveForm(form,path,method,convert=x=>x){
 }
 $('#menuForm').onsubmit=e=>{e.preventDefault();const b=formData(e.target);const path=b.id?'catalog/'+b.id:'catalog';saveForm(e.target,path,b.id?'PATCH':'POST',x=>({...x,price:Number(x.price)}))};
 $('#tableForm').onsubmit=e=>{e.preventDefault();saveForm(e.target,'tables','POST',x=>({...x,capacity:Number(x.capacity)}))};
-$('#supplierForm').onsubmit=e=>{e.preventDefault();const b=formData(e.target);saveForm(e.target,b.id?'suppliers/'+b.id:'suppliers',b.id?'PATCH':'POST')};
 $('#customerForm').onsubmit=e=>{e.preventDefault();const b=formData(e.target);saveForm(e.target,b.id?'customers/'+b.id:'customers',b.id?'PATCH':'POST')};
 $('#openShiftForm').onsubmit=e=>{e.preventDefault();saveForm(e.target,'shift','POST',x=>({action:'open',openingCash:Number(x.openingCash)}))};
 $('#closeShiftForm').onsubmit=e=>{e.preventDefault();if(!window.confirm('Bạn đã đếm tiền mặt thực tế và muốn chốt ca?'))return;saveForm(e.target,'shift','POST',x=>({action:'close',countedCash:Number(x.countedCash),note:x.note,confirm:true}))};
@@ -84,7 +82,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
 /* V11 progressive disclosure: preserve all original forms and connected APIs. */
 (function minimalCore(){
  const actions=[
-  ['menu','Thêm món'],['tables','Thêm bàn'],['suppliers','Thêm nhà cung cấp'],
+  ['menu','Thêm món'],['tables','Thêm bàn'],
   ['customers','Thêm khách hàng']
  ];
  const registry=new Map();
@@ -98,7 +96,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
   formPanel.classList.add('ui-form-card');
   listPanel.classList.add('ui-focused-list');
   const row=document.createElement('div');row.className='ui-action-row';
-  const title=document.createElement('strong');title.textContent=sectionId==='tables'?'Danh sách bàn':sectionId==='menu'?'Thực đơn đang quản lý':sectionId==='suppliers'?'Nhà cung cấp':'Khách hàng';title.className='sh-headingline';
+  const title=document.createElement('strong');title.textContent=sectionId==='tables'?'Danh sách bàn':sectionId==='menu'?'Thực đơn đang quản lý':'Khách hàng';title.className='sh-headingline';
   const button=document.createElement('button');button.type='button';button.className='ui-form-toggle';button.textContent='+ '+actionText;
   const toggle=open=>{
    formPanel.classList.toggle('is-open',open);
@@ -136,7 +134,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
  const label=document.createElement('summary');label.textContent='Khác';
  const menu=document.createElement('div');
  extra.append(label,menu);
- const secondary=['suppliers','customers','shifts','audit'];
+ const secondary=['customers','shifts','audit'];
  for(const code of secondary){
   const el=tabs.querySelector('[data-tab="'+code+'"]');
   if(!el)throw Error('Thiếu tab '+code);
