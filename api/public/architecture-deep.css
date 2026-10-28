@@ -124,3 +124,10 @@
 .deep-edge.trace-current:not(.is-muted){stroke:#ffd25b;opacity:1;stroke-width:3}
 @media(max-width:1170px){.deep-kpi-band{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:650px){.deep-kpi-band{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;padding:9px}.deep-metric{padding:10px 9px}.deep-metric strong{font-size:20px}.deep-trace-dock{padding:11px 9px}.deep-trace-head{display:block}.deep-trace-head>span{display:block;margin-top:6px}.deep-trace-item{min-width:190px}.deep-trace-step{flex-basis:142px}}
+
+/* Live API request occupancy on each node; values come from traced server requests. */
+.deep-kpi-band{grid-template-columns:repeat(4,minmax(0,1fr))}
+.deep-node-active{position:absolute;top:4px;right:7px;border:1px solid #e5b54b;border-radius:5px;padding:2px 5px;background:#4b3d21;color:#ffdc83;font-size:8px;font-weight:850;font-variant-numeric:tabular-nums;z-index:3}
+.deep-node.trace-current .deep-node-active{background:#755820;color:#fff0b5}
+@media(max-width:1170px){.deep-kpi-band{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:690px){.deep-kpi-band{grid-template-columns:repeat(2,minmax(0,1fr))}}
