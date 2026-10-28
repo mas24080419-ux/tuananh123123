@@ -34,8 +34,12 @@ test('KDS filters active items and invalidates after writes; order writes are ba
  assert(server.includes("JOIN dining_order_lines li ON li.order_id=o.id WHERE li.status IN ('new','preparing','ready')"));
  assert(server.includes('const fetchedOrders=await kdsCache.get()'));
  assert(server.includes("const kdsCache=createAsyncTtlCache(()=>getOrders(true),{ttlMs:900})"));
- assert(server.includes("kdsCache.invalidate();void orderLive.pulse(true)"));
- assert(server.includes("await c.query('COMMIT');\n  kdsCache.invalidate()"));
+ assert(server.includes("invalidateOrderReads();void orderLive.pulse(true)"));
+ assert(server.includes('const all=await staffOrdersCache.get()'));
+ assert(server.includes('staffOrdersCache.invalidate()'));
+ assert(server.includes('ORDER BY recent.created_at DESC LIMIT 100'));
+ assert(server.includes("pending.status IN ('new','preparing','ready')"));
+ assert(server.includes("await c.query('COMMIT');\n  invalidateOrderReads()"));
  const order=server.slice(server.indexOf('async function placeOrder'),server.indexOf('async function getOrders'));
  assert(order.includes('FROM UNNEST($2::uuid[],$3::uuid[],$4::text[],$5::integer[]'));
  assert(!order.includes('for(const it of items)await c.query('));
