@@ -12,6 +12,7 @@ function makeOrderFlow({pool,intervalMs=2500,maxClients=5,now=()=>new Date().toI
   const orders=await pool.query({text:`SELECT o.id,o.created_at,o.payment_status,t.name AS table_name
     FROM dining_orders o JOIN dining_tables t ON t.id=o.table_id
     WHERE o.created_at>=now()-interval '24 hours'
+      OR EXISTS (SELECT 1 FROM dining_order_lines li WHERE li.order_id=o.id AND li.status IN ('new','preparing','ready'))
     ORDER BY o.created_at DESC,o.id DESC LIMIT 20`,query_timeout:4000});
   const ids=orders.rows.map(x=>x.id);
   if(!ids.length)return {checkedAt:now(),orders:[],events:[],cursor:'0',source:'postgresql'};
@@ -97,7 +98,7 @@ function makeOrderFlow({pool,intervalMs=2500,maxClients=5,now=()=>new Date().toI
   subscribers.add(sub);
   send(res,first);
   const remove=()=>{subscribers.delete(sub);stopIfIdle()};
-  req.once('close',remove);res.once('close',remove);
+  res.once('close',remove);
   if(!timer)timer=setInterval(()=>{void pulse()},intervalMs);
   return undefined;
  }
