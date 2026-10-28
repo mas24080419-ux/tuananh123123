@@ -2,7 +2,7 @@
 // Approximate live browser sessions viewing the QR menu, not camera scans.
 // Ephemeral, privacy-preserving in-memory state: no IPs, cookies or personal data.
 module.exports=function qrPresence({now=()=>Date.now(),ttlMs=55000,maxSessions=2500,validationMs=30000}={}){
- const sessions=new Map(),validTables=new Map();
+ const sessions=new Map(),validTables=new Map(),pendingTableChecks=new Map();
  const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
  const tokenPattern=/^[0-9a-f]{48}$/i;
  const error=(message,status=400)=>Object.assign(Error(message),{status});
@@ -18,9 +18,21 @@ module.exports=function qrPresence({now=()=>Date.now(),ttlMs=55000,maxSessions=2
    throw error('Phiên QR không hợp lệ.');
   let table=validTables.get(token)?.table;
   if(!table){
-   table=await lookup(token);
-   if(!table||table.active!==true)throw error('Mã QR đã hết hiệu lực.',404);
-   validTables.set(token,{table:{id:table.id,name:table.name},validatedAt:now()});
+   // Concurrent viewers of the same table reuse one PostgreSQL token lookup,
+   // preventing a 100-device QR burst from launching 100 identical SELECTs.
+   let pending=pendingTableChecks.get(token);
+   if(!pending){
+    pending=Promise.resolve().then(()=>lookup(token));
+    pendingTableChecks.set(token,pending);
+   }
+   try{
+    const result=await pending;
+    if(!result||result.active!==true)throw error('Mã QR đã hết hiệu lực.',404);
+    table={id:result.id,name:result.name};
+    validTables.set(token,{table,validatedAt:now()});
+   }finally{
+    if(pendingTableChecks.get(token)===pending)pendingTableChecks.delete(token);
+   }
   }
   // One browser tab contributes at most one active session. A session cannot
   // silently change tables: it is first removed before linking to the new table.
