@@ -2,7 +2,7 @@
 // Owner-only cross-module observability. Business events are read from already committed
 // PostgreSQL rows; API measurements exist only in memory for this Node process.
 // No request bodies, tokens, names, phone numbers or raw dynamic URLs are retained.
-function makeSystemFlow({pool,qrPresence=null,intervalMs=4000,maxClients=4,now=()=>new Date().toISOString()}){
+function makeSystemFlow({pool,qrPresence=null,staffOrderPresence=null,intervalMs=4000,maxClients=4,now=()=>new Date().toISOString()}){
  const subscribers=new Set(),requests=[];
  let timer=null,running=false,revision=0;
  const telemetry=require('./processing-telemetry')({now,publish:message=>{
@@ -12,6 +12,7 @@ function makeSystemFlow({pool,qrPresence=null,intervalMs=4000,maxClients=4,now=(
  const fail=(message,status=503)=>Object.assign(Error(message),{status});
  const classify=(method,path)=>{
   if(method==='GET'&&path.startsWith('/api/staff/'))return null; // Do not trace polling reads
+  if(path==='/api/staff/order-presence'||path==='/api/staff/order-presence/leave')return null; // UI activity is a snapshot, never a transaction trace
   if(!path.startsWith('/api/')||path.startsWith('/api/admin/architecture')||path==='/api/me'||path==='/api/health'||/login|logout|password|activate-owner|recipient|payment-banks/.test(path))return null;
   const rules=[
    [/^\/api\/orders$/, 'orders','/api/orders'],
@@ -85,7 +86,7 @@ function makeSystemFlow({pool,qrPresence=null,intervalMs=4000,maxClients=4,now=(
    const verifiedOrders=[...grouped].map(([orderId,order])=>({orderId,source:order.source,steps:order.steps,latestAt:order.steps[order.steps.length-1]?.at})).reverse().slice(0,35);
    return {checkedAt:now(),source:'postgresql + process-memory',
     events:result.rows.map(r=>({id:r.id,module:r.module,action:r.action,occurredAt:r.occurred_at,source:r.source})),
-    requests:requests.slice(0,50),metrics:countResult.rows[0]||null,qrPresence:qrPresence?qrPresence.snapshot():null,verifiedOrders,...telemetry.summary(),
+    requests:requests.slice(0,50),metrics:countResult.rows[0]||null,qrPresence:qrPresence?qrPresence.snapshot():null,staffOrderPresence:staffOrderPresence?staffOrderPresence.snapshot():null,verifiedOrders,...telemetry.summary(),
     connectedOwners:subscribers.size,
     scope:'24h PostgreSQL counts and SSE execution steps in RAM; individual SQL statements are not traced'};
   }

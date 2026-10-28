@@ -5,6 +5,7 @@
  const money=n=>new Intl.NumberFormat('vi-VN',{maximumFractionDigits:0}).format(Number(n)||0)+' ₫';
  const date=s=>new Date(s).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
  const state={role:null,menu:[],tables:[],orders:[],cart:new Map(),requestId:null,ready:false,loading:false,saving:false};
+ const staffPresence={sessionId:crypto.randomUUID(),ordered:false,inFlight:false,dirty:false,timer:null,pending:null};
  const message=(s,error=false)=>{$('message').textContent=s;$('message').classList.toggle('error',error)};
  async function api(url,options={}){
   const response=await fetch(url,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
@@ -13,6 +14,37 @@
   return result;
  }
  const canPay=()=>['admin','manager','cashier'].includes(state.role);
+ // Send ONLY counts and a table identifier, never item names, prices, notes or customer data.
+ const activity=()=>({
+  sessionId:staffPresence.sessionId,tableId:$('table').value||null,
+  stage:state.saving?'submitting':staffPresence.ordered?'ordered':
+   (state.cart.size>0||$('table').value||$('search').value.trim())?'selecting':'viewing',
+  cartItems:[...state.cart.values()].reduce((a,b)=>a+b,0)
+ });
+ async function pulsePresence(){
+  if(!state.ready||document.hidden)return;
+  if(staffPresence.inFlight){staffPresence.dirty=true;return}
+  staffPresence.inFlight=true;
+  try{await api('/api/staff/order-presence',{method:'POST',body:JSON.stringify(activity())})}
+  catch{ /* Advisory telemetry only: ordering remains available if tracking is offline. */ }
+  finally{
+   staffPresence.inFlight=false;
+   if(staffPresence.dirty){staffPresence.dirty=false;queuePresence()}
+  }
+ }
+ function queuePresence(){
+  if(staffPresence.pending)clearTimeout(staffPresence.pending);
+  staffPresence.pending=setTimeout(()=>{staffPresence.pending=null;void pulsePresence()},250);
+ }
+ function leavePresence(){
+  if(staffPresence.pending){clearTimeout(staffPresence.pending);staffPresence.pending=null}
+  if(!state.ready)return;
+  const body=JSON.stringify({sessionId:staffPresence.sessionId});
+  if(navigator.sendBeacon){
+   try{if(navigator.sendBeacon('/api/staff/order-presence/leave',new Blob([body],{type:'text/plain;charset=UTF-8'})))return}catch{}
+  }
+  try{void fetch('/api/staff/order-presence/leave',{method:'POST',credentials:'same-origin',keepalive:true,headers:{'Content-Type':'text/plain'},body})}catch{}
+ }
  function drawCart(){
   const count=[...state.cart.values()].reduce((a,b)=>a+b,0);
   const sum=[...state.cart].reduce((a,[id,q])=>a+q*(Number(state.menu.find(m=>m.id===id)?.price)||0),0);
@@ -75,23 +107,23 @@
   const all=[...state.cart.values()].reduce((a,b)=>a+b,0)-old+next;
   if(next>20||next>Number(m.available_quantity)||all>60)return;
   if(next)state.cart.set(id,next);else state.cart.delete(id);
-  state.requestId=null;drawMenu();
+  state.requestId=null;staffPresence.ordered=false;drawMenu();queuePresence();
  });
- $('search').addEventListener('input',drawMenu);
- $('table').addEventListener('change',()=>{state.requestId=null;drawCart()});
+ $('search').addEventListener('input',()=>{staffPresence.ordered=false;drawMenu();queuePresence()});
+ $('table').addEventListener('change',()=>{state.requestId=null;staffPresence.ordered=false;drawCart();queuePresence()});
  $('payment').addEventListener('change',()=>{state.requestId=null});
  $('note').addEventListener('input',()=>{state.requestId=null});
  $('orderForm').addEventListener('submit',async e=>{
   e.preventDefault();if(state.saving||!state.cart.size)return;
   const table=state.tables.find(t=>t.id===$('table').value);if(!table){message('Chọn bàn trước khi gọi món.',true);return}
   const body={token:table.token,requestId:state.requestId||crypto.randomUUID(),paymentMethod:$('payment').value,note:$('note').value.trim(),items:[...state.cart].map(([id,qty])=>({id,qty}))};
-  state.requestId=body.requestId;state.saving=true;drawCart();
+  state.requestId=body.requestId;state.saving=true;drawCart();void pulsePresence();
   try{const result=await api('/api/staff/orders',{method:'POST',body:JSON.stringify(body)});
-   state.cart.clear();state.requestId=null;$('note').value='';$('search').value='';
+   state.cart.clear();staffPresence.ordered=true;state.requestId=null;$('note').value='';$('search').value='';
    message('Đã gửi đơn #'+result.id.slice(0,8)+' đến Bếp/Bar.');
    await loadCatalog();await loadOrders(true);
   }catch(error){message(error.message,true);if(error.status===409){state.requestId=null;try{await loadCatalog()}catch{}}}
-  finally{state.saving=false;drawMenu()}
+  finally{state.saving=false;drawMenu();queuePresence()}
  });
  $('orders').addEventListener('click',async e=>{
   const line=e.target.closest('button[data-line]');
@@ -109,17 +141,19 @@
  $('filter').addEventListener('input',drawOrders);
  $('status').addEventListener('change',drawOrders);
  $('reload').addEventListener('click',()=>loadOrders());
- $('logout').addEventListener('click',async()=>{try{await api('/api/logout',{method:'POST',body:'{}'})}finally{location.replace('/login')}});
+ $('logout').addEventListener('click',async()=>{leavePresence();try{await api('/api/logout',{method:'POST',body:'{}'})}finally{location.replace('/login')}});
  (async()=>{
   try{
    const me=await api('/api/me');
    if(!me.staff){$('gate').textContent='Bạn cần đăng nhập trước. Mở trang Nhân viên để tiếp tục.';return}
    if(me.workArea||!['admin','waiter','cashier','manager'].includes(me.role)){$('gate').textContent='Vai trò này không có quyền gọi món. Quay lại màn hình Bếp hoặc khu vực được giao.';return}
    state.role=me.role;$('employeeName').textContent=me.displayName||me.username||'Chủ cửa hàng';
-   $('gate').hidden=true;$('app').hidden=false;await loadCatalog();state.ready=true;await loadOrders(true);
+   $('gate').hidden=true;$('app').hidden=false;await loadCatalog();state.ready=true;void pulsePresence();await loadOrders(true);
    message('Sẵn sàng gọi món. Đơn mới được kiểm tra tồn kho trước khi tạo.');
   }catch(error){message(error.message,true);$('gate').textContent='Không kết nối được hoặc phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'}
  })();
  setInterval(()=>{if(!document.hidden)loadOrders(true)},5000);
- document.addEventListener('visibilitychange',()=>{if(!document.hidden)loadOrders(true)});
+ staffPresence.timer=setInterval(()=>{if(!document.hidden)void pulsePresence()},15000);
+ window.addEventListener('pagehide',leavePresence);
+ document.addEventListener('visibilitychange',()=>{if(document.hidden)leavePresence();else{loadOrders(true);void pulsePresence()}});
 })();

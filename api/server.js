@@ -39,7 +39,8 @@ const ownerAccounts=require('./owner-auth')({pool});
 const architectureMonitor=require('./architecture-monitor');
 const orderLive=require('./order-flow-live')({pool});
 const qrPresence=require('./qr-presence')();
-const systemFlow=require('./system-flow')({pool,qrPresence});
+const staffOrderPresence=require('./staff-order-presence')();
+const systemFlow=require('./system-flow')({pool,qrPresence,staffOrderPresence});
 const token=i=>crypto.createHmac('sha256',SESSION_SECRET).update('qr-table-'+i).digest('hex').slice(0,48);
 const authHash=s=>crypto.createHash('sha256').update(s).digest();
 const safeEq=(a,b)=>{const x=authHash(a),y=authHash(b);return crypto.timingSafeEqual(x,y)};
@@ -360,6 +361,17 @@ if(req.method==='POST'&&p==='/api/qr/presence'){
  return send(res,200,await qrPresence.heartbeat(await input(req),getTable));
 }
 if(req.method==='POST'&&p==='/api/qr/leave')return send(res,200,qrPresence.leave(await input(req)));
+// Authenticated employee UI presence; does not create an order or touch inventory.
+if(req.method==='POST'&&['/api/staff/order-presence','/api/staff/order-presence/leave'].includes(p)){
+ if(!await requireAuth(req,res))return;
+ const actor=await identity(req);
+ if(!canManageOrders(actor))return err(res,403,'Vai trò này không được gọi món.');
+ if(!pool)return err(res,503,'Giám sát nhân viên yêu cầu PostgreSQL.');
+ const body=await input(req);
+ if(p.endsWith('/leave'))return send(res,200,staffOrderPresence.leave(body,actor));
+ const lookup=async id=>(await pool.query('SELECT id,name,active FROM dining_tables WHERE id=$1 AND active=true',[id])).rows[0];
+ return send(res,200,await staffOrderPresence.heartbeat(body,actor,lookup));
+}
 if(req.method==='GET'&&p==='/api/admin/qr/presence'){
  if(!await requireAdmin(req,res))return;
  return send(res,200,qrPresence.snapshot());
