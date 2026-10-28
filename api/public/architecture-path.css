@@ -1,0 +1,40 @@
+/* SalesHub live processing pipeline. Paths are displayed only for observed SSE steps.
+   Motion is a brief replay of recorded stages, never a fake idle loop. */
+.deep-runtime-banner{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 15px;background:linear-gradient(110deg,#102a2f,#111b2c);border-top:1px solid #2b4b54;border-bottom:1px solid #25404c}
+.deep-runtime-led{display:flex;align-items:center;gap:12px;min-width:0}
+.path-runtime-dot{flex:none;width:11px;height:11px;border-radius:50%;background:#516b86;border:2px solid #8c9cb0}
+.path-runtime-dot.active{background:#5fe7c5;border-color:#b5ffe4;box-shadow:0 0 0 4px #51e6bd20}
+.path-runtime-dot.error{background:#fb8291;border-color:#ffd0d3;box-shadow:0 0 0 4px #fa879220}
+.deep-runtime-led>div{display:flex;flex-direction:column;gap:6px;min-width:0}
+#pathRuntimeTitle{font-size:12px;font-weight:800;color:#ecf7f9;overflow-wrap:anywhere}
+#pathRuntimeDescription{font-size:10.5px;line-height:1.45;color:#a8c3ce;overflow-wrap:anywhere}
+.deep-runtime-right{display:flex;align-items:center;justify-content:flex-end;gap:11px;flex:none}
+.path-runtime-progress{font-size:11px;font-weight:850;font-variant-numeric:tabular-nums;color:#ffcc62}
+.path-runtime-queue{font-size:10px;color:#9bb4d1}
+.path-runtime-replay{background:#1b3346;border:1px solid #427d81;color:#c7f1ec;font-size:10px;font-weight:800;border-radius:8px;padding:9px 11px;white-space:nowrap}
+.path-runtime-replay:hover{background:#22515a}
+.deep-real-data-legend{font-size:10px;color:#91b8bd}
+.deep-real-data-legend b{color:#8ee8c6}
+.deep-stage .deep-node.path-source{opacity:1!important}
+.deep-stage .deep-node.path-visited{opacity:1!important;border-color:#50bba8!important;box-shadow:0 0 0 1px #59e5b52d!important}
+.deep-stage .deep-node.path-current{opacity:1!important;border:2px solid #ffe08e!important;background:linear-gradient(145deg,#25423e,#1d3143)!important;box-shadow:0 0 0 4px #5de9bb24,0 0 17px #53d7b440!important;z-index:5}
+.deep-stage .deep-node.path-current .deep-node-light{background:#f8d878;box-shadow:0 0 0 4px #f4ca3c20}
+.deep-stage .deep-node.path-current .deep-node-active{background:#32624e;color:#dbffef}
+.deep-wires #deepRuntimeLinks{pointer-events:none}
+.deep-wires .runtime-link{fill:none;stroke-width:3;opacity:.9;vector-effect:non-scaling-stroke;stroke-linecap:round}
+.deep-wires .runtime-link.travelled{stroke:#54bca1;stroke-width:2;opacity:.65}
+.deep-wires .runtime-link.current{stroke-width:4;opacity:1;filter:drop-shadow(0 0 4px #b2e6be78)}
+.deep-wires .runtime-packet{filter:drop-shadow(0 0 5px #f7d478);stroke:#f9fcf8;stroke-width:1.5}
+.deep-wires .deep-edge.route-current{stroke:#a2fce0!important;opacity:1!important;stroke-width:3.4!important}
+.arch-legacy-details{margin-top:17px;margin-bottom:17px;border:1px solid #293b56;border-radius:13px;background:#0e1828;overflow:hidden}
+.arch-legacy-details>summary{display:flex;align-items:center;justify-content:space-between;gap:14px;cursor:pointer;padding:14px 17px;color:#a3b8d6;font-size:12px;font-weight:800;list-style:none}
+.arch-legacy-details>summary::-webkit-details-marker{display:none}
+.arch-legacy-details>summary::before{content:"+";display:inline-flex;align-items:center;justify-content:center;color:#f2c762;border:1px solid #465a70;border-radius:6px;width:25px;height:25px;font-size:18px;flex:none}
+.arch-legacy-details[open]>summary::before{content:"−"}
+.arch-legacy-details>summary span{flex:1}
+.arch-legacy-details>summary small{font-size:10px;color:#6e8aa6}
+.arch-legacy-details .arch-legacy-body{padding:0 12px 12px}
+.arch-legacy-details .live-orders-panel,.arch-legacy-details .arch-workbench{margin-top:12px}
+@media(max-width:940px){.deep-runtime-banner{align-items:flex-start;flex-direction:column}.deep-runtime-right{width:100%;justify-content:flex-start;flex-wrap:wrap}}
+@media(max-width:650px){.deep-runtime-banner{padding:12px 10px}.deep-runtime-right{gap:8px}.path-runtime-replay{margin-left:auto}.arch-legacy-details>summary{flex-wrap:wrap;font-size:11px;padding:12px}.arch-legacy-details>summary small{width:100%;padding-left:37px}}
+@media(prefers-reduced-motion:reduce){.deep-wires .runtime-packet{display:none}}
