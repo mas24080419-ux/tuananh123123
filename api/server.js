@@ -402,6 +402,16 @@ if(req.method==='GET'&&p==='/api/admin/operations'){
  const range=adminDateRange(u.searchParams);
  return send(res,200,{...await ops.overview(range.from,range.to),range});
 }
+if(req.method==='GET'&&p==='/api/admin/inventory'){
+ if(!await requireAdmin(req,res))return;
+ return send(res,200,await ops.inventoryDashboard());
+}
+const thresholdAction=p.match(/^\/api\/admin\/inventory\/items\/([0-9a-f-]{36})\/reorder$/i);
+if(req.method==='PATCH'&&thresholdAction){
+ if(!await requireAdmin(req,res))return;
+ if(!throttle(req,'reorder',40))return err(res,429,'Thao tác quá nhanh.');
+ return send(res,200,{item:await ops.updateReorderLevel(thresholdAction[1],await input(req))});
+}
 if(req.method==='POST'&&p==='/api/admin/inventory/items'){
  if(!await requireAdmin(req,res))return;
  if(!throttle(req,'inventory',40))return err(res,429,'Thao tác quá nhanh.');
