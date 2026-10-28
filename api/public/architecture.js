@@ -87,6 +87,7 @@
  }
  function updateHighlight(){
   if(!modelState.model)return;
+  document.body.dataset.archFlow=modelState.filter;
   const visible=activeGroups(),selected=modelState.selected,connected=selected?.type==='node'?new Set(modelState.model.edges.filter(e=>e.from===selected.id||e.to===selected.id).map(e=>e.id)):null;
   const allowedNodes=nodeActiveSet();
   for(const btn of $('archNodes').querySelectorAll('[data-arch-node]')){
@@ -212,6 +213,7 @@
   const target=event.target.closest('[data-flow]');if(!target||!modelState.model)return;
   modelState.filter=target.dataset.flow;
   modelState.selected=null;drawFilters();updateHighlight();renderInspect();
+  document.dispatchEvent(new CustomEvent('saleshub:overview-filter',{detail:{filter:modelState.filter}}));
  });
  $('archZoomIn').addEventListener('click',()=>setScale(modelState.scale+.15));
  $('archZoomOut').addEventListener('click',()=>setScale(modelState.scale-.15));

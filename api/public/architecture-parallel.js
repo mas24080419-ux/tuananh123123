@@ -36,11 +36,45 @@
    const sx=ax+aw/2,sy=ay+ah,ex=bx+bw/2,ey=by,dy=Math.max(30,Math.abs(ey-sy)*.38);
    return 'M'+sx+' '+sy+' C'+sx+' '+(sy+dy)+' '+ex+' '+(ey-dy)+' '+ex+' '+ey;
   }
+  const overviewMap={
+   guest:'guest',staff:'staff',stafforder:'stafforder',staffcart:'staffcart',
+   http:'http',auth:'auth',validate:'orders',orders:'orders',
+   kds:'kds',inventory:'inventory',finance:'finance',rental:'rental',admin:'backoffice',
+   tx:'postgres',pg:'postgres',audit:'audit'
+  };
+  function paintOverview(){
+   const nodes=document.getElementById('archNodes'),wires=document.getElementById('archEdges');
+   if(!nodes||!wires)return;
+   const show=enabled()&&document.body.dataset.archFlow==='all';
+   const counts=new Map(),routes=new Set();
+   if(show){
+    for(const item of traces.values()){
+     if(item.index<0)continue;
+     const trail=[root(item.trace),...(item.trace.steps||[]).slice(0,item.index+1).map(s=>s.node)].map(n=>overviewMap[n]).filter(Boolean);
+     for(const n of new Set(trail))counts.set(n,(counts.get(n)||0)+1);
+     for(let i=1;i<trail.length;i++)if(trail[i]!==trail[i-1])routes.add(trail[i-1]+'-'+trail[i]);
+    }
+   }
+   const qr=show?Number(lastSnapshot?.qrPresence?.selectingSessions||0):0;
+   const staff=show?Number(lastSnapshot?.staffOrderPresence?.selectingSessions||0)+Number(lastSnapshot?.staffOrderPresence?.submittingSessions||0):0;
+   if(qr)counts.set('guest',(counts.get('guest')||0)+qr);
+   if(staff)for(const n of ['stafforder','staffcart'])counts.set(n,(counts.get(n)||0)+staff);
+   for(const n of nodes.querySelectorAll('[data-arch-node]')){
+    const count=counts.get(n.dataset.archNode)||0;
+    n.classList.toggle('arch-concurrent-active',count>0);
+    if(count)n.setAttribute('data-arch-concurrent',count+' luồng');
+    else n.removeAttribute('data-arch-concurrent');
+   }
+   for(const e of wires.querySelectorAll('[data-arch-edge]'))
+    e.classList.toggle('arch-concurrent-route',show&&routes.has(e.dataset.archEdge));
+  }
   function clear(){
+   paintOverview();
    for(const item of traces.values())if(item.timer)clearTimeout(item.timer);
    traces.clear();layer.replaceChildren();
    nodes.querySelectorAll('[data-concurrent]').forEach(n=>{n.classList.remove('concurrent-active');n.removeAttribute('data-concurrent')});
    svg.querySelectorAll('.deep-edge.concurrent-active').forEach(e=>e.classList.remove('concurrent-active'));
+   paintOverview();
   }
   function render(){
    if(!enabled()){clear();return}
@@ -81,6 +115,7 @@
    if(el('pathRuntimeQueue'))el('pathRuntimeQueue').textContent=waiting+' mốc chờ · '+(failed?failed+' lỗi':'không lỗi đang hiển thị');
    if(el('pathRuntimeDot'))el('pathRuntimeDot').className='path-runtime-dot '+(failed?'error':drawing?'active':'');
    if(el('deepLivePath')&&drawing)el('deepLivePath').textContent='Tất cả đang hiển thị '+drawing+' luồng mốc backend thực song song · không tự chuyển module';
+   paintOverview();
   }
   function advance(id){
    const t=traces.get(id);
@@ -136,6 +171,7 @@
    if(!enabled())return;
    const time=Date.parse(lastSnapshot?.checkedAt)||Date.now();
    for(const t of [...(lastSnapshot?.active||[]),...(lastSnapshot?.traces||[])])add(t,{fromSnapshot:true,at:time});
+   render();
   }
   function onFilter(){
    if(!enabled()){clear();return}
@@ -146,6 +182,7 @@
   document.addEventListener('saleshub:trace',onTrace);
   document.addEventListener('saleshub:snapshot',onSnapshot);
   document.addEventListener('saleshub:architecture-filter',onFilter);
+  document.addEventListener('saleshub:overview-filter',paintOverview);
   window.addEventListener('pagehide',clear);
   render();
  }

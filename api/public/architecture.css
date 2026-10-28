@@ -148,3 +148,8 @@
 
 .arch-node.is-staff-cart-live{border-color:#6bc9ff!important;box-shadow:0 0 0 2px #58b6ec40,0 6px 20px #0004!important}
 [data-arch-edge].is-staff-presence-live .arch-wire{stroke:#7acfff!important;stroke-width:3;opacity:1}
+
+/* Simultaneous observed backend traces on the overview map (All mode only). */
+.arch-node.arch-concurrent-active{border-color:#7ed6ff;box-shadow:0 0 0 2px #54b6eb44,0 6px 14px #0003}
+.arch-node.arch-concurrent-active::after{content:attr(data-arch-concurrent);position:absolute;right:7px;top:6px;background:#235978;color:#e6f7ff;border-radius:5px;padding:2px 5px;font-size:9px;font-weight:850}
+[data-arch-edge].arch-concurrent-route .arch-wire{stroke:#83caff!important;stroke-width:3!important;opacity:1!important}
