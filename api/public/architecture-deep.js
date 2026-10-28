@@ -85,13 +85,15 @@
   document.querySelectorAll('#deepFilters [data-flow]').forEach(b=>b.classList.toggle('is-active',b.dataset.flow===filter));
   document.querySelectorAll('#deepNodes [data-id]').forEach(b=>{
    const id=b.dataset.id,selectedNow=id===selected;
-   const isFlow=filter==='all'||id==='http'||id==='pg'||id==='tx'||id==='audit'||id==='stream'||id==='app'||id==='auth'||id==='validate'||id===filter;
+   const traceNodes=new Set(currentTrace()?.steps?.map(x=>x.node)||[]);
+   const isFlow=traceNodes.has(id)||filter==='all'||id==='http'||id==='pg'||id==='tx'||id==='audit'||id==='stream'||id==='app'||id==='auth'||id==='validate'||id===filter;
    b.classList.toggle('is-muted',!isFlow);
    b.classList.toggle('is-selected',selectedNow);
    b.setAttribute('aria-pressed',String(selectedNow));
   });
   document.querySelectorAll('#deepWires [data-flow]').forEach(p=>{
-   const inFlow=filter==='all'||p.dataset.flow===filter||p.dataset.flow==='database'&&filter==='all';
+   const traceNodes=new Set(currentTrace()?.steps?.map(x=>x.node)||[]);
+   const inFlow=filter==='all'||p.dataset.flow===filter||(traceNodes.has(p.dataset.src)&&traceNodes.has(p.dataset.dst));
    const related=p.dataset.src===selected||p.dataset.dst===selected;
    p.classList.toggle('is-muted',!inFlow);
    p.classList.toggle('is-selected',related&&inFlow);
