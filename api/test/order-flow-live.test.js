@@ -74,8 +74,10 @@ test('server persists trace markers inside order transaction and publishes only 
  const orderPath=server.slice(server.indexOf('async function placeOrder'),server.indexOf('async function getOrders'));
  assert(orderPath.indexOf("'order_validated'")<orderPath.indexOf('await ops.consume(c,orderId)'));
  assert(orderPath.indexOf("'inventory_checked'")>orderPath.indexOf('await ops.consume(c,orderId)'));
- assert(orderPath.indexOf("'inventory_checked'")<orderPath.indexOf("await c.query('COMMIT');void orderLive.pulse(true)"));
- assert(orderPath.indexOf("await c.query('COMMIT');void orderLive.pulse(true)")>0);
+ const committed=orderPath.indexOf("await c.query('COMMIT');systemFlow.mark(flowReq,'pg','PostgreSQL COMMIT thành công')");
+ assert(committed>0,'COMMIT must finish before live order publication');
+ assert(orderPath.indexOf("'inventory_checked'")<committed);
+ assert(committed<orderPath.indexOf('void orderLive.pulse(true)'));
  assert(server.includes("void orderLive.pulse(true);return row"));
 });
 test('live SSE and reconnect API are authenticated as owner on backend',()=>{
