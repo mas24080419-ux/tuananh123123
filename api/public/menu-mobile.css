@@ -3,6 +3,7 @@
 @media(max-width:760px){
  :root{--menu-sea:#087f79;--menu-ink:#172f3b;--menu-muted:#7a8d99;--menu-line:#e9eff2}
  body:has(#menu.section.active){background:#f5f8f9!important}
+ body:has(#menu.section.active) main{font-family:"Plus Jakarta Sans",-apple-system,BlinkMacSystemFont,system-ui,sans-serif}
  body:has(#menu.section.active) main>.eyebrow,
  body:has(#menu.section.active) main>h1,
  body:has(#menu.section.active) main>p.muted{display:none!important}
