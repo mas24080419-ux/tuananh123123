@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f6f8fb"><title>Tắm Tráng 6 · Gọi món & quản lý đơn</title>
+<link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/staff-orders.css?v=staff-order-1"></head><body>
+<header class="top"><div class="brand"><img src="/tam-trang-6-logo.svg" alt="" width="42" height="42"><div><b>Tắm Tráng 6</b><small>NHÂN VIÊN · GỌI MÓN</small></div></div>
+<nav><span id="employeeName"></span><a href="/staff?kds=1">Bếp / QR</a><button id="logout" type="button">Đăng xuất</button></nav></header>
+<main id="app" hidden><div class="heading"><div><small>GIAO DIỆN NHÂN VIÊN</small><h1>Gọi món & quản lý đơn</h1><p>Đơn của nhân viên được gửi về Bếp/Bar và kiểm tra tồn kho trên máy chủ.</p></div><span>● Đang đồng bộ</span></div>
+<div id="message" class="message" role="status" aria-live="polite">Đang tải dữ liệu...</div>
+<div class="layout"><section class="panel"><div class="panel-head"><small>01 · GỌI MÓN TẠI BÀN</small><h2>Tạo đơn hàng</h2></div><form id="orderForm">
+<div class="two"><label>Bàn<select id="table" required><option value="">Đang tải...</option></select></label><label>Phương thức thanh toán<select id="payment"><option value="cash">Tiền mặt</option><option value="bank_transfer">Chuyển khoản</option></select></label></div>
+<label>Tìm món<input type="search" id="search" placeholder="Nhập tên hoặc danh mục" autocomplete="off"></label>
+<div id="menu" class="menu"></div>
+<label>Ghi chú<input id="note" maxlength="160" placeholder="Ví dụ: Không hành, ít đá"></label>
+<div class="cart"><div><b>Giỏ hàng</b><small id="cartCount">Chưa chọn món</small></div><strong id="amount">0 ₫</strong></div>
+<button id="place" class="primary" type="submit" disabled>Gửi đơn đến Bếp/Bar</button><p class="hint">Hệ thống xác minh số lượng còn lại khi gửi đơn. Món hết hàng không thể đặt.</p>
+</form></section>
+<section class="panel"><div class="panel-head row"><div><small>02 · KIỂM SOÁT ĐƠN</small><h2>Đơn hàng gần đây</h2></div><button id="reload" type="button" class="light">Làm mới</button></div>
+<div class="filters two"><label>Tìm theo bàn / mã đơn<input id="filter" type="search" placeholder="Tìm đơn..."></label><label>Trạng thái<select id="status"><option value="active">Đang xử lý</option><option value="all">Tất cả</option><option value="unpaid">Chưa thu tiền</option><option value="paid">Đã thu tiền</option></select></label></div>
+<p id="count" class="hint summary">Đang tải...</p><div id="orders" class="orders"></div></section></div></main>
+<div id="gate" class="gate">Đang xác minh tài khoản... <a href="/staff">Đăng nhập nhân viên</a></div>
+<script src="/staff-orders.js?v=staff-order-1"></script></body></html>
