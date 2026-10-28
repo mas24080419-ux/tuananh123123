@@ -77,3 +77,8 @@
 @media(max-width:1180px){.deep-content{grid-template-columns:minmax(0,1fr) 310px}}
 @media(max-width:870px){.deep-content{display:block}.deep-viewport{max-height:540px}.deep-inspector{border-left:0;border-top:1px solid #2a405d;max-height:none}.deep-event-list{grid-template-columns:1fr}}
 @media(max-width:650px){.deep-header{padding:13px 12px;display:block}.deep-header h2{font-size:15px}.deep-head-actions{margin-top:12px;justify-content:space-between}.deep-filters{padding:9px;gap:4px}.deep-viewport{min-height:480px;max-height:520px}.deep-map-caption{gap:8px;padding:10px 12px}.deep-events-top{padding:12px;display:block}.deep-events-tabs{margin-top:10px}.deep-events-info{padding:9px 12px}.deep-event-list{padding:7px 9px 12px}.deep-status{font-size:9px}}
+
+.deep-follow{background:#203248;color:#dfeafa;border:1px solid #4b6688;border-radius:8px;padding:8px 10px;font-size:10px;font-weight:800;white-space:nowrap}
+.deep-follow[aria-pressed="true"]{background:#183d32;border-color:#327e66;color:#99f0ce}
+#deepLivePath{color:#f8cd70;font-weight:750}
+@media(max-width:650px){.deep-head-actions{flex-wrap:wrap}.deep-follow{flex:1}}
