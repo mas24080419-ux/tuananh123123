@@ -5,6 +5,7 @@
  const W=1630,H=790;
  const services={
   guest:{name:'Khách / QR',tag:'CLIENT',kind:'client',summary:'Khách dùng trình duyệt mở link bàn từ QR để xem món và gửi order.',paths:['/t/:token','GET /api/menu/:token','POST /api/orders'],steps:['Trình duyệt đọc QR trên bàn và nhận token của bàn','Tải thực đơn qua API và gửi requestId cùng món đã chọn','Backend kiểm tra token, món và số lượng; khách không có quyền truy cập các API quản trị'],tables:[]},
+  cart:{name:'Đang chọn món · Giỏ QR',tag:'BROWSER CART',kind:'client',summary:'Theo dõi các phiên QR có món trong giỏ trên điện thoại trước khi khách xác nhận. Dữ liệu trạng thái do trình duyệt báo về và chỉ giữ tạm trong RAM.',paths:['api/public/guest.js → cart Map','window.saleshubQrActivity()','POST /api/qr/presence','api/qr-presence.js'],steps:['Khách mở thực đơn, phiên được ghi nhận là đang xem','Khi thay đổi giỏ, frontend gửi trạng thái selecting và tổng số phần','Backend thống kê số phiên đang chọn và số phần tạm theo từng bàn, không lưu giỏ vào PostgreSQL','Khách bấm xác nhận: chuyển sang submitting; backend xử lý POST /api/orders riêng','Chỉ sau khi HTTP trả thành công mới ghi nhận ordered trên phiên; số đơn đã lưu nằm trong PostgreSQL','Khi khách rời trang, thông tin tạm tự hết hạn sau khoảng 55 giây'],tables:['process memory: qrPresence (tạm)']},
   staff:{name:'Nhân viên / Bếp / Bar',tag:'STAFF',kind:'client',summary:'Giao diện nội bộ dành cho các vai trò theo tài khoản và khu vực.',paths:['/staff','/staff/lockers','GET /api/kds','GET /api/lockers'],steps:['Đăng nhập và nhận cookie phiên HttpOnly','Backend kiểm tra role / work_area tại mỗi request','Nhân viên bếp/bar đổi trạng thái món; khu vực thiết bị xử lý phao và tủ'],tables:[]},
   owner:{name:'Chủ cửa hàng',tag:'OWNER',kind:'client',summary:'Điều hành toàn bộ hệ thống qua giao diện quản trị; dữ liệu giám sát chỉ chủ cửa hàng mới được đọc.',paths:['/admin','/admin/architecture','/admin/inventory','/admin/operations'],steps:['Xác thực chủ qua session HMAC và dữ liệu owner_accounts','Truy cập API quản trị và số liệu tổng hợp','Xem sự kiện DB đã commit và telemetry API đã chuẩn hóa trên bản đồ'],tables:['owner_accounts']},
   http:{name:'HTTP Router / Render',tag:'server.js',kind:'gateway',summary:'Node.js HTTP server trên Render. Nhận HTTPS, định tuyến request, trả JSON và phục vụ giao diện tĩnh.',paths:['api/server.js','api/static-files.js'],steps:['Nhận HTTP request qua web service Render','Kiểm tra same-origin và giới hạn tần suất theo nhóm endpoint','Định tuyến theo method + URL; không có API gateway riêng được xác minh','Trả HTTP status và response; ghi thời gian API vào bộ nhớ tiến trình'],tables:[]},
@@ -23,7 +24,8 @@
   app:{name:'Owner Architecture Console',tag:'UI',kind:'observe',summary:'Trang giám sát chỉ cho chủ cửa hàng: bản đồ logic, trạng thái DB, sự kiện commit và truy cập API.',paths:['/admin/architecture','api/public/architecture.html','api/public/architecture-deep.js'],steps:['Chọn luồng xử lý muốn xem trên bản đồ','Nhấp một node để xem trình tự xử lý, API, file mã nguồn và bảng SQL','Theo dõi event DB đã commit và request HTTP theo từng module','Phân biệt dữ liệu lịch sử và telemetry trong RAM','Không lộ thông tin khách hàng trong console'],tables:[]}
  };
  const nodes=[
-  {id:'guest',label:'Khách gọi món',subtitle:'QR / trình duyệt',kind:'client',x:25,y:125,w:190},
+  {id:'guest',label:'Khách gọi món',subtitle:'QR / trình duyệt',kind:'client',x:25,y:100,w:190},
+   {id:'cart',label:'Đang chọn món',subtitle:'Giỏ hàng · trước đặt đơn',kind:'client',x:25,y:230,w:190},
   {id:'staff',label:'Nhân viên / Bếp',subtitle:'KDS / dịch vụ',kind:'client',x:25,y:350,w:190},
   {id:'owner',label:'Chủ cửa hàng',subtitle:'Quản trị / báo cáo',kind:'client',x:25,y:575,w:190},
   {id:'http',label:'Render · HTTP Router',subtitle:'server.js · API',kind:'gateway',x:265,y:285,w:215},
@@ -42,7 +44,7 @@
   {id:'app',label:'Architecture UI',subtitle:'event log / inspector',kind:'observe',x:1370,y:525,w:210}
  ];
  const edges=[
-  ['guest','http','orders'],['staff','http','kds'],['owner','http','admin'],['http','validate','access'],
+  ['guest','http','orders'],['guest','cart','orders'],['cart','http','orders'],['staff','http','kds'],['owner','http','admin'],['http','validate','access'],
   ['http','auth','access'],['validate','orders','orders'],['auth','kds','kds'],['auth','inventory','inventory'],
   ['auth','finance','finance'],['auth','rental','rental'],['auth','admin','admin'],
   ['orders','inventory','orders'],['orders','kds','orders'],
@@ -50,7 +52,7 @@
   ['rental','tx','rental'],['admin','tx','admin'],['tx','pg','database'],['pg','audit','database'],
   ['audit','stream','observe'],['stream','app','observe'],['owner','app','observe']
  ];
- const filters=[['all','Tất cả'],['orders','QR Order'],['kds','Bếp / Bar'],['inventory','Kho'],['finance','Thu–chi'],['rental','Phao & Tủ'],['admin','Quản trị'],['access','API / Quyền'],['database','PostgreSQL'],['observe','Giám sát']];
+ const filters=[['all','Tất cả'],['orders','QR Order'],['cart','Đang chọn món'],['kds','Bếp / Bar'],['inventory','Kho'],['finance','Thu–chi'],['rental','Phao & Tủ'],['admin','Quản trị'],['access','API / Quyền'],['database','PostgreSQL'],['observe','Giám sát']];
  const colors={client:'#53c8ed',gateway:'#5fe0ad',module:'#f6c74f',database:'#a998ff',observe:'#ffa361'};
  let selected='orders',filter='all',scale=1,source=null,timer=null,last=null,view='events',followLive=true,focusedTrace=null,hasSnapshot=false;
  function node(id){return nodes.find(n=>n.id===id)}
@@ -86,14 +88,14 @@
   document.querySelectorAll('#deepNodes [data-id]').forEach(b=>{
    const id=b.dataset.id,selectedNow=id===selected;
    const traceNodes=new Set(currentTrace()?.steps?.map(x=>x.node)||[]);
-   const isFlow=traceNodes.has(id)||filter==='all'||id==='http'||id==='pg'||id==='tx'||id==='audit'||id==='stream'||id==='app'||id==='auth'||id==='validate'||id===filter;
+   const isFlow=traceNodes.has(id)||filter==='all'||(filter==='orders'&&id==='cart')||id==='http'||id==='pg'||id==='tx'||id==='audit'||id==='stream'||id==='app'||id==='auth'||id==='validate'||id===filter;
    b.classList.toggle('is-muted',!isFlow);
    b.classList.toggle('is-selected',selectedNow);
    b.setAttribute('aria-pressed',String(selectedNow));
   });
   document.querySelectorAll('#deepWires [data-flow]').forEach(p=>{
    const traceNodes=new Set(currentTrace()?.steps?.map(x=>x.node)||[]);
-   const inFlow=filter==='all'||p.dataset.flow===filter||(traceNodes.has(p.dataset.src)&&traceNodes.has(p.dataset.dst));
+   const inFlow=filter==='all'||(filter==='cart'&&(p.dataset.src==='cart'||p.dataset.dst==='cart'))||p.dataset.flow===filter||(traceNodes.has(p.dataset.src)&&traceNodes.has(p.dataset.dst));
    const related=p.dataset.src===selected||p.dataset.dst===selected;
    p.classList.toggle('is-muted',!inFlow);
    p.classList.toggle('is-selected',related&&inFlow);
@@ -119,16 +121,22 @@
   const tables=state?.activeTables;
   $('deepQrViewers').textContent=count==null?'—':pretty(count);
   $('deepQrTables').textContent=tables==null?'—':pretty(tables);
+  $('deepQrSelecting').textContent=state?.selectingSessions==null?'—':pretty(state.selectingSessions);
+  $('deepQrCartItems').textContent=state?.cartItems==null?'—':pretty(state.cartItems);
+  $('deepQrSubmitting').textContent=state?.submittingSessions==null?'—':pretty(state.submittingSessions);
   const summary=$('deepQrSummary'),list=$('deepQrTableBreakdown');
   if(!state){
    summary.textContent='Đang kết nối dữ liệu QR';
    list.innerHTML='<span class="deep-qr-no-viewers">Chưa kết nối bộ đếm QR.</span>';
    return;
   }
-  summary.textContent=pretty(count)+' phiên đang mở · '+pretty(tables)+' bàn';
+  summary.textContent=pretty(count)+' phiên mở · '+pretty(state.selectingSessions||0)+' đang chọn · '+pretty(state.submittingSessions||0)+' đang gửi';
   const rows=state.tables||[];
   list.innerHTML=rows.length?rows.map(t=>
-   '<div class="deep-qr-table-chip"><span>'+escape(t.tableName)+'</span><strong>'+pretty(t.activeSessions)+'</strong><small>đang xem</small></div>'
+   '<div class="deep-qr-table-chip"><div class="deep-qr-table-main"><strong>'+escape(t.tableName)+'</strong><span>'+pretty(t.activeSessions)+' phiên mở</span></div>'+
+   '<div class="deep-qr-table-stages"><span>'+pretty(t.viewingSessions||0)+' xem menu</span><span class="is-selecting">'+pretty(t.selectingSessions||0)+' chọn món</span>'+
+   '<span class="is-cart">'+pretty(t.cartItems||0)+' phần trong giỏ</span><span class="is-submitting">'+pretty(t.submittingSessions||0)+' đang gửi</span>'+
+   '<span>'+pretty(t.orderedSessions||0)+' đã nhận xác nhận</span></div></div>'
   ).join(''):'<span class="deep-qr-no-viewers">Hiện chưa có thiết bị đang mở thực đơn QR.</span>';
  }
  function renderMetrics(){
@@ -139,7 +147,8 @@
   const a=last?.active||[];
   const at=node=>a.filter(t=>t.steps?.at(-1)?.node===node).length;
   const values={
-   guest:[last?.qrPresence?.activeSessions??null,'đang xem QR'],
+   guest:[last?.qrPresence?.activeSessions??null,'phiên QR mở'],
+    cart:[last?.qrPresence?.selectingSessions??null,'đang chọn món'],
    staff:[a.filter(t=>['kds','rental'].includes(t.module)).length,'đang chạy'],
    owner:[a.filter(t=>['admin','finance','inventory'].includes(t.module)).length,'đang chạy'],
    http:[last?.inFlight||0,'đang chạy'],auth:[at('auth'),'đang xác thực'],validate:[at('validate'),'đang kiểm tra'],
