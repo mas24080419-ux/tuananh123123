@@ -57,8 +57,20 @@
   const items=state.menu.filter(m=>(m.name+' '+m.category).toLocaleLowerCase('vi-VN').includes(query));
   $('menu').innerHTML=items.map(m=>{
    const q=state.cart.get(m.id)||0,n=Number(m.available_quantity)||0;
-   return '<div class="food"><div><b>'+esc(m.name)+'</b><small>'+esc(m.category)+' · '+(n>0?'Còn '+n+' phần':'Hết hàng')+'</small><div class="price">'+money(m.price)+'</div></div>'+
-    '<div class="counter"><button type="button" data-id="'+esc(m.id)+'" data-step="-1" '+(!q?'disabled':'')+' aria-label="Giảm '+esc(m.name)+'">−</button><b>'+q+'</b><button type="button" data-id="'+esc(m.id)+'" data-step="1" '+(q>=n||q>=20?'disabled':'')+' aria-label="Thêm '+esc(m.name)+'">+</button></div></div>';
+   const cartTotal=[...state.cart.values()].reduce((total,qty)=>total+qty,0);
+   const canAdd=!state.saving&&q<n&&q<20&&cartTotal<60;
+   const soldOut=n<=0;
+   const hint=soldOut?'Hết hàng':q?'Đã chọn '+q+' · chạm để thêm':'Chạm vào món để thêm';
+   // The main item surface is a real button, separate from +/- controls.
+   // Tap the name, price or empty area on mobile to add one portion to the cart.
+   return '<div class="food'+(q?' in-cart':'')+(soldOut?' sold-out':'')+'">'+
+    '<button type="button" class="foodPick" data-id="'+esc(m.id)+'" data-step="1" '+(canAdd?'':'disabled')+
+    ' aria-label="Thêm một phần '+esc(m.name)+' vào giỏ hàng"><span class="foodInfo"><b>'+esc(m.name)+'</b>'+
+    '<small>'+esc(m.category)+' · '+(n>0?'Còn '+n+' phần':'Hết hàng')+'</small><span class="price">'+money(m.price)+'</span>'+
+    '<span class="tapHint">'+esc(hint)+'</span></span></button>'+
+    '<div class="counter"><button type="button" data-id="'+esc(m.id)+'" data-step="-1" '+(!q||state.saving?'disabled':'')+' aria-label="Giảm '+esc(m.name)+'">−</button>'+
+    '<b aria-label="'+q+' phần">'+q+'</b><button type="button" data-id="'+esc(m.id)+'" data-step="1" '+(canAdd?'':'disabled')+
+    ' aria-label="Thêm '+esc(m.name)+'">+</button></div></div>';
   }).join('')||'<div class="empty">Không có món phù hợp</div>';
   drawCart();
  }
@@ -101,7 +113,8 @@
   finally{state.loading=false}
  }
  $('menu').addEventListener('click',e=>{
-  const btn=e.target.closest('button[data-id]');if(!btn||state.saving)return;
+  // Both tapping the item card and pressing + add one portion; - removes one.
+  const btn=e.target.closest('button[data-id]');if(!btn||btn.disabled||state.saving)return;
   const id=btn.dataset.id,m=state.menu.find(x=>x.id===id);if(!m)return;
   const old=state.cart.get(id)||0,next=Math.max(0,old+Number(btn.dataset.step));
   const all=[...state.cart.values()].reduce((a,b)=>a+b,0)-old+next;

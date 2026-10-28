@@ -60,6 +60,11 @@ test('staff page, links and browser controller parse and expose safe actions',()
  assert(read('public/staff-orders.css').includes('@media(max-width:520px)'));
  assert(js.includes("api('/api/staff/orders'")&&js.includes("api('/api/staff/menu'"));
  assert(js.includes('state.requestId=body.requestId')&&js.includes('crypto.randomUUID()'));
+ assert(js.includes('class="foodPick"')&&js.includes("data-step=\"1\""),'tap target must add one portion');
+ assert(js.includes('btn.disabled||state.saving'),'disabled items cannot be selected by tap');
+ assert(js.includes('cartTotal<60')&&js.includes('q<n&&q<20'),'preserve stock and quantity guards');
+ assert(html.includes('Chạm vào món để thêm vào đơn'),'mobile UI describes tap-to-select');
+ assert(html.includes('/staff-orders.js?v=staff-tap-card-v2'));
  assert(!js.includes('/api/admin/finance')&&!js.includes('/api/admin/summary'));
  assert(read('public/staff.js').includes("location.replace('/staff/orders')"));
  assert(read('public/users.html').includes('Phục vụ bàn — tạo & quản lý đơn'));
