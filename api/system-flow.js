@@ -11,9 +11,12 @@ function makeSystemFlow({pool,qrPresence=null,intervalMs=4000,maxClients=4,now=(
  }});
  const fail=(message,status=503)=>Object.assign(Error(message),{status});
  const classify=(method,path)=>{
+  if(method==='GET'&&path.startsWith('/api/staff/'))return null; // Do not trace polling reads
   if(!path.startsWith('/api/')||path.startsWith('/api/admin/architecture')||path==='/api/me'||path==='/api/health'||/login|logout|password|activate-owner|recipient|payment-banks/.test(path))return null;
   const rules=[
    [/^\/api\/orders$/, 'orders','/api/orders'],
+   [/^\/api\/staff\/orders$/, 'stafforder','/api/staff/orders'],
+   [/^\/api\/staff\/orders\/[0-9a-f-]{36}\/confirm-payment$/i,'finance','/api/staff/orders/:id/confirm-payment'],
    [/^\/api\/order-status\//,'orders','/api/order-status/:id'],
    [/^\/api\/menu\//,'orders','/api/menu/:token'],
    [/^\/api\/kds$/, 'kds','/api/kds'],
@@ -68,16 +71,18 @@ function makeSystemFlow({pool,qrPresence=null,intervalMs=4000,maxClients=4,now=(
    const [result,countResult,orderAudit]=await Promise.all([
     pool.query({text:sql,query_timeout:4500}),
     pool.query({text:telemetry.metricsSql,query_timeout:4500}),
-    pool.query({text:"SELECT id::text AS id, order_id::text AS order_id, action, created_at FROM dining_audit WHERE created_at>now()-interval '4 hours' AND action IN ('order_validated','inventory_checked','order_created','item_status_changed','payment_confirmed') ORDER BY created_at DESC,id DESC LIMIT 150",query_timeout:4500})
+    pool.query({text:"SELECT id::text AS id, order_id::text AS order_id, action, actor, created_at FROM dining_audit WHERE created_at>now()-interval '4 hours' AND action IN ('order_validated','inventory_checked','order_created','item_status_changed','payment_confirmed') ORDER BY created_at DESC,id DESC LIMIT 150",query_timeout:4500})
    ]);
    // Only durable audit records; no inferred HTTP/SQL spans and no personal data.
    const grouped=new Map();
    for(const a of (orderAudit.rows||[]).slice().reverse()){
     if(!a.order_id||!a.action||!a.id)continue;
-    if(!grouped.has(a.order_id))grouped.set(a.order_id,[]);
-    grouped.get(a.order_id).push({id:a.id,action:a.action,at:a.created_at});
+    if(!grouped.has(a.order_id))grouped.set(a.order_id,{steps:[],source:'unknown'});
+    const order=grouped.get(a.order_id);
+    order.steps.push({id:a.id,action:a.action,at:a.created_at});
+    if(a.action==='order_created')order.source=a.actor==='staff'?'staff':a.actor==='guest'?'guest':'unknown';
    }
-   const verifiedOrders=[...grouped].map(([orderId,steps])=>({orderId,steps,latestAt:steps[steps.length-1]?.at})).reverse().slice(0,35);
+   const verifiedOrders=[...grouped].map(([orderId,order])=>({orderId,source:order.source,steps:order.steps,latestAt:order.steps[order.steps.length-1]?.at})).reverse().slice(0,35);
    return {checkedAt:now(),source:'postgresql + process-memory',
     events:result.rows.map(r=>({id:r.id,module:r.module,action:r.action,occurredAt:r.occurred_at,source:r.source})),
     requests:requests.slice(0,50),metrics:countResult.rows[0]||null,qrPresence:qrPresence?qrPresence.snapshot():null,verifiedOrders,...telemetry.summary(),
