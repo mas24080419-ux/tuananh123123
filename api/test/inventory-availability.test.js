@@ -46,3 +46,12 @@ test('Guest availability is computed from database recipe quantities, not a fixe
  assert.match(guest,/hasUnavailableCart\(\)/);
  assert.match(guest,/refreshMenuAvailability/);
 });
+
+test('QR inventory movement uses a typed PostgreSQL numeric negation, not -unknown',async()=>{
+ const db=fakeClient(5);
+ await ops.consume(db.c,'order-typed');
+ assert.deepEqual(db.stats(),{remaining:3,updated:1,movements:1});
+ const source=fs.readFileSync(path.join(__dirname,'..','operations.js'),'utf8');
+ assert(source.includes("SELECT $1,$2,-($3::numeric(14,3)),'consume'"));
+ assert(!source.includes("SELECT $1,$2,-$3,'consume'"));
+});
