@@ -6,11 +6,13 @@ module.exports=function staffAccounts({pool,id}){
  const err=(msg,status=400)=>Object.assign(Error(msg),{status});
  const uuid=x=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x);
  const roles=['manager','cashier','waiter','kitchen','bar'];
+ const validUsername=name=>/^[a-z][a-z0-9._-]{2,31}$/.test(name)||
+  (name.length<=100&&/^[a-z0-9._%+-]{1,64}@[a-z0-9-]+(?:\.[a-z0-9-]+)+$/.test(name));
  const info=body=>{
   const areaRoles={equipment_staff:'equipment',restroom_staff:'restroom'};
   const workArea=areaRoles[body.role]||null;
   const username=String(body.username||'').trim().toLowerCase(),displayName=String(body.displayName||'').trim().slice(0,90),role=workArea?'waiter':body.role;
-  if(!/^[a-z][a-z0-9._-]{2,31}$/.test(username)||displayName.length<2||!roles.includes(role))throw err('Tên đăng nhập, tên hiển thị hoặc vai trò không hợp lệ.');
+  if(!validUsername(username)||displayName.length<2||!roles.includes(role))throw err('Tên đăng nhập, tên hiển thị hoặc vai trò không hợp lệ.');
   return {username,displayName,role,workArea};
  };
  const validatePassword=p=>{if(typeof p!=='string'||p.length<12||p.length>128)throw err('Mật khẩu nhân viên phải dài từ 12 đến 128 ký tự.');return p};

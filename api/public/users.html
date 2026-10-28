@@ -4,7 +4,7 @@
 <main><span class="tag">QUẢN TRỊ / RBAC</span><h1>Nhân viên</h1><p>Tài khoản riêng, phân quyền và khóa truy cập trong một nơi.</p>
 <div id="notice" class="alert" role="status">Đang xác minh tài khoản quản trị...</div>
 <div class="ui-toolbar" id="usersToolbar"><button id="showCreateUser" type="button">+ Thêm nhân viên</button></div><div class="cols" id="usersColumns"><div class="card" id="createUserCard"><h2>Cấp tài khoản mới</h2><form id="createUser">
-<label>Tên đăng nhập<input name="username" required minlength="3" maxlength="32" pattern="[a-z][a-z0-9._-]{2,31}" autocomplete="off" placeholder="vd: bep01"></label>
+<label>Email hoặc tên đăng nhập<input name="username" required minlength="3" maxlength="100" autocomplete="off" placeholder="vd: bep01 hoặc nhanvien@example.com"></label>
 <label>Tên hiển thị<input name="displayName" required minlength="2" maxlength="90" placeholder="Họ tên nhân viên"></label>
 <label>Vai trò<select name="role" required><option value="equipment_staff">Phao bơi &amp; tủ đồ — thu tiền khu vực</option><option value="restroom_staff">Nhà vệ sinh — thu tiền khu vực</option><option value="waiter">Phục vụ bàn — tạo & quản lý đơn</option><option value="cashier">Thu ngân — đơn & thanh toán</option><option value="kitchen">Nhân viên bếp</option><option value="bar">Nhân viên bar</option><option value="manager">Quản lý — điều phối đơn</option></select></label>
 <label>Mật khẩu riêng (tối thiểu 12 ký tự)<input name="password" type="password" minlength="12" maxlength="128" required autocomplete="new-password"></label>
