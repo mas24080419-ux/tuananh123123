@@ -43,6 +43,8 @@ module.exports=function processingTelemetry({now=()=>new Date().toISOString(),pu
  const metricsSql=[
   'SELECT',
   '(SELECT count(*)::int FROM dining_orders WHERE created_at>=now()-interval \'24 hours\') AS "orders24h",',
+  '(SELECT count(*)::int FROM dining_orders o WHERE EXISTS (SELECT 1 FROM dining_order_lines li WHERE li.order_id=o.id AND li.status IN (\'new\',\'preparing\',\'ready\'))) AS "ordersInProgress",',
+  '(SELECT count(*)::int FROM dining_orders o WHERE EXISTS (SELECT 1 FROM dining_order_lines li WHERE li.order_id=o.id AND li.status=\'preparing\')) AS "ordersPreparing",',
   '(SELECT count(*)::int FROM dining_order_lines WHERE status=\'new\') AS "itemsWaiting",',
   '(SELECT count(*)::int FROM dining_order_lines WHERE status=\'preparing\') AS "itemsPreparing",',
   '(SELECT count(*)::int FROM dining_order_lines WHERE status=\'ready\') AS "itemsReady",',
