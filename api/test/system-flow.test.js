@@ -56,3 +56,35 @@ test('Production routes enforce owner access before system events and streams',(
   assert.match(snippet,/requireAdmin\(req,res\)/);
  }
 });
+
+test('Durable committed QR audit reconstructs the real ordered milestones after a process restart',async()=>{
+ const orderId='a61892b3-e3a6-4792-8b77-82964098fd6c';
+ const audit=[
+  {id:'22',order_id:orderId,action:'order_created',created_at:'2026-10-28T08:26:20.726Z',privatePhone:'012345678'},
+  {id:'21',order_id:orderId,action:'inventory_checked',created_at:'2026-10-28T08:26:20.726Z'},
+  {id:'20',order_id:orderId,action:'order_validated',created_at:'2026-10-28T08:26:20.726Z'}
+ ];
+ const db={query:async q=>{
+  if(q.text.includes('order_id::text'))return {rows:audit};
+  if(q.text.includes('AS "orders24h"'))return {rows:[{orders24h:4,ordersInProgress:2}]};
+  return {rows:[]};
+ }};
+ const flow=makeSystemFlow({pool:db,now:()=> '2026-10-28T08:27:00.000Z'});
+ const d=await flow.recent();
+ assert.equal(d.verifiedOrders.length,1);
+ assert.equal(d.verifiedOrders[0].orderId,orderId);
+ assert.deepEqual(d.verifiedOrders[0].steps.map(x=>x.action),['order_validated','inventory_checked','order_created']);
+ assert.deepEqual(d.verifiedOrders[0].steps.map(x=>x.id),['20','21','22']);
+ assert.doesNotMatch(JSON.stringify(d),/012345678/);
+ assert.equal(d.metrics.orders24h,4);
+});
+test('Architecture client uses persisted order count and recovers verified audit without manufacturing SQL spans',()=>{
+ const fs=require('node:fs'),path=require('node:path');
+ const js=fs.readFileSync(path.join(__dirname,'../public/architecture-deep.js'),'utf8');
+ const player=fs.readFileSync(path.join(__dirname,'../public/architecture-path.js'),'utf8');
+ assert.match(js,/guest:\[m\.orders24h,'đơn QR \/ 24h'\]/);
+ assert.match(player,/data\?\.verifiedOrders/);
+ assert.match(player,/postgresql-audit/);
+ assert.match(player,/elapsedMs:null/);
+ assert.match(player,/Đã xác thực yêu cầu \(audit PostgreSQL\)/);
+});
