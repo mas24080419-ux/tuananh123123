@@ -45,7 +45,7 @@ test('order feed reads actual PostgreSQL orders, item states, and whitelisted au
  assert(!JSON.stringify(d).match(/customerPhone|token|payment_account/));
  db.setSeq(4);const next=await feed.recent();
  assert.equal(next.events.length,2);
- assert.equal(next.events[1].to,'preparing');
+ assert.equal(next.events.find(event=>event.action==='item_status_changed').to,'preparing');
  assert.equal(next.orders[0].items[0].status,'preparing');
 });
 test('pilot mode fails closed, not fabricated live order data',async()=>{
@@ -74,7 +74,7 @@ test('server persists trace markers inside order transaction and publishes only 
  const orderPath=server.slice(server.indexOf('async function placeOrder'),server.indexOf('async function getOrders'));
  assert(orderPath.indexOf("'order_validated'")<orderPath.indexOf('await ops.consume(c,orderId)'));
  assert(orderPath.indexOf("'inventory_checked'")>orderPath.indexOf('await ops.consume(c,orderId)'));
- assert(orderPath.indexOf("'inventory_checked'")<orderPath.indexOf("await c.query('COMMIT')"));
+ assert(orderPath.indexOf("'inventory_checked'")<orderPath.indexOf("await c.query('COMMIT');void orderLive.pulse(true)"));
  assert(orderPath.indexOf("await c.query('COMMIT');void orderLive.pulse(true)")>0);
  assert(server.includes("void orderLive.pulse(true);return row"));
 });
