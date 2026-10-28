@@ -21,6 +21,7 @@ const note = $('#note');
 const submit = $('#submit');
 let selectedPaymentMethod = 'cash';
 let bankRecipient = null;
+let bankRecipients = [];
 const paymentOptions = document.querySelectorAll('input[name="paymentMethod"]');
 function syncPaymentMethod() {
   paymentOptions.forEach(input => {
@@ -30,6 +31,7 @@ function syncPaymentMethod() {
   $('#paymentMethodHint').textContent = selectedPaymentMethod === 'bank_transfer'
     ? 'Chọn chuyển khoản: QR được điền sẵn số tiền. Đơn chỉ được xác nhận thanh toán khi tiền thực sự về ngân hàng.'
     : 'Bạn sẽ thanh toán tiền mặt với nhân viên. Đơn sẽ được ghi nhận trước khi thanh toán.';
+  renderReceivingBanks();
   updateTransferPreview();
 }
 paymentOptions.forEach(input => input.addEventListener('change', () => {
@@ -38,6 +40,25 @@ paymentOptions.forEach(input => input.addEventListener('change', () => {
   syncPaymentMethod();
 }));
 
+function renderReceivingBanks(){
+ const select=$('#receivingBankSelect');if(!select)return;
+ const current=bankRecipient?.bankBin;
+ select.replaceChildren();
+ for(const bank of bankRecipients){
+  const item=document.createElement('option');
+  item.value=bank.bankBin;
+  item.textContent=(bank.bankBin==='970422'?'MB Bank':bank.bankBin==='970415'?'VietinBank':'Ngân hàng')+' · '+bank.accountNumber;
+  select.append(item);
+ }
+ bankRecipient=bankRecipients.find(x=>x.bankBin===current)||bankRecipients[0]||null;
+ if(bankRecipient)select.value=bankRecipient.bankBin;
+ select.disabled=sending||Boolean(pendingPayload)||confirmed;
+}
+$('#receivingBankSelect')?.addEventListener('change',()=>{
+ if(sending||pendingPayload||confirmed)return;
+ bankRecipient=bankRecipients.find(x=>x.bankBin===$('#receivingBankSelect').value)||null;
+ updateTransferPreview();
+});
 function transferUrl(recipient,amount,reference){
  if(!recipient||!/^\d{6}$/.test(recipient.bankBin)||!/^\d{6,25}$/.test(recipient.accountNumber)||
     !Number.isSafeInteger(amount)||amount<=0||amount>999999999999)return null;
@@ -50,7 +71,7 @@ function updateTransferPreview(){
  if(!show)return;
  const amount=totalStats().subtotal;
  const status=$('#transferPreviewStatus'),content=$('#transferPreviewContent');
- const url=bankRecipient?transferUrl(bankRecipient,amount,'TT6 TAM TINH'):null;
+ const url=bankRecipient?transferUrl(bankRecipient,amount,bankRecipient.bankBin==='970415'?'SEVQR TT6 TAM TINH':'TT6 TAM TINH'):null;
  if(!url){
    hidden('#transferPreviewContent',true);
    status.textContent=!bankRecipient?'Cửa hàng chưa cấu hình tài khoản nhận chuyển khoản. Vui lòng chọn tiền mặt hoặc liên hệ nhân viên.':'Hãy thêm món để tạo QR theo số tiền cần thanh toán.';
@@ -384,6 +405,7 @@ async function submitOrder() {
     items: [...cart].map(([id, qty]) => ({id, qty,note:(itemNotes.get(id)||'').trim().slice(0,160)})),
     requestId: newUUID(),
     paymentMethod: selectedPaymentMethod,
+    bankBin: selectedPaymentMethod==='bank_transfer'?bankRecipient?.bankBin:null,
     note: note.value.trim().slice(0,160),
   };
   savePending();
@@ -437,8 +459,10 @@ async function init() {
     table = data.table; products = data.items.filter(p=>p.active!==false); mode = data.mode;
     try{
       const config=await api('/api/payment/recipient?token='+encodeURIComponent(tableToken));
-      bankRecipient=config.configured?config.recipient:null;
-    }catch{bankRecipient=null}
+      bankRecipients=Array.isArray(config.recipients)?config.recipients:(config.recipient?[config.recipient]:[]);
+       bankRecipient=bankRecipients[0]||null;
+       renderReceivingBanks();
+     }catch{bankRecipients=[];bankRecipient=null;renderReceivingBanks()}
     $('#tableName').textContent = `${table.name} · ${table.zone}`;
     $('#tableBadge').textContent = table.name;
     $('#cartTable').textContent = table.name;

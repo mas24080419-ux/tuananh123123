@@ -41,6 +41,9 @@
         <p id="paymentMethodHint" class="qr-payment-hint">Bạn sẽ thanh toán tiền mặt với nhân viên. Đơn sẽ được ghi nhận trước khi thanh toán.</p>
       </fieldset>
       <section id="transferPreview" class="qr-transfer-preview hidden" aria-live="polite">
+        <label for="receivingBankSelect" style="display:grid;gap:7px;margin:9px 0;font-size:13px;font-weight:750">Ngân hàng nhận tiền của cửa hàng
+          <select id="receivingBankSelect" style="width:100%;padding:12px;border:1px solid #dce5e9;border-radius:11px;background:white;color:#244550;font-size:16px" aria-label="Chọn tài khoản MB Bank hoặc VietinBank"></select>
+        </label>
         <h3>QR chuyển khoản theo số tiền giỏ hàng</h3>
         <p id="transferPreviewStatus" class="qr-transfer-message">Đang kiểm tra cấu hình tài khoản...</p>
         <div id="transferPreviewContent" class="hidden">
@@ -102,7 +105,7 @@
     </div>
   </div>
 </div>
-<script src="/guest.js?v=qr-selecting-20261028-v1"></script>
+<script src="/guest.js?v=mb-vietin-pilot-v1"></script>
 <script src="/qr-presence-client.js?v=qr-selecting-20261028-v1"></script>
 </body>
 </html>
