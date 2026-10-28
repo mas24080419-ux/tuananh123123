@@ -192,6 +192,7 @@
    select(selected);
   }
   renderMetrics();renderTraces();
+  document.dispatchEvent(new CustomEvent('saleshub:trace',{detail:data}));
  }
 
  function updateFollow(){
@@ -201,7 +202,8 @@
  function receive(data){
   const previous=last;
   last=data;hasSnapshot=true;renderEvents();renderMetrics();renderTraces();
-  if(previous&&followLive){
+  document.dispatchEvent(new CustomEvent('saleshub:snapshot',{detail:data}));
+  if(previous&&followLive&&!focusedTrace){
    const oldDb=new Set(previous.events.map(e=>e.id));
    const oldHttp=new Set(previous.requests.map(e=>e.id));
    const event=data.events.find(e=>!oldDb.has(e.id))||data.requests.find(e=>!oldHttp.has(e.id));
