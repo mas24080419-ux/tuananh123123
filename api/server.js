@@ -425,6 +425,15 @@ if(req.method==='GET'&&p==='/api/admin/payment-banks'){
  if(!await requireAdmin(req,res))return;
  return send(res,200,await paymentRecipient.banks());
 }
+if(p==='/api/admin/bank-transactions'&&req.method==='GET'){
+ if(!await requireAdmin(req,res))return;
+ if(!pool)return err(res,503,'Cần PostgreSQL.');
+ const rows=(await pool.query("SELECT external_id,bank_bin,account_number,amount,payment_reference,order_id,status,received_at FROM bank_webhook_transactions ORDER BY id DESC LIMIT 50")).rows;
+ return send(res,200,{transactions:rows.map(x=>({
+  eventId:x.external_id,bankBin:x.bank_bin,accountTail:x.account_number?('••••'+x.account_number.slice(-4)):'',
+  amount:Number(x.amount),reference:x.payment_reference,orderId:x.order_id,status:x.status,receivedAt:x.received_at
+ }))});
+}
 if(p==='/api/admin/receiving-banks'){
  if(!await requireAdmin(req,res))return;
  if(req.method==='GET')return send(res,200,{accounts:await paymentRecipient.list(),sepay:{configured:sepayWebhook.enabled,autoConfirm:sepayWebhook.autoConfirm}});

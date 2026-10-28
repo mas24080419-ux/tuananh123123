@@ -28,3 +28,13 @@ button:disabled{opacity:.6}.row{display:grid;grid-template-columns:1fr 1fr;gap:1
 .tt6-bank-card .bankSave{min-height:44px}
 #sepayWebhookUrl{overflow-wrap:anywhere;font-size:12px}
 @media(max-width:760px){.tt6-bank-grid{grid-template-columns:minmax(0,1fr)}.tt6-bank-card input:not([type=checkbox]){font-size:16px!important}.tt6-bank-card button{width:100%;min-height:48px}}
+
+.tt6-reconcile-head{display:flex;justify-content:space-between;align-items:start;gap:12px;flex-wrap:wrap}
+.tt6-reconcile-head h2{margin:0 0 5px}
+#refreshBankTx{background:#edf6f4!important;color:#176d5a!important;min-height:42px}
+.tt6-bank-tx-list{display:grid;gap:9px}
+.tt6-bank-tx-row{display:grid;gap:6px;padding:12px;border:1px solid #e5edef;border-radius:11px;background:#fbfcfc}
+.tt6-bank-tx-row strong{font-size:13px}
+.tt6-bank-tx-row small{font-size:11px;color:#71828c;overflow-wrap:anywhere}
+.tt6-bank-tx-state{font-size:11px;font-weight:750;color:#8b641d}
+@media(max-width:760px){.tt6-reconcile-head #refreshBankTx{width:100%}}

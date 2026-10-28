@@ -1,5 +1,5 @@
 <!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7f8fa"><title>Tắm Tráng 6 · QR chuyển khoản</title><link rel="stylesheet" href="/admin-minimal.css">
-<link rel="stylesheet" href="/payment.css?v=two-bank-v1"><link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
+<link rel="stylesheet" href="/payment.css?v=two-bank-activity-v2"><link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
 </head><body><div class="shell tt6-payment-shell"><aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside><main class="wrap tt6-payment-content"><header class="top"><strong class="sh-payment-brand"><img class="sh-brand-logo" src="/tam-trang-6-logo.svg" width="40" height="40" alt="">Tắm Tráng 6</strong><nav><a href="/admin">Tổng quan</a> · <a href="/admin/operations">Thu–chi</a></nav></header>
 <h1>MB Bank & VietinBank</h1>
@@ -31,5 +31,11 @@
 <p>Webhook: <code id="sepayWebhookUrl"></code></p>
 <p class="small">Cần liên kết MB và VietinBank với SePay, tạo webhook HMAC-SHA256 và lưu khóa bí mật trong biến môi trường Render. Khi chưa kích hoạt, không có đơn nào được tự đánh dấu Đã thanh toán.</p>
 <p class="small">Với VietinBank cá nhân, QR chính thức có nội dung bắt đầu bằng <b>SEVQR</b>. Không nhập mật khẩu ngân hàng, PIN hay OTP vào SalesHub.</p></section>
+<section class="card">
+ <div class="tt6-reconcile-head"><div><h2>Nhật ký đối soát giao dịch</h2><p class="small">Chỉ hiển thị thông báo đã được xác thực từ SePay. Không tạo giao dịch ảo trên production.</p></div>
+ <button id="refreshBankTx" type="button">Làm mới</button></div>
+ <p id="bankTxStatus" class="small" role="status">Đang tải nhật ký…</p>
+ <div class="tt6-bank-tx-list" id="bankTxList" aria-live="polite"></div>
+</section>
 <div class="info">Hãy thử quét QR để kiểm tra tên chủ tài khoản và số tài khoản, không chuyển khoản thử với QR kiểm tra. Thanh toán thật cần được đối soát từ nguồn giao dịch.</div></main></div>
-<script src="/payment.js?v=two-bank-v1"></script></body></html>
+<script src="/payment.js?v=two-bank-activity-v2"></script></body></html>

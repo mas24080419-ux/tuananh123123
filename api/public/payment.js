@@ -43,4 +43,28 @@ document.querySelectorAll('.receivingBankForm').forEach(form=>form.addEventListe
   notice('Đã lưu '+label[account.bankBin]+' trên PostgreSQL. Hãy quét QR kiểm tra thông tin.');
  }catch(e){notice(e.message,true)}finally{btn.disabled=false}
 }));
+function money(v){return new Intl.NumberFormat('vi-VN',{maximumFractionDigits:0}).format(Number(v)||0)+'đ'}
+async function refreshTransactions(){
+ const status=$('#bankTxStatus'),list=$('#bankTxList');
+ if(!list)return;
+ try{
+  const result=await api('/api/admin/bank-transactions');
+  const rows=result.transactions||[];
+  status.textContent=rows.length?'Đang hiển thị '+rows.length+' thông báo giao dịch gần nhất.':'Chưa có thông báo giao dịch nào từ webhook đã xác thực.';
+  const labels={needs_review:'Cần đối soát',verified_test:'Đã khớp · Chế độ thử nghiệm',auto_paid:'Đã tự xác nhận',already_paid:'Đơn đã được xác nhận trước đó'};
+  list.replaceChildren();
+  for(const tx of rows){
+   const item=document.createElement('div');item.className='tt6-bank-tx-row';
+   const heading=document.createElement('strong');
+   heading.textContent=(label[tx.bankBin]||'Ngân hàng chưa xác định')+' · '+money(tx.amount);
+   const detail=document.createElement('small');
+   detail.textContent='Tài khoản '+(tx.accountTail||'chưa xác định')+' · Mã '+(tx.reference||'chưa khớp')+' · '+(tx.receivedAt?new Date(tx.receivedAt).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}):'');
+   const badge=document.createElement('span');badge.className='tt6-bank-tx-state';
+   badge.textContent=labels[tx.status]||'Chờ kiểm tra';
+   item.append(heading,detail,badge);list.append(item);
+  }
+ }catch(e){status.textContent='Không tải được nhật ký: '+e.message}
+}
+$('#refreshBankTx')?.addEventListener('click',refreshTransactions);
 init();
+void refreshTransactions();
