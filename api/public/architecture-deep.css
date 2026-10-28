@@ -131,3 +131,21 @@
 .deep-node.trace-current .deep-node-active{background:#755820;color:#fff0b5}
 @media(max-width:1170px){.deep-kpi-band{grid-template-columns:repeat(4,minmax(0,1fr))}}
 @media(max-width:690px){.deep-kpi-band{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+
+/* QR guest presence, separate from completed order counts. */
+.deep-qr-metric{background:#10352e;border-color:#256c5f}
+.deep-qr-metric>span{color:#9aefda}
+.deep-qr-metric strong{color:#7df0ce}
+.deep-qr-presence{padding:12px 15px 11px;background:#0c2028;border-bottom:1px solid #2b5962}
+.deep-qr-presence-title{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.deep-qr-presence-title strong{display:inline-flex;align-items:center;gap:8px;font-size:10px;letter-spacing:.5px;color:#9bf2dc}
+.deep-qr-presence-title small{font-size:10px;color:#b0cadd;font-variant-numeric:tabular-nums}
+.deep-qr-live-dot{width:7px;height:7px;flex:none;background:#69dbba;border-radius:50%}
+.deep-qr-table-list{display:flex;gap:8px;flex-wrap:wrap;margin:11px 0 9px;align-items:stretch}
+.deep-qr-table-chip{display:flex;align-items:center;gap:7px;padding:8px 11px;background:#173b42;border:1px solid #31776e;border-radius:9px;min-width:110px}
+.deep-qr-table-chip span{font-size:10px;font-weight:750;color:#e9faf6}
+.deep-qr-table-chip strong{font-size:15px;font-weight:850;color:#79ebc9;font-variant-numeric:tabular-nums}
+.deep-qr-table-chip small{font-size:9px;color:#b2c9c9}
+.deep-qr-no-viewers{font-size:11px;color:#8caeaf;line-height:1.5}
+.deep-qr-presence p{font-size:9px;color:#88a9ae;line-height:1.5;margin:0}
