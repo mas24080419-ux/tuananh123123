@@ -1,18 +1,35 @@
 <!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7f8fa"><title>Tắm Tráng 6 · QR chuyển khoản</title><link rel="stylesheet" href="/admin-minimal.css">
-<link rel="stylesheet" href="/payment.css"><link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
+<link rel="stylesheet" href="/payment.css?v=two-bank-v1"><link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
 </head><body><div class="shell tt6-payment-shell"><aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside><main class="wrap tt6-payment-content"><header class="top"><strong class="sh-payment-brand"><img class="sh-brand-logo" src="/tam-trang-6-logo.svg" width="40" height="40" alt="">Tắm Tráng 6</strong><nav><a href="/admin">Tổng quan</a> · <a href="/admin/operations">Thu–chi</a></nav></header>
-<h1>Cấu hình QR chuyển khoản</h1><p>Chọn ngân hàng và nhập tài khoản nhận tiền. Hệ thống tự lấy mã ngân hàng để tạo QR đúng số tiền đơn hàng. <b>Không yêu cầu mã PIN, OTP hay mật khẩu ngân hàng.</b></p>
-<div id="notice" class="info status" role="status">Đang kiểm tra tài khoản quản trị...</div>
-<div class="card"><h2 style="margin-top:0">Tài khoản nhận tiền</h2>
-<form id="bankForm" class="field" autocomplete="off">
-<div class="row"><label>Ngân hàng nhận tiền<select id="bankSelect" name="bankBin" required><option value="">Đang tải danh sách ngân hàng…</option></select><small id="bankDirectoryNote" class="small">Chỉ cần chọn ngân hàng; hệ thống tự lấy mã BIN.</small></label>
-<label>Số tài khoản nhận tiền<input name="accountNumber" type="text" id="bankAccount" inputmode="numeric" pattern="[0-9]{6,25}" minlength="6" maxlength="25" placeholder="Số tài khoản" required></label></div>
-<label>Tên chủ tài khoản nhận tiền<input id="bankName" name="accountName" minlength="2" maxlength="100" required placeholder="Tên hiển thị trên tài khoản ngân hàng"></label>
-<label style="display:flex;flex-direction:row;align-items:center;gap:9px"><input type="checkbox" style="width:18px" id="bankEnabled" checked> Bật QR thanh toán cho khách hàng</label>
-<button id="save" type="submit">Lưu cấu hình trên Neon</button>
-</form></div>
-<div class="card" id="previewCard" hidden><h2>Kiểm tra thông tin nhận tiền</h2><div class="preview"><img id="previewQr" alt="QR kiểm tra cấu hình ngân hàng" loading="lazy"><div><b id="previewName"></b><p id="previewDescription"></p><p class="small">Mã QR kiểm tra dùng số tiền thử 1.000đ. <strong>Đừng chuyển tiền để thử!</strong> Dùng ứng dụng ngân hàng quét và đối chiếu đúng tên, STK và ngân hàng, sau đó hủy thao tác.</p></div></div></div>
-<div class="info">QR chỉ điền sẵn người nhận, số tiền và nội dung chuyển khoản. Hệ thống không tự biết tiền đã về nếu chưa tích hợp đối soát ngân hàng; chỉ xác nhận “Đã thanh toán” sau khi kiểm tra giao dịch thực tế.</div>
-</main></div>
-<script src="/payment.js"></script></body></html>
+<h1>MB Bank & VietinBank</h1>
+<p>Hai tài khoản nhận tiền riêng của cửa hàng. Khách chọn ngân hàng trước khi gửi đơn; hệ thống tạo QR riêng với số tiền và mã tham chiếu.</p>
+<div id="notice" class="info status" role="status" aria-live="polite">Đang kiểm tra quyền quản trị…</div>
+<div class="tt6-bank-grid"><section class="card tt6-bank-card" data-bin="970422">
+ <h2>MB Bank</h2>
+ <form class="field receivingBankForm" data-bank-bin="970422">
+  <label>Số tài khoản nhận tiền<input name="accountNumber" inputmode="numeric" type="text" pattern="[0-9]{6,25}" maxlength="25" minlength="6" required></label>
+  <label>Tên chủ tài khoản<input name="accountName" type="text" maxlength="100" minlength="2" required></label>
+  <label class="tt6-bank-toggle"><input type="checkbox" name="enabled" style="width:18px"> Bật QR cho tài khoản này</label>
+  <button type="submit" class="bankSave">Lưu tài khoản</button>
+ </form>
+ <div class="tt6-bank-preview" hidden><p><b>QR kiểm tra</b> — chỉ quét để đối chiếu, không chuyển tiền.</p>
+  <img class="bankPreviewQr" alt="QR kiểm tra ngân hàng" width="172" height="172" loading="lazy" referrerpolicy="no-referrer"><p class="bankPreviewInfo"></p></div>
+</section><section class="card tt6-bank-card" data-bin="970415">
+ <h2>VietinBank</h2>
+ <form class="field receivingBankForm" data-bank-bin="970415">
+  <label>Số tài khoản nhận tiền<input name="accountNumber" inputmode="numeric" type="text" pattern="[0-9]{6,25}" maxlength="25" minlength="6" required></label>
+  <label>Tên chủ tài khoản<input name="accountName" type="text" maxlength="100" minlength="2" required></label>
+  <label class="tt6-bank-toggle"><input type="checkbox" name="enabled" style="width:18px"> Bật QR cho tài khoản này</label>
+  <button type="submit" class="bankSave">Lưu tài khoản</button>
+ </form>
+ <div class="tt6-bank-preview" hidden><p><b>QR kiểm tra</b> — chỉ quét để đối chiếu, không chuyển tiền.</p>
+  <img class="bankPreviewQr" alt="QR kiểm tra ngân hàng" width="172" height="172" loading="lazy" referrerpolicy="no-referrer"><p class="bankPreviewInfo"></p></div>
+</section></div>
+<section class="card"><h2>Đối soát tự động SePay</h2>
+<p id="sepayState">Đang kiểm tra webhook…</p>
+<p>Webhook: <code id="sepayWebhookUrl"></code></p>
+<p class="small">Cần liên kết MB và VietinBank với SePay, tạo webhook HMAC-SHA256 và lưu khóa bí mật trong biến môi trường Render. Khi chưa kích hoạt, không có đơn nào được tự đánh dấu Đã thanh toán.</p>
+<p class="small">Với VietinBank cá nhân, QR chính thức có nội dung bắt đầu bằng <b>SEVQR</b>. Không nhập mật khẩu ngân hàng, PIN hay OTP vào SalesHub.</p></section>
+<div class="info">Hãy thử quét QR để kiểm tra tên chủ tài khoản và số tài khoản, không chuyển khoản thử với QR kiểm tra. Thanh toán thật cần được đối soát từ nguồn giao dịch.</div></main></div>
+<script src="/payment.js?v=two-bank-v1"></script></body></html>

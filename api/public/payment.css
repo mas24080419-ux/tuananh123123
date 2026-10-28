@@ -16,3 +16,15 @@ button:disabled{opacity:.6}.row{display:grid;grid-template-columns:1fr 1fr;gap:1
 .preview img{width:190px;height:auto;max-width:100%;border-radius:11px;background:#fff}
 .small{font-size:11px}
 @media(max-width:600px){.row,.preview{grid-template-columns:1fr}.card{padding:16px}}
+
+.tt6-bank-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;align-items:start}
+.tt6-bank-card{margin:10px 0;min-width:0}
+.tt6-bank-card h2{margin-top:0}
+.tt6-bank-toggle{display:flex;flex-direction:row;align-items:center;gap:9px;line-height:1.5}
+.tt6-bank-preview{margin-top:14px;padding:12px;border-radius:11px;background:#f3faf7}
+.tt6-bank-preview[hidden]{display:none!important}
+.tt6-bank-preview img{display:block;width:172px;max-width:100%;height:auto;border-radius:9px}
+.tt6-bank-preview p{overflow-wrap:anywhere}
+.tt6-bank-card .bankSave{min-height:44px}
+#sepayWebhookUrl{overflow-wrap:anywhere;font-size:12px}
+@media(max-width:760px){.tt6-bank-grid{grid-template-columns:minmax(0,1fr)}.tt6-bank-card input:not([type=checkbox]){font-size:16px!important}.tt6-bank-card button{width:100%;min-height:48px}}
