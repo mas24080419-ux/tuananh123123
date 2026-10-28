@@ -43,7 +43,7 @@ function makeSystemFlow({pool,intervalMs=4000,maxClients=4,now=()=>new Date().to
    const durationMs=Math.round(Number(process.hrtime.bigint()-started)/1e6);
    requests.unshift({id:'http-'+(++revision),module:target.module,route:target.route,method:target.method,status:res.statusCode,durationMs,occurredAt:now(),source:'http-memory'});
    if(requests.length>60)requests.length=60;
-   if(subscribers.size)void pulse();
+   if(subscribers.size&&['POST','PATCH','PUT','DELETE'].includes(req.method))void pulse();
   });
  }
  // Events come from committed rows. All selected columns are categorical;
