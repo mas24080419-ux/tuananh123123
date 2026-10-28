@@ -1,0 +1,52 @@
+/* Owner-only QR scanner preview. Token and SVG are read from existing protected APIs. */
+.tt6-architecture-page .arch-header-actions .arch-qr-launch{
+  display:inline-flex;align-items:center;justify-content:center;gap:9px;
+  min-height:39px;padding:9px 15px;border-radius:10px;
+  border:1px solid #57aa98;background:#1b5249;color:#d9fff1;
+  font-size:11px;font-weight:800;line-height:1.3;white-space:normal;
+  box-shadow:0 2px 12px #0b231950;cursor:pointer;
+}
+.tt6-architecture-page .arch-header-actions .arch-qr-launch:hover{background:#26675a;border-color:#8ce3c8}
+.tt6-architecture-page .arch-header-actions .arch-qr-launch svg{width:18px;height:18px;flex:none}
+.tt6-architecture-page .arch-qr-dialog{
+  box-sizing:border-box;color:#ebf4ff;background:#111c30;
+  border:1px solid #415873;border-radius:19px;
+  width:min(94vw,490px);max-height:min(90vh,850px);
+  padding:0;margin:auto;overflow:auto;
+  box-shadow:0 28px 85px #000b1ab9;
+  font-family:"Plus Jakarta Sans",system-ui,sans-serif;
+}
+.tt6-architecture-page .arch-qr-dialog::backdrop{background:#030a15ba;backdrop-filter:blur(3px)}
+.tt6-architecture-page .arch-qr-dialog-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:23px 24px 14px}
+.tt6-architecture-page .arch-qr-eyebrow{color:#6fe5c4;font-size:9px;letter-spacing:1px;font-weight:850}
+.tt6-architecture-page .arch-qr-dialog h2{font-size:21px;line-height:1.3;letter-spacing:-.4px;color:#f7faff;margin:7px 0 8px}
+.tt6-architecture-page .arch-qr-dialog-head p{font-size:11px;color:#a8bdd6;line-height:1.6;margin:0}
+.tt6-architecture-page .arch-qr-close{flex:none;background:#23354e;color:#d6e6fa;border:1px solid #344a65;border-radius:9px;width:33px;height:33px;font-size:21px;line-height:1;cursor:pointer}
+.tt6-architecture-page .arch-qr-close:hover{background:#354860}
+.tt6-architecture-page .arch-qr-dialog-content{padding:5px 24px 19px;display:flex;flex-direction:column;align-items:stretch}
+.tt6-architecture-page .arch-qr-picker{font-size:11px;font-weight:800;color:#b9cee4;display:flex;flex-direction:column;gap:7px}
+.tt6-architecture-page .arch-qr-picker select{font:inherit;font-size:12px;color:#e6f3ff;background:#182840;border:1px solid #426080;border-radius:9px;padding:11px 13px;min-height:43px;max-width:100%}
+.tt6-architecture-page .arch-qr-image-shell{align-self:center;display:flex;justify-content:center;align-items:center;background:#fff;border-radius:14px;border:8px solid #fff;padding:13px;width:294px;max-width:100%;aspect-ratio:1/1;box-shadow:0 9px 26px #0005;margin-top:16px}
+.tt6-architecture-page .arch-qr-image-shell img{display:block;width:100%;height:100%;object-fit:contain;image-rendering:auto}
+.tt6-architecture-page .arch-qr-image-shell img[hidden]{display:none!important}
+.tt6-architecture-page .arch-qr-placeholder{color:#354961;font-size:12px;font-weight:750;line-height:1.5;text-align:center;padding:9px}
+.tt6-architecture-page .arch-qr-placeholder[hidden]{display:none!important}
+.tt6-architecture-page .arch-qr-table-name{color:#f7faff;text-align:center;margin-top:12px;font-size:14px;font-weight:850;min-height:21px}
+.tt6-architecture-page .arch-qr-dialog-actions{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;margin-top:12px}
+.tt6-architecture-page .arch-qr-dialog-actions a{border-radius:9px;font-size:11px;font-weight:750;text-decoration:none;padding:9px 12px;border:1px solid #3a6079;color:#bde4ee;background:#1a3447}
+.tt6-architecture-page .arch-qr-dialog-actions a:hover{background:#275067}
+.tt6-architecture-page .arch-qr-dialog-actions a[hidden]{display:none!important}
+.tt6-architecture-page .arch-qr-feedback{font-size:10px;line-height:1.5;color:#89dabc;margin:13px 0 0;text-align:center}
+.tt6-architecture-page .arch-qr-feedback.is-error{color:#ffaaa8}
+.tt6-architecture-page .arch-qr-dialog-foot{padding:15px 24px 20px;border-top:1px solid #2c3f59;background:#0d1829;display:flex;flex-direction:column;align-items:stretch;gap:14px}
+.tt6-architecture-page .arch-qr-dialog-foot span{color:#8ba4be;text-align:center;font-size:10px;line-height:1.4}
+.tt6-architecture-page .arch-qr-dialog-foot button{background:#71dbb6;border:1px solid #7ceaca;border-radius:10px;min-height:43px;padding:10px 16px;color:#092f2b;font-size:12px;font-weight:850}
+.tt6-architecture-page .arch-qr-dialog-foot button:hover{background:#8ff3d0}
+@media(max-width:690px){
+ .tt6-architecture-page .arch-header-actions .arch-qr-launch{width:100%;min-height:43px}
+ .tt6-architecture-page .arch-qr-dialog{width:min(95vw,470px);max-height:88dvh}
+ .tt6-architecture-page .arch-qr-dialog-head{padding:19px 16px 12px}
+ .tt6-architecture-page .arch-qr-dialog-content{padding:3px 16px 15px}
+ .tt6-architecture-page .arch-qr-dialog-foot{padding:13px 16px 17px}
+ .tt6-architecture-page .arch-qr-image-shell{width:min(286px,80vw);padding:9px}
+}
