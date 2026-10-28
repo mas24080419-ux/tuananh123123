@@ -40,3 +40,6 @@
  .tt6-orders-page #orders tr:has(td[colspan]){display:block!important}
  .tt6-orders-page #orders tr:has(td[colspan]) td::before{content:none}
 }
+
+/* Keep the inline payment confirmation above the fixed phone bottom navigation. */
+@media(max-width:760px){.tt6-orders-page .payment-confirm-panel{scroll-margin-block-end:110px}}

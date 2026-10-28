@@ -13,6 +13,7 @@ test('mobile owner orders use card layout and inline payment confirmation, never
  assert(css.includes('min-width:0!important')&&css.includes('data-label')&&css.includes('.mark-paid'));
  assert(css.includes('.payment-confirm-panel[hidden]'));
  assert(js.includes('payment-confirm-panel')&&js.includes('payment-approve'));
+ assert(js.includes("scrollIntoView?.({block:'nearest'"));
  assert(!js.includes('window.confirm('));
  assert(!js.includes("confirm('XÁC NHẬN"));
  assert.doesNotThrow(()=>new vm.Script(js));

@@ -76,6 +76,7 @@ function openPaymentConfirmation(button){
   'Đơn #'+order.id.slice(0,8)+' · '+cash(order.total_vnd)+' · '+methodText(paymentMethod);
  const feedback=panel.querySelector('.payment-row-feedback');
  feedback.hidden=true;feedback.textContent='';
+ panel.scrollIntoView?.({block:'nearest',behavior:'auto'});
  panel.querySelector('.payment-approve').focus({preventScroll:true});
 }
 async function submitPayment(button){
