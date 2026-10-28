@@ -15,8 +15,8 @@
  const layer=document.createElementNS(ns,'g');layer.setAttribute('id','deepRuntimeLinks');
  layer.setAttribute('aria-hidden','true');svg.appendChild(layer);
  const text=(id,value)=>{const n=$(id);if(n)n.textContent=String(value)};
- const originFor=module=>module==='orders'?'guest':module==='kds'||module==='rental'?'staff':'owner';
- const titles={orders:'Đơn QR',kds:'Bếp / Bar',inventory:'Kho',finance:'Thu–chi',rental:'Phao & Tủ',admin:'Quản trị'};
+ const originFor=trace=>trace.module==='stafforder'||trace.route?.startsWith('/api/staff/orders')?'stafforder':trace.module==='orders'?'guest':trace.module==='kds'||trace.module==='rental'?'staff':'owner';
+ const titles={orders:'Đơn QR',stafforder:'Nhân viên gọi món',kds:'Bếp / Bar',inventory:'Kho',finance:'Thu–chi',rental:'Phao & Tủ',admin:'Quản trị'};
  const auditAction={
   order_validated:{node:'validate',label:'Đã xác thực yêu cầu (audit PostgreSQL)'},
   inventory_checked:{node:'inventory',label:'Đã kiểm tra quy tắc kho (audit PostgreSQL)'},
@@ -69,7 +69,7 @@
   const trace=known.get(frame.id);if(!trace)return;
   const steps=trace.steps||[],upto=Math.min(frame.index,steps.length-1);
   if(upto<0)return;
-  const start=originFor(trace.module),path=[start,...steps.slice(0,upto+1).map(e=>e.node)];
+  const start=originFor(trace),path=[start,...steps.slice(0,upto+1).map(e=>e.node)];
   for(let i=0;i<path.length;i++){
    const node=nodeDom(path[i]);if(!node)continue;
    node.classList.add(i===path.length-1?'path-current':'path-visited');
@@ -155,7 +155,7 @@
     if(previous!==undefined&&trace.steps.length>previous){
      addFrames(trace,previous,true);
     }else if(previous===undefined&&!restoredIds.has(trace.id)&&
-      trace.state!=='running'&&trace.method==='POST'&&trace.route==='/api/orders'&&
+      trace.state!=='running'&&trace.method==='POST'&&['/api/orders','/api/staff/orders'].includes(trace.route)&&
       trace.steps.length>1&&
       snapshotTime-Date.parse(trace.finishedAt||trace.createdAt)>=0&&
       snapshotTime-Date.parse(trace.finishedAt||trace.createdAt)<180000){
@@ -181,11 +181,12 @@
    const prev=seen.get(id);
    const latest=Date.parse(flow.latestAt||steps[steps.length-1].at);
    const near=Number.isFinite(latest)&&snapshotTime-latest>=0&&snapshotTime-latest<180000;
+   const sourceRoute=flow.source==='staff'?'/api/staff/orders':flow.source==='guest'?'/api/orders':null;
    const hasLiveTrace=[...known.values()].some(t=>
-    t.source!=='postgresql-audit'&&t.method==='POST'&&t.route==='/api/orders'&&
+    t.source!=='postgresql-audit'&&t.method==='POST'&&(sourceRoute?t.route===sourceRoute:['/api/orders','/api/staff/orders'].includes(t.route))&&
     Number.isFinite(Date.parse(t.createdAt))&&Math.abs(Date.parse(t.createdAt)-latest)<12000
    );
-   const recovered={id,module:'orders',method:'POST',route:'/api/orders (DB audit)',
+   const recovered={id,module:flow.source==='staff'?'stafforder':'orders',method:'POST',route:(sourceRoute||'/api/orders')+' (DB audit)',
     source:'postgresql-audit',state:'success',steps,createdAt:steps[0].at,
     finishedAt:steps[steps.length-1].at,count:null,durationMs:null};
    store(recovered);seen.set(id,steps.length);
@@ -197,14 +198,14 @@
   }
   if(!started){
    started=true;bar.textContent='Đã kết nối nguồn trace thực';
-   description.textContent='Các mốc xử lý thật sẽ chạy qua sơ đồ. Nếu SSE bị ngắt, request QR vừa hoàn tất sẽ được khôi phục từ trace của server; không mô phỏng trạng thái.';
+   description.textContent='Mốc xử lý của đơn QR và đơn nhân viên sẽ chạy qua sơ đồ. Khi SSE gián đoạn, chỉ các mốc thực đã ghi mới được phát lại; không mô phỏng trạng thái.';
   }
  }
  replay.addEventListener('click',()=>{
   const selected=document.querySelector('#deepTraceList [data-trace-id].is-focused')?.dataset.traceId;
   const latest=[...known.values()].filter(t=>t.steps?.length).sort((a,b)=>
    Date.parse(b.finishedAt||b.createdAt||0)-Date.parse(a.finishedAt||a.createdAt||0));
-  const trace=known.get(selected)||known.get(lastTrace)||latest.find(t=>t.method==='POST'&&t.module==='orders')||latest[0];
+  const trace=known.get(selected)||known.get(lastTrace)||latest.find(t=>t.method==='POST'&&['orders','stafforder'].includes(t.module))||latest[0];
   if(!trace?.steps?.length){bar.textContent='Chưa có trace để phát lại';return}
   if(!followEnabled())$('deepFollow')?.click();
   stopPlayback();store(trace);addFrames(trace,0,true);
