@@ -1,0 +1,86 @@
+/* Order lifecycle telemetry: real PostgreSQL events only. */
+.live-orders-panel{margin:0 0 15px;background:#101c2e;border:1px solid #2a3c56;border-radius:17px;overflow:hidden;color:#e4edfb}
+.live-orders-header{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:17px 18px;background:linear-gradient(105deg,#14253b,#0e192a);border-bottom:1px solid #273a55}
+.live-orders-heading{display:flex;align-items:center;gap:12px;min-width:0}
+.live-orders-mark{display:grid;place-items:center;width:42px;height:42px;flex:none;border-radius:13px;background:#163e44;color:#67e3cb}
+.live-orders-mark svg{width:23px;height:23px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.live-orders-heading p{font-size:9px;letter-spacing:1.3px;color:#58bfbf;font-weight:800;margin:0 0 4px}
+.live-orders-heading h2{font-size:17px;font-weight:800;letter-spacing:-.25px;line-height:1.3;margin:0 0 4px;color:#f0f6ff}
+.live-orders-heading small{color:#8fa5bf;font-size:10px}
+.live-orders-controls{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.live-connection{display:inline-flex;align-items:center;gap:8px;border:1px solid #384b61;border-radius:999px;background:#1b2b40;color:#b7c8e0;min-height:34px;padding:7px 11px;font-size:10px;font-weight:800;white-space:nowrap}
+.live-connection-dot{display:block;flex:none;height:8px;width:8px;background:#9aa9b5;border-radius:50%}
+.live-connection.connected{border-color:#23675c;color:#82e5ca;background:#15362f}.live-connection.connected .live-connection-dot{background:#43cba7}
+.live-connection.fallback{border-color:#76602f;color:#f9d481;background:#352d1d}.live-connection.fallback .live-connection-dot{background:#f2c154}
+.live-connection.offline{border-color:#7c3d4f;color:#f6a6b3;background:#38212b}.live-connection.offline .live-connection-dot{background:#ef7a93}
+#liveFollowNewest{background:#273951;color:#d8e6f8;border:1px solid #40536f;min-height:35px;padding:8px 12px;font-size:10px;font-weight:800;border-radius:9px}
+#liveFollowNewest[aria-pressed=true]{background:#19504b;color:#91eed9;border-color:#34766d}
+.live-orders-body{display:grid;grid-template-columns:minmax(210px,290px) minmax(0,1fr);min-height:300px;max-height:475px}
+.live-order-list-wrap{min-width:0;background:#0d1727;border-right:1px solid #283b51;display:flex;flex-direction:column;overflow:hidden}
+.live-order-section-head{display:flex;align-items:center;justify-content:space-between;gap:6px;padding:13px 14px;border-bottom:1px solid #22354a;color:#e6edfc}
+.live-order-section-head strong{font-size:11px}.live-order-section-head span{font-size:9.5px;color:#98aec8}
+.live-order-list{overflow:auto;max-height:419px;scrollbar-width:thin;scrollbar-color:#45617c #0d1727;padding:8px;display:grid;align-content:start;gap:7px}
+.live-order-option{display:flex;flex-direction:column;gap:5px;min-height:88px;width:100%;text-align:left;background:#15243a;border:1px solid #293d57;border-radius:11px;padding:10px 11px;color:#d9e8f9}
+.live-order-option:hover,.live-order-option.selected{border-color:#73d7b9;background:#193536}
+.live-order-option-row{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.live-order-option-row strong{font-size:12px;overflow-wrap:anywhere}
+.live-order-option-sub{font-size:10px;color:#95a9c3;line-height:1.4}
+.live-order-option-qty{font-size:10px;color:#bed0df}
+.live-order-mini,.live-order-state{font-size:9px;font-weight:800;padding:4px 7px;line-height:1.3;border-radius:99px;background:#303446;color:#d1cedd;white-space:nowrap}
+.live-order-mini.waiting,.live-order-state.waiting{background:#3a321d;color:#f3cf70}
+.live-order-mini.busy,.live-order-state.busy{background:#163750;color:#81cff9}
+.live-order-mini.ready,.live-order-state.ready{background:#183d48;color:#81e6e9}
+.live-order-mini.done,.live-order-state.done{background:#1b4235;color:#7ce7af}
+.live-order-mini.cancel,.live-order-state.cancel{background:#432638;color:#f1a3b5}
+.live-order-empty{padding:21px 14px;border:1px dashed #354960;border-radius:12px;color:#a4bad2;background:#142239;text-align:center;font-size:11px;line-height:1.65}
+.live-order-empty small{display:block;margin-top:8px;color:#879cb7}
+.live-order-detail{overflow:auto;min-width:0;padding:17px 19px;scrollbar-width:thin}
+.live-order-placeholder{color:#95a9c4;font-size:12px}
+.live-order-detail-top{display:flex;justify-content:space-between;align-items:flex-start;gap:12px}
+.live-order-detail-kicker{color:#7dcfbe;font-size:9px;font-weight:800;letter-spacing:1.05px;margin:0 0 6px}
+.live-order-detail-top h3{font-size:19px;font-weight:800;margin:0 0 4px;color:#f4f9ff}
+.live-order-detail-top small{font-size:10px;color:#9db2cc}
+.live-order-state{margin-top:5px;font-size:10px;padding:7px 9px}
+.live-flow-stages{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;padding:16px 0 15px;margin:13px 0;border-top:1px solid #2b3a50;border-bottom:1px solid #2b3a50}
+.live-flow-stage{display:flex;flex-direction:column;align-items:center;gap:7px;text-align:center;position:relative;min-width:0}
+.live-flow-stage:not(:last-child):after{content:"";position:absolute;left:calc(50% + 16px);top:12px;width:calc(100% - 32px);height:1px;background:#42536b}
+.live-flow-stage.observed:not(:last-child):after{background:#4eb89c}
+.live-flow-stage-mark{height:26px;width:26px;display:grid;place-items:center;border-radius:50%;border:1px solid #57677d;background:#26364c;color:#97a8c1;font-size:10px;font-weight:800;position:relative;z-index:1}
+.live-flow-stage.observed .live-flow-stage-mark{background:#1a5849;color:#9df3d5;border-color:#56c6aa}
+.live-flow-stage small{font-size:9px;color:#8da3ba;line-height:1.45;padding:0 3px}
+.live-flow-stage.observed small{color:#c0eadd}
+.live-detail-columns{display:grid;grid-template-columns:minmax(0,.83fr) minmax(0,1.17fr);gap:18px}
+.live-detail-columns h4{font-size:11px;letter-spacing:.4px;color:#e1ebf8;margin:0 0 9px}
+.live-order-food{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;font-size:11px;color:#d2e2f1;padding:8px 0;border-bottom:1px solid #25374b;overflow-wrap:anywhere}
+.live-order-food small{color:#8fa5bd;white-space:nowrap}.live-order-food-status{font-size:10px;color:#84d9c5;text-align:right;flex:none}
+.live-timeline{list-style:none;margin:0;padding:0 0 0 8px;border-left:1px solid #35506a}
+.live-timeline-event{display:flex;gap:10px;margin:0 0 13px;position:relative;color:#d6e6f4}
+.live-timeline-dot{flex:none;position:relative;left:-12px;top:6px;width:8px;height:8px;border-radius:50%;background:#66d5bd;box-shadow:0 0 0 3px #183c40}
+.live-timeline-event>div{margin-left:-9px;min-width:0}
+.live-timeline-event strong{font-size:10.5px;line-height:1.45}
+.live-timeline-event p{font-size:10px;color:#91a8bd;margin:3px 0}
+.live-timeline-event time{display:block;font-size:9.5px;color:#6f8eab;margin-top:3px}
+.live-timeline-missing{font-size:11px;color:#ddbb76;line-height:1.65}
+.live-order-detail-foot{font-size:9.5px;line-height:1.65;color:#819ab1;border-top:1px solid #2b3a51;padding-top:11px;margin-top:15px}
+.live-orders-footer{display:flex;justify-content:space-between;gap:12px;padding:10px 15px;border-top:1px solid #2c4059;color:#90a8be;font-size:9.5px;line-height:1.55}
+.arch-node.arch-live-node-active{border-color:#7de3b9!important;box-shadow:0 0 0 2px #63d3ad4d,0 7px 22px #50c89e26!important}
+.arch-wire-hit{pointer-events:stroke}
+.arch-wire-live-highlight,.arch-live-wire-active>.arch-wire{stroke:#72e8b7!important;stroke-width:3!important;opacity:1!important;filter:drop-shadow(0 0 3px #71e4b65b)}
+@media(max-width:1120px){.live-orders-body{grid-template-columns:250px minmax(0,1fr)}}
+@media(max-width:760px){
+ .live-orders-header{flex-direction:column;align-items:flex-start;padding:14px;gap:12px}
+ .live-orders-heading h2{font-size:15px}
+ .live-orders-controls{width:100%;justify-content:space-between}
+ .live-orders-body{display:block;max-height:none}
+ .live-order-list-wrap{border-right:0;border-bottom:1px solid #293a54}
+ .live-order-list{display:flex;overflow-x:auto;overflow-y:hidden;max-height:none;padding:9px 10px;gap:8px}
+ .live-order-option{flex:0 0 215px;min-height:92px}
+ .live-order-detail{padding:14px;max-height:none}
+ .live-flow-stages{margin:10px 0;padding:14px 0}
+ .live-flow-stage small{font-size:8.5px}
+ .live-detail-columns{grid-template-columns:1fr;gap:17px}
+ .live-orders-footer{flex-wrap:wrap;gap:6px}
+ .live-order-detail-top h3{font-size:17px}
+ .live-order-section-head{padding:10px 12px}
+}
+@media(prefers-reduced-motion:reduce){.live-orders-panel *{animation:none!important;transition:none!important}}
