@@ -2,7 +2,7 @@
 // Owner-only cross-module observability. Business events are read from already committed
 // PostgreSQL rows; API measurements exist only in memory for this Node process.
 // No request bodies, tokens, names, phone numbers or raw dynamic URLs are retained.
-function makeSystemFlow({pool,intervalMs=4000,maxClients=4,now=()=>new Date().toISOString()}){
+function makeSystemFlow({pool,qrPresence=null,intervalMs=4000,maxClients=4,now=()=>new Date().toISOString()}){
  const subscribers=new Set(),requests=[];
  let timer=null,running=false,revision=0;
  const telemetry=require('./processing-telemetry')({now,publish:message=>{
@@ -80,7 +80,7 @@ function makeSystemFlow({pool,intervalMs=4000,maxClients=4,now=()=>new Date().to
    const verifiedOrders=[...grouped].map(([orderId,steps])=>({orderId,steps,latestAt:steps[steps.length-1]?.at})).reverse().slice(0,35);
    return {checkedAt:now(),source:'postgresql + process-memory',
     events:result.rows.map(r=>({id:r.id,module:r.module,action:r.action,occurredAt:r.occurred_at,source:r.source})),
-    requests:requests.slice(0,50),metrics:countResult.rows[0]||null,verifiedOrders,...telemetry.summary(),
+    requests:requests.slice(0,50),metrics:countResult.rows[0]||null,qrPresence:qrPresence?qrPresence.snapshot():null,verifiedOrders,...telemetry.summary(),
     connectedOwners:subscribers.size,
     scope:'24h PostgreSQL counts and SSE execution steps in RAM; individual SQL statements are not traced'};
   }
