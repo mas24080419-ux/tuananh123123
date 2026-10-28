@@ -36,6 +36,7 @@ const {areas:serviceAreas,canAccess:canAccessArea,canUseDining}=require('./area-
 const ownerAccounts=require('./owner-auth')({pool});
 const architectureMonitor=require('./architecture-monitor');
 const orderLive=require('./order-flow-live')({pool});
+const systemFlow=require('./system-flow')({pool});
 const token=i=>crypto.createHmac('sha256',SESSION_SECRET).update('qr-table-'+i).digest('hex').slice(0,48);
 const authHash=s=>crypto.createHash('sha256').update(s).digest();
 const safeEq=(a,b)=>{const x=authHash(a),y=authHash(b);return crypto.timingSafeEqual(x,y)};
@@ -322,6 +323,16 @@ if(req.method==='GET'&&p==='/api/admin/architecture/live'){
  if(!throttle(req,'architecture-stream',15))return err(res,429,'Mở luồng giám sát quá nhanh.');
  return orderLive.attach(req,res,async()=>{req._verified=false;return (await identity(req))?.role==='admin'});
 }
+if(req.method==='GET'&&p==='/api/admin/architecture/system/recent'){
+ if(!await requireAdmin(req,res))return;
+ if(!throttle(req,'architecture-system-read',35))return err(res,429,'Làm mới nhật ký quá nhanh.');
+ return send(res,200,await systemFlow.recent());
+}
+if(req.method==='GET'&&p==='/api/admin/architecture/system/live'){
+ if(!await requireAdmin(req,res))return;
+ if(!throttle(req,'architecture-system-stream',12))return err(res,429,'Mở quá nhiều kết nối.');
+ return systemFlow.attach(req,res,async()=>{req._verified=false;return (await identity(req))?.role==='admin'});
+}
 if(req.method==='GET'&&p==='/api/me'){const a=await identity(req);return send(res,200,{staff:!!a,role:a?.role||null,username:a?.username||null,email:a?.email||null,needsOwnerSetup:Boolean(a?.role==='admin'&&a?.legacy),displayName:a?.displayName||null,workArea:a?.workArea||null})}
 if(req.method==='GET'&&p.startsWith('/api/menu/')){const t=await getTable(p.slice('/api/menu/'.length));if(!t)return err(res,404,'QR không hợp lệ.');return send(res,200,{table:{name:t.name,zone:t.zone},items:await getMenu(),mode})}
 if(req.method==='GET'&&p==='/api/payment/recipient'){
@@ -522,4 +533,4 @@ async function main(){
    console.log('Owner email account securely initialized.');
   }
  }
- http.createServer((req,res)=>route(req,res).catch(e=>{console.error('request failed',e.message);err(res,e.status||500,e.status?e.message:'Lỗi máy chủ')})).listen(PORT,'0.0.0.0',()=>console.log(`SalesHub ${mode} listening ${PORT}`))}main().catch(e=>{console.error('startup failed',e.message);process.exit(1)});
+ http.createServer((req,res)=>{systemFlow.trackRequest(req,res);return route(req,res).catch(e=>{console.error('request failed',e.message);err(res,e.status||500,e.status?e.message:'Lỗi máy chủ')})}).listen(PORT,'0.0.0.0',()=>console.log(`SalesHub ${mode} listening ${PORT}`))}main().catch(e=>{console.error('startup failed',e.message);process.exit(1)});
