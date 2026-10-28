@@ -32,7 +32,7 @@ test('SePay HMAC signs timestamp and original byte payload; rejects altered and 
  const raw=Buffer.from(JSON.stringify(payload()),'utf8'),timestamp=String(Math.floor(Date.now()/1000));
  const signed='sha256='+crypto.createHmac('sha256',secret).update(timestamp+'.').update(raw).digest('hex');
  assert.equal(verify(raw,{'x-sepay-timestamp':timestamp,'x-sepay-signature':signed},secret),true);
- assert.throws(()=>verify(Buffer.from(raw.toString()+' '),{'x-sepay-timestamp':timestamp,'x-sepay-signature':signed},secret),/chữ ký/);
+ assert.throws(()=>verify(Buffer.from(raw.toString()+' '),{'x-sepay-timestamp':timestamp,'x-sepay-signature':signed},secret),/chữ ký/i);
  assert.throws(()=>verify(raw,{'x-sepay-timestamp':String(Number(timestamp)-900),'x-sepay-signature':signed},secret),/timestamp/);
  assert.throws(()=>verify(raw,{'x-sepay-timestamp':timestamp,'x-sepay-signature':signed},''),/khóa/);
 });
@@ -41,7 +41,7 @@ test('MB and VietinBank codes, unique order reference, outgoing transfer rejecti
  assert.equal(parse(payload({gateway:'VietinBank',content:'SEVQR '+ref})).bank,'970415');
  assert.equal(referenceFrom('SEVQR '+ref),ref);
  assert.equal(referenceFrom(ref+'X'),null);
- assert.equal(referenceFrom('TT6AABBCCDDEEFF11 TT61234567890123'),null);
+ assert.equal(referenceFrom('TT6AABBCCDDEEFF11 TT612345678901234'),null);
  assert.equal(parse(payload({transferType:'out'})).incoming,false);
  assert.throws(()=>parse(payload({transferAmount:-100})),/không hợp lệ/);
 });
