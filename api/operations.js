@@ -122,7 +122,11 @@ module.exports=function operations({pool,id}){
   });
  }
  async function consume(c,orderId){
-  const recipe=await c.query("SELECT l.id AS line_id,r.inventory_item_id,(l.quantity*r.quantity_per_unit)::numeric(14,3) AS amount FROM dining_order_lines l JOIN inventory_recipes r ON r.menu_item_id=l.menu_item_id WHERE l.order_id=$1 ORDER BY r.inventory_item_id,l.id",[orderId]);
+  const recipe=await c.query("SELECT l.id AS line_id,l.name AS line_name,r.inventory_item_id,(l.quantity*r.quantity_per_unit)::numeric(14,3) AS amount FROM dining_order_lines l LEFT JOIN inventory_recipes r ON r.menu_item_id=l.menu_item_id WHERE l.order_id=$1 ORDER BY r.inventory_item_id NULLS FIRST,l.id",[orderId]);
+  // Reject the entire order if even one item has no stock mapping.
+  // This prevents products without recipes bypassing inventory controls.
+  const unmapped=recipe.rows.find(x=>!x.inventory_item_id);
+  if(unmapped)throw bad('Món '+unmapped.line_name+' chưa liên kết kho, vui lòng chọn món khác.',409);
   const aggregated=new Map();
   for(const line of recipe.rows)aggregated.set(line.inventory_item_id,Math.round(((aggregated.get(line.inventory_item_id)||0)+Number(line.amount))*1000)/1000);
   for(const [ingredientId,amount] of [...aggregated].sort((a,b)=>a[0].localeCompare(b[0]))){
