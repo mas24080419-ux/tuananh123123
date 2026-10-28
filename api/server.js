@@ -36,7 +36,8 @@ const {areas:serviceAreas,canAccess:canAccessArea,canUseDining}=require('./area-
 const ownerAccounts=require('./owner-auth')({pool});
 const architectureMonitor=require('./architecture-monitor');
 const orderLive=require('./order-flow-live')({pool});
-const systemFlow=require('./system-flow')({pool});
+const qrPresence=require('./qr-presence')();
+const systemFlow=require('./system-flow')({pool,qrPresence});
 const token=i=>crypto.createHmac('sha256',SESSION_SECRET).update('qr-table-'+i).digest('hex').slice(0,48);
 const authHash=s=>crypto.createHash('sha256').update(s).digest();
 const safeEq=(a,b)=>{const x=authHash(a),y=authHash(b);return crypto.timingSafeEqual(x,y)};
@@ -321,6 +322,16 @@ if(req.method==='POST'&&p==='/api/users/login'){
  return send(res,200,{ok:true,role:user.role,displayName:user.displayName,workArea:user.workArea},{'Set-Cookie':staffCookie(user)});
 }
 if(req.method==='POST'&&p==='/api/logout'){return send(res,200,{ok:true},{'Set-Cookie':'sh_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'})}
+// Sessions represent open QR-menu tabs, not camera scans.
+if(req.method==='POST'&&p==='/api/qr/presence'){
+ if(!pool)return err(res,503,'Giám sát QR cần PostgreSQL.');
+ return send(res,200,await qrPresence.heartbeat(await input(req),getTable));
+}
+if(req.method==='POST'&&p==='/api/qr/leave')return send(res,200,qrPresence.leave(await input(req)));
+if(req.method==='GET'&&p==='/api/admin/qr/presence'){
+ if(!await requireAdmin(req,res))return;
+ return send(res,200,qrPresence.snapshot());
+}
 if(req.method==='GET'&&p==='/api/admin/architecture'){
  if(!await requireAdmin(req,res))return;
  if(!throttle(req,'architecture-read',50))return err(res,429,'Làm mới giám sát quá nhanh.');
