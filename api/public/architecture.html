@@ -14,10 +14,10 @@
 <link rel="stylesheet" href="/architecture-path.css?v=20261028-path-v5">
 <link rel="stylesheet" href="/architecture-qr.css?v=20261028-qr-v1">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
-<script defer src="/architecture.js?v=20261028-arch1"></script>
-<script defer src="/architecture-live.js?v=20261028-arch-live1"></script>
-<script defer src="/architecture-deep.js?v=20261028-selecting-v1"></script>
-<script defer src="/architecture-path.js?v=20261028-qr-trace-fix8"></script>
+<script defer src="/architecture.js?v=20261028-staff-orders-map-v2"></script>
+<script defer src="/architecture-live.js?v=20261028-staff-orders-map-v2"></script>
+<script defer src="/architecture-deep.js?v=20261028-staff-orders-map-v2"></script>
+<script defer src="/architecture-path.js?v=20261028-staff-orders-map-v2"></script>
 <script defer src="/architecture-qr.js?v=20261028-qr-v1"></script>
 </head>
 <body class="tt6-architecture-page">
@@ -28,7 +28,7 @@
     <div class="arch-title">
       <p class="arch-eyebrow"><span class="arch-prod-dot"></span> PRODUCTION <span class="arch-slash">/</span> SALES<span class="arch-accent">HUB</span> <span class="arch-head-separator">/</span> SYSTEM ARCHITECTURE</p>
       <h1>Kiến trúc & luồng dữ liệu</h1>
-      <p class="arch-intro">Theo dõi hệ thống từ QR gọi món, xử lý đơn, kho, thu–chi đến PostgreSQL. Chọn một khối hoặc đường kết nối để kiểm tra.</p>
+      <p class="arch-intro">Theo dõi QR khách gọi món và nhân viên tạo/kiểm soát đơn, từ xác thực quyền, kiểm tra kho, Bếp/Bar, thanh toán đến PostgreSQL. Chọn một khối hoặc đường kết nối để kiểm tra.</p>
     </div>
     <div class="arch-header-actions"><button type="button" id="archQrLaunch" class="arch-qr-launch" aria-haspopup="dialog" aria-controls="archQrDialog"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3m7-3h-2m-3 7h-2m7-4v4h-4"/></svg> Hiện QR để điện thoại quét</button><span class="arch-readonly"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Zm-4-10 3 3 5-6"/></svg> Chỉ xem · tài khoản chủ</span><button type="button" id="archRefresh" class="arch-refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-5L4 8M4 4v4h4M4 13a8 8 0 0 0 14 5l2-2M20 20v-4h-4"/></svg> Cập nhật trạng thái</button></div>
   </header>

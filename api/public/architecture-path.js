@@ -15,7 +15,7 @@
  const layer=document.createElementNS(ns,'g');layer.setAttribute('id','deepRuntimeLinks');
  layer.setAttribute('aria-hidden','true');svg.appendChild(layer);
  const text=(id,value)=>{const n=$(id);if(n)n.textContent=String(value)};
- const originFor=trace=>trace.module==='stafforder'||trace.route?.startsWith('/api/staff/orders')?'stafforder':trace.module==='orders'?'guest':trace.module==='kds'||trace.module==='rental'?'staff':'owner';
+ const originFor=trace=>trace.source==='postgresql-audit'&&trace.orderSource==='unknown'?'http':trace.module==='stafforder'||trace.route?.startsWith('/api/staff/orders')?'stafforder':trace.module==='orders'?'guest':trace.module==='kds'||trace.module==='rental'?'staff':'owner';
  const titles={orders:'Đơn QR',stafforder:'Nhân viên gọi món',kds:'Bếp / Bar',inventory:'Kho',finance:'Thu–chi',rental:'Phao & Tủ',admin:'Quản trị'};
  const auditAction={
   order_validated:{node:'validate',label:'Đã xác thực yêu cầu (audit PostgreSQL)'},
@@ -186,7 +186,7 @@
     t.source!=='postgresql-audit'&&t.method==='POST'&&(sourceRoute?t.route===sourceRoute:['/api/orders','/api/staff/orders'].includes(t.route))&&
     Number.isFinite(Date.parse(t.createdAt))&&Math.abs(Date.parse(t.createdAt)-latest)<12000
    );
-   const recovered={id,module:flow.source==='staff'?'stafforder':'orders',method:'POST',route:(sourceRoute||'/api/orders')+' (DB audit)',
+   const recovered={id,module:flow.source==='staff'?'stafforder':'orders',method:'POST',route:sourceRoute?sourceRoute+' (DB audit)':'DB audit · chưa rõ nguồn tạo đơn',orderSource:flow.source||'unknown',
     source:'postgresql-audit',state:'success',steps,createdAt:steps[0].at,
     finishedAt:steps[steps.length-1].at,count:null,durationMs:null};
    store(recovered);seen.set(id,steps.length);
