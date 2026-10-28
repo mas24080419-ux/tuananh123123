@@ -62,7 +62,7 @@
   const d=Math.max(24,(x2-x1)*.45);return 'M'+x1+' '+y1+' C'+(x1+d)+' '+y1+' '+(x2-d)+' '+y2+' '+x2+' '+y2
  }
  function renderGraph(){
-  $('deepNodes').innerHTML=nodes.map(n=>'<button type="button" class="deep-node deep-'+escape(n.kind)+'" data-id="'+escape(n.id)+'" style="left:'+n.x+'px;top:'+n.y+'px;width:'+n.w+'px;--nodecolor:'+colors[n.kind]+'" aria-pressed="false"><span class="deep-node-top"><span class="deep-node-light"></span><strong>'+escape(n.label)+'</strong></span><span class="deep-node-desc">'+escape(n.subtitle)+'</span><span class="deep-node-end">'+escape(services[n.id]?.tag||n.kind.toUpperCase())+'</span><span class="deep-node-count" data-live-node="'+escape(n.id)+'">—</span></button>').join('');
+  $('deepNodes').innerHTML=nodes.map(n=>'<button type="button" class="deep-node deep-'+escape(n.kind)+'" data-id="'+escape(n.id)+'" style="left:'+n.x+'px;top:'+n.y+'px;width:'+n.w+'px;--nodecolor:'+colors[n.kind]+'" aria-pressed="false"><span class="deep-node-top"><span class="deep-node-light"></span><strong>'+escape(n.label)+'</strong></span><span class="deep-node-desc">'+escape(n.subtitle)+'</span><span class="deep-node-end">'+escape(services[n.id]?.tag||n.kind.toUpperCase())+'</span><span class="deep-node-count" data-live-node="'+escape(n.id)+'">—</span><span class="deep-node-active" data-active-node="'+escape(n.id)+'" hidden></span></button>').join('');
   $('deepWires').innerHTML='<defs><marker id="deepArrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2 L10 6 L1 10" fill="none" stroke="#90a3bd" stroke-width="1.3"/></marker></defs>'+edges.map(([a,b,f])=>'<path class="deep-edge" data-flow="'+f+'" data-src="'+a+'" data-dst="'+b+'" d="'+line(a,b)+'" marker-end="url(#deepArrow)"/>').join('');
   $('deepFilters').innerHTML=filters.map(([id,title])=>'<button type="button" data-flow="'+id+'" class="deep-filter">'+escape(title)+'</button>').join('');
   $('deepNodes').addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b){followLive=false;updateFollow();select(b.dataset.id)}});
@@ -108,7 +108,7 @@
  }
  const clock=s=>{let d=new Date(s);return Number.isFinite(+d)?d.toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—'};
  const domain={orders:'QR Order',kds:'Bếp / Bar',inventory:'Kho',finance:'Thu–chi',rental:'Phao / Tủ',admin:'Quản trị'};
- const metricIds={orders24h:'deepMetricOrders',itemsWaiting:'deepMetricWaiting',itemsPreparing:'deepMetricPreparing',
+ const metricIds={orders24h:'deepMetricOrders',ordersInProgress:'deepMetricInProgress',ordersPreparing:'deepMetricOrderPreparing',itemsWaiting:'deepMetricWaiting',itemsPreparing:'deepMetricPreparing',
   itemsReady:'deepMetricReady',stockMovements24h:'deepMetricStock'};
  const pretty=n=>n!==undefined&&n!==null&&Number.isFinite(Number(n))?new Intl.NumberFormat('vi-VN').format(Number(n)):'—';
  const traceAll=()=>[...(last?.active||[]),...(last?.traces||[])];
@@ -124,7 +124,7 @@
    staff:[a.filter(t=>['kds','rental'].includes(t.module)).length,'đang chạy'],
    owner:[a.filter(t=>['admin','finance','inventory'].includes(t.module)).length,'đang chạy'],
    http:[last?.inFlight||0,'đang chạy'],auth:[at('auth'),'đang xác thực'],validate:[at('validate'),'đang kiểm tra'],
-   orders:[m.orders24h,'đơn / 24h'],kds:[m.itemsWaiting,'món chờ'],inventory:[m.stockMovements24h,'biến động / 24h'],
+   orders:[m.ordersInProgress,'đơn chưa xong'],kds:[m.itemsWaiting,'món chờ'],inventory:[m.stockMovements24h,'biến động / 24h'],
    finance:[m.financeEntries24h,'phiếu / 24h'],rental:[m.occupiedLockers,'tủ đang thuê'],
    admin:[a.filter(t=>t.module==='admin').length,'đang chạy'],tx:[at('tx'),'đang giao dịch'],
    pg:[at('pg'),'đang xử lý'],audit:[m.auditEvents24h,'audit / 24h'],
@@ -134,6 +134,7 @@
    const pair=values[b.dataset.liveNode];
    b.textContent=hasSnapshot&&pair?pretty(pair[0])+' · '+pair[1]:'— · chưa có số liệu';
   });
+  document.querySelectorAll('#deepNodes [data-active-node]').forEach(b=>{const n=a.filter(t=>t.steps?.at(-1)?.node===b.dataset.activeNode).length;b.hidden=n===0;b.textContent=n+' LIVE';});
  }
  function updateTraceHighlights(){
   const t=currentTrace(),trail=t?.steps?.map(step=>step.node)||[];
