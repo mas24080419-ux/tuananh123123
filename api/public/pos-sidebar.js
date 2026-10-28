@@ -66,6 +66,7 @@ function setup(){
  link('/staff/lockers','Phao & tủ đồ','box')+
  link('/admin/core','Món & bàn','table')+
  link('/admin/inventory','Quản lý kho','box')+
+ link('/admin/architecture','Luồng dữ liệu','chart')+
  link('/admin/operations','Thu–chi','wallet')+
  link('/staff','Màn hình bếp / Bar','chef')+
  '<span class="tt6-side-section-label">QUẢN LÝ CỬA HÀNG</span>'+
