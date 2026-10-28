@@ -37,7 +37,11 @@ module.exports=function qrPresence({now=()=>Date.now(),ttlMs=55000,maxSessions=2
   // One browser tab contributes at most one active session. A session cannot
   // silently change tables: it is first removed before linking to the new table.
   if(!sessions.has(sessionId)&&sessions.size>=maxSessions)throw error('Hệ thống giám sát QR tạm quá tải.',503);
-  sessions.set(sessionId,{tableId:table.id,tableName:table.name,lastSeen:now()});
+  // UI state is advisory telemetry (not proof of a committed order).
+  const allowed=new Set(['viewing','selecting','submitting','ordered']);
+  const stage=allowed.has(body?.stage)?body.stage:'viewing';
+  const cartItems=Number.isSafeInteger(body?.cartItems)&&body.cartItems>=0&&body.cartItems<=60?body.cartItems:0;
+  sessions.set(sessionId,{tableId:table.id,tableName:table.name,lastSeen:now(),stage,cartItems});
   return {ok:true,ttlSeconds:Math.ceil(ttlMs/1000)};
  }
  function leave(body){
@@ -47,15 +51,26 @@ module.exports=function qrPresence({now=()=>Date.now(),ttlMs=55000,maxSessions=2
  function snapshot(){
   cleanup();
   const byTable=new Map();
+  const total={activeSessions:sessions.size,activeTables:0,selectingSessions:0,submittingSessions:0,
+   orderedSessions:0,cartItems:0,viewingSessions:0};
   for(const s of sessions.values()){
    const key=s.tableId;
-   if(!byTable.has(key))byTable.set(key,{tableName:s.tableName,activeSessions:0});
-   byTable.get(key).activeSessions++;
+   if(!byTable.has(key))byTable.set(key,{tableName:s.tableName,activeSessions:0,selectingSessions:0,
+    submittingSessions:0,orderedSessions:0,cartItems:0,viewingSessions:0});
+   const t=byTable.get(key);
+   t.activeSessions++;
+   const phaseKey=s.stage==='selecting'?'selectingSessions':s.stage==='submitting'?'submittingSessions':
+    s.stage==='ordered'?'orderedSessions':'viewingSessions';
+   t[phaseKey]++;total[phaseKey]++;
+   if(s.stage==='selecting'||s.stage==='submitting'){
+    t.cartItems+=s.cartItems;total.cartItems+=s.cartItems;
+   }
   }
+  total.activeTables=byTable.size;
   const tables=[...byTable.values()].sort((a,b)=>b.activeSessions-a.activeSessions||a.tableName.localeCompare(b.tableName,'vi')).slice(0,40);
-  return {activeSessions:sessions.size,activeTables:byTable.size,tables,ttlSeconds:Math.ceil(ttlMs/1000),
-   meaning:'Số phiên trình duyệt đang xem thực đơn QR, không phải lượt camera quét hay số người duy nhất',
-   scope:'RAM một instance Render; không tính người chỉ quét camera mà không mở trang'};
+  return {...total,tables,ttlSeconds:Math.ceil(ttlMs/1000),
+   meaning:'Hoạt động các tab QR đang mở: xem thực đơn, chọn món trong giỏ, đang gửi yêu cầu và đã nhận phản hồi thành công. Số món là số tạm trong giỏ, chưa COMMIT.',
+   scope:'Trạng thái gửi từ UI theo heartbeat, không phải chứng từ PostgreSQL, không đếm người duy nhất; RAM một instance Render.'};
  }
  return {heartbeat,leave,snapshot};
 };
