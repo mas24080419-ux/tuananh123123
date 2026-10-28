@@ -170,10 +170,10 @@
     '<span class="deep-trace-duration"><b>'+escape(state)+'</b><small>'+pretty(elapsed)+' ms</small></span></button>';
   }).join('');
   const t=currentTrace();if(!t)return;
-  const state=t.state==='running'?'CHƯA XÁC NHẬN COMMIT':t.state==='success'?'REQUEST ĐÃ HOÀN THÀNH':'REQUEST LỖI / CÓ THỂ ĐÃ ROLLBACK';
+  const state=t.readOnly?(t.state==='running'?'ĐANG ĐỌC DỮ LIỆU (KHÔNG CÓ COMMIT GHI)':t.state==='success'?'ĐỌC DỮ LIỆU HOÀN THÀNH':'YÊU CẦU ĐỌC THẤT BẠI'):(t.state==='running'?'CHƯA XÁC NHẬN COMMIT':t.state==='success'?'REQUEST ĐÃ HOÀN THÀNH':'REQUEST LỖI / CÓ THỂ ĐÃ ROLLBACK');
   $('deepTraceSteps').innerHTML='<span class="deep-trace-traceid">TRACE '+escape(t.id.slice(0,8).toUpperCase())+' · '+escape(state)+'</span>'+
    '<div class="deep-trace-chain">'+(t.steps||[]).map((step,i)=>'<div class="deep-trace-step '+(i===t.steps.length-1?'last':'')+'"><b>'+escape(step.node.toUpperCase())+'</b><span>'+escape(step.label)+'</span><time>+'+pretty(step.elapsedMs)+' ms</time></div>').join('')+'</div>'+
-   (t.count!=null?'<div class="deep-trace-count">Số lượng món được gửi: <strong>'+pretty(t.count)+'</strong></div>':'');
+   (t.count!=null?'<div class="deep-trace-count">'+(t.readOnly?'Số mục đã truy vấn: ':'Số lượng món được xử lý: ')+'<strong>'+pretty(t.count)+'</strong></div>':'');
   updateTraceHighlights();
  }
  function traceUpdate(data){
