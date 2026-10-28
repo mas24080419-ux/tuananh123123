@@ -1,0 +1,23 @@
+name: SalesHub Render-Neon remote staging load
+on:
+  workflow_dispatch:
+jobs:
+  remote-staging-load:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Send 50 and 100 concurrent HTTP orders only to isolated staging
+        env:
+          SALESHUB_STAGING_URL: https://saleshub-loadtest-staging.onrender.com
+        run: node api/loadtest/remote-staging-50-100.js
+      - name: Preserve report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: saleshub-remote-staging-load-report
+          path: api/loadtest/results/remote-staging.json
+          if-no-files-found: warn

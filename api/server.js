@@ -289,6 +289,15 @@ const serveStatic=require('./static-files')(path.join(__dirname,'public'));
 async function route(req,res){for(const [k,v]of Object.entries(securityHeaders))res.setHeader(k,v);const u=new URL(req.url,'http://localhost');const p=u.pathname;
 if(!sameOrigin(req,res))return;
 if(req.method==='GET'&&p==='/api/health'){let db='pilot';if(pool){try{await pool.query('SELECT 1');db='ready'}catch{db='unavailable'}}return send(res,db==='unavailable'?503:200,{ok:db!=='unavailable',mode,database:db,pilot:mode==='pilot',notice:mode==='pilot'?'BẢN THỬ NGHIỆM: đơn hàng lưu RAM và bị xóa khi server khởi động lại. Không dùng vận hành thật.':'Dữ liệu được lưu trên PostgreSQL.'})}
+// Available only on the isolated staging branch with the explicit staging flag.
+// The DB must contain an independent marker before any load generation starts.
+if(req.method==='GET'&&p==='/api/loadtest/identity'&&process.env.SALES_STAGING==='true'){
+ if(!pool)return err(res,503,'Staging requires PostgreSQL.');
+ const check=await pool.query("SELECT current_database() AS database,EXISTS(SELECT 1 FROM loadtest_identity WHERE marker='saleshub-isolated-neon-staging-20261028') AS isolated");
+ const value=check.rows[0];
+ if(value.database!=='saleshub_loadtest'||value.isolated!==true)return err(res,503,'Refusing load test against a non-staging database.');
+ return send(res,200,{isolated:true,environment:'staging',database:value.database});
+}
 if(req.method==='POST'&&p==='/api/login')return err(res,410,'Hãy dùng tên đăng nhập và mật khẩu riêng do chủ cửa hàng cấp.');
 if(req.method==='POST'&&p==='/api/admin/login'){
  if(!throttle(req,'admin-login',6))return err(res,429,'Đăng nhập quá nhiều lần. Hãy thử lại sau.');
