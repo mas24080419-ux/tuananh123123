@@ -4,7 +4,7 @@
  const escape=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
  const time=value=>{const d=new Date(value);return Number.isFinite(d.getTime())?d.toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}):'—'};
  const shortId=id=>String(id||'').slice(0,8).toUpperCase();
- let source=null,fallbackTimer=null,retryTimer=null,data=null,selected=null,pinned=false,seenCursor='0',loaded=false,inFlight=false;
+ let source=null,fallbackTimer=null,retryTimer=null,data=null,selected=null,pinned=true,seenCursor='0',loaded=false,inFlight=false;
  const current=()=>data?.orders?.find(o=>o.id===selected);
  const events=()=>data?.events?.filter(e=>e.orderId===selected)||[];
  const getState=o=>{
@@ -49,7 +49,7 @@
  })[e.action]||(e.action==='item_status_changed'?'kds':'audit');
  function paintDetail(){
   const o=current();
-  if(!o){$('liveOrderDetail').innerHTML='<div class="live-order-empty">Chọn một đơn để xem luồng xử lý. Khi có đơn mới, hệ thống sẽ tự hiển thị.</div>';highlight([]);return}
+  if(!o){$('liveOrderDetail').innerHTML='<div class="live-order-empty">Tất cả luồng vẫn đang được theo dõi. Chọn một đơn để xem chi tiết riêng.</div>';highlight([]);return}
   const audit=events(),stages=[
    ['order_validated','API kiểm tra yêu cầu'],
    ['inventory_checked','Xử lý quy tắc tồn kho'],
@@ -104,7 +104,7 @@
   if(!next||!Array.isArray(next.orders)||!Array.isArray(next.events))return;
   const first=next.orders[0]?.id||null;
   if(!pinned&&(first!==selected||!selected))selected=first;
-  else if(selected&&!next.orders.some(x=>x.id===selected)){pinned=false;selected=first}
+  else if(selected&&!next.orders.some(x=>x.id===selected))selected=null;
   const different=String(next.cursor)!==seenCursor;
   data=next;seenCursor=String(next.cursor||'0');
   paintList();paintDetail();
@@ -144,6 +144,7 @@
  function disconnect(){
   if(source){source.close();source=null}stopFallback();
  }
+ $('liveFollowNewest').setAttribute('aria-pressed','false');
  $('liveOrderList').addEventListener('click',event=>{
   const btn=event.target.closest('[data-order]');
   if(!btn||!data)return;

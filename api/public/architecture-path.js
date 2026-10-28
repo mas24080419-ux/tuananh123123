@@ -63,7 +63,7 @@
    if(e.dataset.src===from&&e.dataset.dst===to)e.classList.add('route-current');
   });
  }
- function followEnabled(){return $('deepFollow')?.getAttribute('aria-pressed')!=='false'}
+ function followEnabled(){return document.body.dataset.deepFlow!=='all'&&$('deepFollow')?.getAttribute('aria-pressed')!=='false'}
  function show(frame){
   clearVisuals();
   const trace=known.get(frame.id);if(!trace)return;
@@ -207,10 +207,16 @@
    Date.parse(b.finishedAt||b.createdAt||0)-Date.parse(a.finishedAt||a.createdAt||0));
   const trace=known.get(selected)||known.get(lastTrace)||latest.find(t=>t.method==='POST'&&['orders','stafforder'].includes(t.module))||latest[0];
   if(!trace?.steps?.length){bar.textContent='Chưa có trace để phát lại';return}
+  // Replay is an explicit drill-down action: switch only when the owner clicks.
+  if(document.body.dataset.deepFlow==='all'){
+   const target=document.querySelector('#deepFilters [data-flow="'+(trace.module==='orders'?'orders':trace.module)+'"]');
+   target?.click();
+  }
   if(!followEnabled())$('deepFollow')?.click();
   stopPlayback();store(trace);addFrames(trace,0,true);
  });
  $('deepFollow')?.addEventListener('click',()=>{if(!followEnabled())stopPlayback()});
+ document.addEventListener('saleshub:architecture-filter',()=>{if(!followEnabled())stopPlayback()});
  document.addEventListener('saleshub:trace',ev=>onTrace(ev.detail));
  document.addEventListener('saleshub:snapshot',ev=>onSnapshot(ev.detail));
  window.addEventListener('pagehide',stopPlayback);

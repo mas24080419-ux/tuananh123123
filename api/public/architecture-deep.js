@@ -58,7 +58,7 @@
  ];
  const filters=[['all','Tất cả'],['orders','QR Order'],['stafforder','Nhân viên gọi món'],['cart','Đang chọn món QR'],['staffcart','NV đang chọn món'],['kds','Bếp / Bar'],['inventory','Kho'],['finance','Thu–chi'],['rental','Phao & Tủ'],['admin','Quản trị'],['access','API / Quyền'],['database','PostgreSQL'],['observe','Giám sát']];
  const colors={client:'#53c8ed',gateway:'#5fe0ad',module:'#f6c74f',database:'#a998ff',observe:'#ffa361'};
- let selected='orders',filter='all',scale=1,source=null,timer=null,last=null,view='events',followLive=true,focusedTrace=null,hasSnapshot=false;
+ let selected=null,filter='all',scale=1,source=null,timer=null,last=null,view='events',followLive=true,focusedTrace=null,hasSnapshot=false;
  function node(id){return nodes.find(n=>n.id===id)}
  const nameFor=id=>services[id]?.name||node(id)?.label||id;
  function line(a,b){
@@ -71,8 +71,8 @@
   $('deepNodes').innerHTML=nodes.map(n=>'<button type="button" class="deep-node deep-'+escape(n.kind)+'" data-id="'+escape(n.id)+'" style="left:'+n.x+'px;top:'+n.y+'px;width:'+n.w+'px;--nodecolor:'+colors[n.kind]+'" aria-pressed="false"><span class="deep-node-top"><span class="deep-node-light"></span><strong>'+escape(n.label)+'</strong></span><span class="deep-node-desc">'+escape(n.subtitle)+'</span><span class="deep-node-end">'+escape(services[n.id]?.tag||n.kind.toUpperCase())+'</span><span class="deep-node-count" data-live-node="'+escape(n.id)+'">—</span><span class="deep-node-active" data-active-node="'+escape(n.id)+'" hidden></span></button>').join('');
   $('deepWires').innerHTML='<defs><marker id="deepArrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2 L10 6 L1 10" fill="none" stroke="#90a3bd" stroke-width="1.3"/></marker></defs>'+edges.map(([a,b,f])=>'<path class="deep-edge" data-flow="'+f+'" data-src="'+a+'" data-dst="'+b+'" d="'+line(a,b)+'" marker-end="url(#deepArrow)"/>').join('');
   $('deepFilters').innerHTML=filters.map(([id,title])=>'<button type="button" data-flow="'+id+'" class="deep-filter">'+escape(title)+'</button>').join('');
-  $('deepNodes').addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b){followLive=false;updateFollow();select(b.dataset.id)}});
-  $('deepFilters').addEventListener('click',e=>{const b=e.target.closest('[data-flow]');if(b){filter=b.dataset.flow;highlight()}});
+  $('deepNodes').addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b)select(b.dataset.id)});
+  $('deepFilters').addEventListener('click',e=>{const b=e.target.closest('[data-flow]');if(b){filter=b.dataset.flow;selected=null;highlight();$('deepInspector').innerHTML='<p>Chọn một khối để xem chi tiết. Bộ lọc hiện tại: '+escape(b.textContent)+'.</p>';document.dispatchEvent(new CustomEvent('saleshub:architecture-filter',{detail:{filter}}))}});
   $('deepZoomOut').addEventListener('click',()=>setScale(scale-.1));
   $('deepZoomIn').addEventListener('click',()=>setScale(scale+.1));
   $('deepFit').addEventListener('click',fit);
@@ -88,6 +88,7 @@
  }
  function fit(){const width=$('deepViewport').clientWidth||1000;setScale(width<760?.7:Math.min(1,(width-18)/W))}
  function highlight(){
+  document.body.dataset.deepFlow=filter;
   document.querySelectorAll('#deepFilters [data-flow]').forEach(b=>b.classList.toggle('is-active',b.dataset.flow===filter));
   document.querySelectorAll('#deepNodes [data-id]').forEach(b=>{
    const id=b.dataset.id,selectedNow=id===selected;
@@ -252,12 +253,8 @@
   last.traces=(last.traces||[]).filter(x=>x.id!==t.id);
   if(t.state==='running')last.active.unshift(t);else last.traces.unshift(t);
   last.traces=last.traces.slice(0,40);last.inFlight=last.active.length;
-  if(followLive){
-   focusedTrace=t.id;filter=t.module;
-   // The live path renderer lights up each actual stage in order. Keep the
-   // inspector on the business module instead of jumping to the last stage.
-   select(t.module);
-  }
+  // Never change the owner's selected filter when another module emits a trace.
+  if(followLive&&filter!=='all')focusedTrace=t.id;
   renderMetrics();renderTraces();
   document.dispatchEvent(new CustomEvent('saleshub:trace',{detail:data}));
  }
@@ -276,8 +273,7 @@
    const oldHttp=new Set(previous.requests.map(e=>e.id));
    const event=data.events.find(e=>!oldDb.has(e.id))||data.requests.find(e=>!oldHttp.has(e.id));
    if(event&&services[event.module]){
-    filter=event.module;
-    select(event.module);
+    // Update the event label only; the all-modules map remains visible.
     $('deepLivePath').textContent='Vừa xử lý: '+(domain[event.module]||event.module)+' · '+(event.action||event.method+' '+event.route)+' · '+clock(event.occurredAt);
    }
   }
@@ -315,9 +311,9 @@
  }
  function init(){
   if(!$('deepStage'))return;
-  renderGraph();select('orders');updateFollow();renderMetrics();
-  $('deepTraceList').addEventListener('click',e=>{const el=e.target.closest('[data-trace-id]');if(!el)return;followLive=false;updateFollow();focusedTrace=el.dataset.traceId;const t=currentTrace();if(t){selected=t.steps?.at(-1)?.node||t.module;filter=t.module;select(selected);renderTraces()}});
-  $('deepFollow').addEventListener('click',()=>{followLive=!followLive;updateFollow()});
+  renderGraph();updateFollow();renderMetrics();
+  $('deepTraceList').addEventListener('click',e=>{const el=e.target.closest('[data-trace-id]');if(!el)return;followLive=false;updateFollow();focusedTrace=el.dataset.traceId;const t=currentTrace();if(t){filter=t.module;selected=t.steps?.at(-1)?.node||t.module;select(selected);document.dispatchEvent(new CustomEvent('saleshub:architecture-filter',{detail:{filter}}));renderTraces()}});
+  $('deepFollow').addEventListener('click',()=>{followLive=!followLive;updateFollow();document.dispatchEvent(new CustomEvent('saleshub:architecture-filter',{detail:{filter}}))});
   $('deepEventItems').addEventListener('click',e=>{const el=e.target.closest('[data-event-module]');if(el&&services[el.dataset.eventModule]){followLive=false;updateFollow();select(el.dataset.eventModule)}});
   document.querySelectorAll('[data-deep-event-view]').forEach(b=>b.addEventListener('click',()=>{
    view=b.dataset.deepEventView;document.querySelectorAll('[data-deep-event-view]').forEach(x=>x.classList.toggle('is-active',x===b));renderEvents()
