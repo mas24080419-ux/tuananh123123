@@ -1,5 +1,6 @@
 (() => {
  'use strict';
+ function initPath(){
  // Visual playback of OBSERVED backend steps, never synthesized activity.
  // Stage dwell is presentation time, not execution time.
  const $=id=>document.getElementById(id);
@@ -157,4 +158,7 @@
  document.addEventListener('saleshub:trace',ev=>onTrace(ev.detail));
  document.addEventListener('saleshub:snapshot',ev=>onSnapshot(ev.detail));
  window.addEventListener('pagehide',stopPlayback);
+ }
+ if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initPath);
+ else initPath();
 })();
