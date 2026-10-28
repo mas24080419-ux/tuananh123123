@@ -56,5 +56,6 @@ test('sandbox path and admin status are separate from production reconciliation'
  const sandbox=fs.readFileSync(path.join(__dirname,'../sepay-sandbox.js'),'utf8');
  assert(!sandbox.includes('pool.query'));
  assert(!sandbox.includes('UPDATE dining_orders'));
- assert(!sandbox.includes('paid_amount'));
+ assert(!/query\s*\(/.test(sandbox),'sandbox must never call SQL');
+ assert(!/INSERT INTO|UPDATE dining_orders|UPDATE finance_entries/.test(sandbox),'sandbox must not mutate sales data');
 });
