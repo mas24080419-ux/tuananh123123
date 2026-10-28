@@ -17,12 +17,11 @@ const empty=(cols,msg)=>'<tr><td colspan="'+cols+'" class="empty">'+esc(msg)+'</
 async function refresh(){
  if(busy)return;busy=true;
  try{
-  const [catalog,tables,suppliers,customers,reservations,shift,audit]=await Promise.all([
+  const [catalog,tables,suppliers,customers,shift,audit]=await Promise.all([
    api('catalog'),api('tables'),api('suppliers'),api('customers?limit=150'),
-   api('reservations?from='+encodeURIComponent(new Date(Date.now()-7*86400000).toISOString())+'&to='+encodeURIComponent(new Date(Date.now()+90*86400000).toISOString())),
    api('shift'),api('audit?limit=100')
   ]);
-  data={catalog:catalog.items,tables:tables.tables,suppliers:suppliers.suppliers,customers:customers.customers,reservations:reservations.reservations,shift:shift.shift,audit:audit.events};
+  data={catalog:catalog.items,tables:tables.tables,suppliers:suppliers.suppliers,customers:customers.customers,shift:shift.shift,audit:audit.events};
   render();note('Đã đồng bộ dữ liệu quản trị từ PostgreSQL.');
  }catch(e){note(e.message,true)}finally{busy=false}
 }
@@ -33,9 +32,7 @@ function render(){
  const setRows=(id,rows,cols)=>{$(id).innerHTML=rows||empty(cols,'Chưa có dữ liệu.')};
  setRows('#supplierRows',data.suppliers.map(s=>'<tr><td><b>'+esc(s.name)+'</b></td><td>'+esc(s.phone)+'<div class="muted">'+esc(s.email)+'</div></td><td>'+esc(s.address)+'</td><td><button data-edit="supplier" data-id="'+esc(s.id)+'" class="secondary">Sửa</button></td></tr>').join(''),4);
  setRows('#customerRows',data.customers.map(x=>'<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.phone)+'</td><td>'+esc(x.email)+'</td><td><button data-edit="customer" data-id="'+esc(x.id)+'" class="secondary">Sửa</button></td></tr>').join(''),4);
- setRows('#reservationRows',data.reservations.map(r=>'<tr><td>'+esc(stamp(r.reserved_at))+'</td><td>'+esc(r.table_name)+'</td><td><b>'+esc(r.customer_name)+'</b><div class="muted">'+r.guests+' khách</div></td><td><span class="pill">'+esc(r.status)+'</span></td><td>'+(r.status==='confirmed'?'<button class="secondary" data-res="'+esc(r.id)+'" data-status="arrived">Khách đến</button><button class="secondary" data-res="'+esc(r.id)+'" data-status="cancelled">Hủy</button>':r.status==='arrived'?'<button class="secondary" data-res="'+esc(r.id)+'" data-status="completed">Hoàn tất</button>':'—')+'</td></tr>').join(''),5);
  setRows('#auditRows',data.audit.map(a=>'<tr><td>'+esc(stamp(a.created_at))+'</td><td>'+esc(a.actor)+'</td><td>'+esc(a.entity)+'</td><td>'+esc(a.action)+'</td><td>'+esc(a.entity_id||'')+'</td></tr>').join(''),5);
- $('#reservationTable').innerHTML='<option value="">Chọn bàn</option>'+data.tables.filter(t=>t.active).map(t=>'<option value="'+esc(t.id)+'">'+esc(t.name)+' · '+esc(t.zone)+' · '+t.capacity+' chỗ</option>').join('');
  const shift=data.shift;
  $('#shiftStatus').textContent=!shift?'Chưa có ca nào.':shift.status==='open'?'Ca đang mở từ '+stamp(shift.opened_at)+' · Tiền đầu ca '+vnd(shift.opening_cash):
   'Ca gần nhất đã chốt. Tiền thực đếm '+vnd(shift.counted_cash)+' · Chênh lệch '+vnd(shift.variance);
@@ -66,7 +63,6 @@ function render(){
  document.querySelectorAll('[data-table-active]').forEach(b=>b.onclick=()=>mutation(async()=>put('tables/'+b.dataset.tableActive,{active:!data.tables.find(t=>t.id===b.dataset.tableActive)?.active},'PATCH')));
  document.querySelectorAll('[data-table-status]').forEach(s=>s.onchange=()=>mutation(async()=>put('tables/'+s.dataset.tableStatus,{serviceStatus:s.value},'PATCH')));
  document.querySelectorAll('[data-table-rotate]').forEach(b=>b.onclick=async()=>{if(!window.confirm('Đổi mã QR sẽ vô hiệu hóa tem đang dán. Xác nhận đổi QR cho bàn này?'))return;await mutation(async()=>put('tables/'+b.dataset.tableRotate+'/rotate-qr',{confirm:true}))});
- document.querySelectorAll('[data-res]').forEach(b=>b.onclick=()=>mutation(async()=>put('reservations/'+b.dataset.res+'/status',{status:b.dataset.status},'PATCH')));
 }
 async function mutation(fn){try{await fn();await refresh()}catch(e){note(e.message,true)}}
 async function saveForm(form,path,method,convert=x=>x){
@@ -77,7 +73,6 @@ $('#menuForm').onsubmit=e=>{e.preventDefault();const b=formData(e.target);const 
 $('#tableForm').onsubmit=e=>{e.preventDefault();saveForm(e.target,'tables','POST',x=>({...x,capacity:Number(x.capacity)}))};
 $('#supplierForm').onsubmit=e=>{e.preventDefault();const b=formData(e.target);saveForm(e.target,b.id?'suppliers/'+b.id:'suppliers',b.id?'PATCH':'POST')};
 $('#customerForm').onsubmit=e=>{e.preventDefault();const b=formData(e.target);saveForm(e.target,b.id?'customers/'+b.id:'customers',b.id?'PATCH':'POST')};
-$('#reservationForm').onsubmit=e=>{e.preventDefault();saveForm(e.target,'reservations','POST',x=>({...x,reservedAt:new Date(x.reservedAt).toISOString(),guests:Number(x.guests),durationMinutes:Number(x.durationMinutes)}))};
 $('#openShiftForm').onsubmit=e=>{e.preventDefault();saveForm(e.target,'shift','POST',x=>({action:'open',openingCash:Number(x.openingCash)}))};
 $('#closeShiftForm').onsubmit=e=>{e.preventDefault();if(!window.confirm('Bạn đã đếm tiền mặt thực tế và muốn chốt ca?'))return;saveForm(e.target,'shift','POST',x=>({action:'close',countedCash:Number(x.countedCash),note:x.note,confirm:true}))};
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{
@@ -90,7 +85,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
 (function minimalCore(){
  const actions=[
   ['menu','Thêm món'],['tables','Thêm bàn'],['suppliers','Thêm nhà cung cấp'],
-  ['customers','Thêm khách hàng'],['reservations','Tạo đặt bàn']
+  ['customers','Thêm khách hàng']
  ];
  const registry=new Map();
  for(const [sectionId,actionText] of actions){
@@ -103,7 +98,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
   formPanel.classList.add('ui-form-card');
   listPanel.classList.add('ui-focused-list');
   const row=document.createElement('div');row.className='ui-action-row';
-  const title=document.createElement('strong');title.textContent=sectionId==='tables'?'Danh sách bàn':sectionId==='menu'?'Thực đơn đang quản lý':sectionId==='reservations'?'Lịch đặt bàn':sectionId==='suppliers'?'Nhà cung cấp':'Khách hàng';title.className='sh-headingline';
+  const title=document.createElement('strong');title.textContent=sectionId==='tables'?'Danh sách bàn':sectionId==='menu'?'Thực đơn đang quản lý':sectionId==='suppliers'?'Nhà cung cấp':'Khách hàng';title.className='sh-headingline';
   const button=document.createElement('button');button.type='button';button.className='ui-form-toggle';button.textContent='+ '+actionText;
   const toggle=open=>{
    formPanel.classList.toggle('is-open',open);
