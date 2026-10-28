@@ -17,6 +17,13 @@
  const text=(id,value)=>{const n=$(id);if(n)n.textContent=String(value)};
  const originFor=module=>module==='orders'?'guest':module==='kds'||module==='rental'?'staff':'owner';
  const titles={orders:'Đơn QR',kds:'Bếp / Bar',inventory:'Kho',finance:'Thu–chi',rental:'Phao & Tủ',admin:'Quản trị'};
+ const auditAction={
+  order_validated:{node:'validate',label:'Đã xác thực yêu cầu (audit PostgreSQL)'},
+  inventory_checked:{node:'inventory',label:'Đã kiểm tra quy tắc kho (audit PostgreSQL)'},
+  order_created:{node:'orders',label:'Đơn đã ghi thành công (audit PostgreSQL)'},
+  item_status_changed:{node:'kds',label:'Đã cập nhật trạng thái món (audit PostgreSQL)'},
+  payment_confirmed:{node:'finance',label:'Đã xác nhận thanh toán (audit PostgreSQL)'}
+ };
  const activeColor=(state,step)=>state==='failed'||state==='aborted'||/ROLLBACK|lỗi/i.test(step?.label||'')?'#fa8691':state==='success'?'#77e4bd':'#f8ca5d';
  const nodeDom=id=>[...nodes.querySelectorAll('[data-id]')].find(el=>el.dataset.id===id);
  const makeSvg=(tag,attrs)=>{
@@ -75,11 +82,11 @@
   const step=steps[upto],n=upto+1;
   workbench?.classList.add('path-running');
   dot.className='path-runtime-dot '+(trace.state==='failed'?'error':'active');
-  bar.textContent=(frame.replay?'PHÁT LẠI MỐC THỰC':'MỐC BACKEND THỰC')+' · '+(titles[trace.module]||trace.module)+' · #'+trace.id.slice(0,8).toUpperCase();
-  description.textContent=step.label+' · ghi nhận +'+step.elapsedMs+' ms'+(trace.count!=null?' · '+trace.count+' món':'');
+  bar.textContent=(trace.source==='postgresql-audit'?'AUDIT ĐÃ COMMIT · PHÁT LẠI':frame.replay?'PHÁT LẠI TRACE THỰC':'MỐC BACKEND TRỰC TIẾP')+' · '+(titles[trace.module]||trace.module)+' · #'+trace.id.slice(0,8).toUpperCase();
+  description.textContent=step.label+(step.elapsedMs==null?' · không có thời gian thực thi chi tiết':' · ghi nhận +'+step.elapsedMs+' ms')+(trace.count!=null?' · '+trace.count+' món':'');
   progress.textContent=n+' / '+steps.length+' mốc';
   pending.textContent=queue.length+' mốc còn chờ hiển thị';
-  text('deepLivePath','Đang trình bày '+(frame.replay?'lại':'mốc vừa nhận')+': '+step.node.toUpperCase()+' → '+step.label+' · thời gian server +'+step.elapsedMs+' ms');
+  text('deepLivePath','Đang trình bày '+(frame.replay?'lại':'mốc vừa nhận')+': '+step.node.toUpperCase()+' → '+step.label+(step.elapsedMs==null?' · đã COMMIT trong DB':' · thời gian server +'+step.elapsedMs+' ms'));
   const viewport=$('deepViewport'),el=nodeDom(step.node);
   if(viewport&&el&&viewport.clientWidth<730&&followEnabled()){
    const size=parseFloat(($('deepScale')?.textContent||'70').replace('%',''))/100||.7;
@@ -158,6 +165,35 @@
     }
    }
    seen.set(trace.id,trace.steps.length);
+  }
+  // Durable recovery: after a Render redeploy, Node memory no longer contains
+  // the earlier HTTP spans. The PostgreSQL audit still proves that each milestone
+  // happened. Build only recorded milestones, never imply unrecorded SQL timing.
+  let restored=0;
+  for(const flow of (data?.verifiedOrders||[])){
+   if(!flow?.orderId||!Array.isArray(flow.steps))continue;
+   const id='audit:'+flow.orderId;
+   const steps=flow.steps.filter(x=>auditAction[x.action]).map(x=>({
+    node:auditAction[x.action].node,label:auditAction[x.action].label,
+    at:x.at,elapsedMs:null,auditId:x.id
+   }));
+   if(!steps.length)continue;
+   const prev=seen.get(id);
+   const latest=Date.parse(flow.latestAt||steps[steps.length-1].at);
+   const near=Number.isFinite(latest)&&snapshotTime-latest>=0&&snapshotTime-latest<180000;
+   const hasLiveTrace=[...known.values()].some(t=>
+    t.source!=='postgresql-audit'&&t.method==='POST'&&t.route==='/api/orders'&&
+    Number.isFinite(Date.parse(t.createdAt))&&Math.abs(Date.parse(t.createdAt)-latest)<12000
+   );
+   const recovered={id,module:'orders',method:'POST',route:'/api/orders (DB audit)',
+    source:'postgresql-audit',state:'success',steps,createdAt:steps[0].at,
+    finishedAt:steps[steps.length-1].at,count:null,durationMs:null};
+   store(recovered);seen.set(id,steps.length);
+   if(followEnabled()&&!hasLiveTrace&&near&&restored<2&&
+      ((prev===undefined&&steps.some(x=>x.auditId))||(prev!==undefined&&steps.length>prev))){
+    addFrames(recovered,prev===undefined?0:prev,true);
+    restored++;
+   }
   }
   if(!started){
    started=true;bar.textContent='Đã kết nối nguồn trace thực';
