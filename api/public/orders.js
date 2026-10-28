@@ -25,31 +25,104 @@ function renderOrders(rows){
  const status=r.payment_status==='paid'?'<span class="pill paid">Đã thu</span>':r.payment_status==='refunded'?'<span class="pill unknown">Đã hoàn tiền</span>':'<span class="pill">Chưa thu</span>';
  const selectable=r.payment_status==='unpaid'&&amount>0;
  const chooser=!r.payment_method?'<select class="pick-method" aria-label="Chọn cách thu tiền cho đơn cũ"><option value="">Chọn cách thu</option><option value="cash">Tiền mặt</option><option value="bank_transfer">Chuyển khoản</option></select>':'';
- const action=selectable?'<div class="row-actions">'+chooser+'<button type="button" class="mark-paid" data-id="'+esc(r.id)+'" data-method="'+esc(r.payment_method||'')+'">Đã nhận tiền</button></div>':'<span class="mini">Không có thao tác</span>';
- return '<tr><td><strong>#'+esc(r.id.slice(0,8))+'</strong><div class="mini">'+esc(shortDate(r.created_at))+'</div></td>'+
- '<td>'+esc(r.table_name)+'</td><td>'+esc(methodText(r.payment_method))+'</td><td class="tight"><strong>'+cash(amount)+'</strong></td>'+
- '<td>'+status+(r.paid_at?'<div class="mini">Lúc '+esc(shortDate(r.paid_at))+'</div>':'')+'</td><td>'+action+'</td></tr>';
+ const action=selectable?'<div class="row-actions">'+chooser+
+  '<button type="button" class="mark-paid" data-id="'+esc(r.id)+'" data-method="'+esc(r.payment_method||'')+'" aria-expanded="false" aria-label="Xác nhận thanh toán cho đơn '+esc(r.id.slice(0,8))+'">Đã nhận tiền</button></div>'+
+  '<div class="payment-confirm-panel" hidden><div class="payment-confirm-title">Xác nhận đã nhận tiền</div><p class="payment-confirm-detail" role="status"></p>'+
+  '<p class="payment-confirm-explain">Chỉ xác nhận khi đã nhận đủ tiền mặt hoặc kiểm tra giao dịch chuyển khoản thực tế.</p>'+
+  '<div class="payment-confirm-actions"><button type="button" class="payment-cancel">Hủy</button><button type="button" class="payment-approve" data-id="'+esc(r.id)+'">Xác nhận đã nhận đủ</button></div>'+
+  '<p class="payment-row-feedback" role="status" aria-live="polite" hidden></p></div>':
+  '<span class="mini">Không có thao tác</span>';
+ return '<tr data-order-id="'+esc(r.id)+'"><td data-label="Đơn hàng"><strong>#'+esc(r.id.slice(0,8))+'</strong><div class="mini">'+esc(shortDate(r.created_at))+'</div></td>'+
+ '<td data-label="Bàn">'+esc(r.table_name)+'</td><td data-label="Phương thức">'+esc(methodText(r.payment_method))+'</td><td class="tight" data-label="Số tiền"><strong>'+cash(amount)+'</strong></td>'+
+ '<td data-label="Trạng thái">'+status+(r.paid_at?'<div class="mini">Lúc '+esc(shortDate(r.paid_at))+'</div>':'')+'</td><td data-label="Thu tiền">'+action+'</td></tr>';
  }).join(''):'<tr><td colspan="6" class="empty">Không có đơn nào trong khoảng ngày đã chọn.</td></tr>';
- $('#orders').querySelectorAll('.mark-paid').forEach(btn=>btn.addEventListener('click',()=>markPaid(btn)));
 }
-async function markPaid(button){
- const id=button.dataset.id;
- const row=button.closest('tr');
- const paymentMethod=button.dataset.method||row.querySelector('.pick-method')?.value||'';
- if(!['cash','bank_transfer'].includes(paymentMethod)){notice('Hãy chọn Tiền mặt hoặc Chuyển khoản cho đơn cũ trước khi xác nhận.', 'error');return}
- const amount=row.cells[3].textContent;
- const method=methodText(paymentMethod);
- if(!window.confirm('XÁC NHẬN ĐÃ THỰC SỰ NHẬN ĐỦ '+amount+' bằng '+method+' cho đơn #'+id.slice(0,8)+'?'))return;
- button.disabled=true;
+// An in-page confirmation is reliable in Safari, Chrome and embedded phone browsers.
+// It does NOT send a payment request on the first tap.
+let paymentPending=false;
+function paymentNotice(row,message,isError=false){
+ const note=row.querySelector('.payment-row-feedback');
+ if(note){note.hidden=false;note.textContent=message;note.classList.toggle('is-error',isError)}
+ notice(message,isError?'error':'ok');
+}
+function paymentDetails(row){
+ const button=row.querySelector('.mark-paid');
+ const select=row.querySelector('.pick-method');
+ const paymentMethod=button?.dataset.method||select?.value||'';
+ const order=(latest?.orders||[]).find(o=>o.id===button?.dataset.id);
+ return {paymentMethod,order};
+}
+function openPaymentConfirmation(button){
+ if(paymentPending)return;
+ const row=button.closest('tr'),{paymentMethod,order}=paymentDetails(row);
+ if(!order){paymentNotice(row,'Không tìm thấy đơn trong danh sách. Hãy tải lại.',true);return}
+ if(!['cash','bank_transfer'].includes(paymentMethod)){
+  paymentNotice(row,'Vui lòng chọn Tiền mặt hoặc Chuyển khoản trước khi xác nhận.',true);
+  row.querySelector('.pick-method')?.focus();
+  return;
+ }
+ if(order.payment_status!=='unpaid'||Number(order.total_vnd)<=0){
+  paymentNotice(row,'Đơn hàng không đủ điều kiện xác nhận thu tiền. Hãy tải lại.',true);
+  return;
+ }
+ // Keep one expanded confirmation so that tapping any other order can't act on the wrong row.
+ $('#orders').querySelectorAll('.payment-confirm-panel').forEach(panel=>{
+  if(panel!==row.querySelector('.payment-confirm-panel'))panel.hidden=true;
+ });
+ $('#orders').querySelectorAll('.mark-paid').forEach(b=>b.setAttribute('aria-expanded',String(b===button)));
+ const panel=row.querySelector('.payment-confirm-panel');
+ panel.hidden=false;
+ panel.querySelector('.payment-confirm-detail').textContent=
+  'Đơn #'+order.id.slice(0,8)+' · '+cash(order.total_vnd)+' · '+methodText(paymentMethod);
+ const feedback=panel.querySelector('.payment-row-feedback');
+ feedback.hidden=true;feedback.textContent='';
+ panel.querySelector('.payment-approve').focus({preventScroll:true});
+}
+async function submitPayment(button){
+ if(paymentPending)return;
+ const row=button.closest('tr'),{paymentMethod,order}=paymentDetails(row);
+ if(!order||!['cash','bank_transfer'].includes(paymentMethod)||row.querySelector('.payment-confirm-panel')?.hidden){
+  paymentNotice(row,'Thông tin xác nhận không hợp lệ. Vui lòng thử lại.',true);return
+ }
+ paymentPending=true;
+ button.disabled=true;button.textContent='Đang lưu…';
+ const opener=row.querySelector('.mark-paid');
+ if(opener)opener.disabled=true;
  try{
-  const result=await request('/api/admin/orders/'+encodeURIComponent(id)+'/confirm-payment',{method:'POST',body:JSON.stringify({confirm:true,paymentMethod})});
-  // Refresh the row immediately; do not silently leave a paid order clickable if a separate poll is running.
-  const matched=(latest?.orders||[]).find(o=>o.id===id);
-  if(matched){matched.payment_status='paid';matched.paid_amount=result.payment.amount;matched.payment_method=paymentMethod;matched.paid_at=new Date().toISOString();applyOrderFilters()}
+  const result=await request('/api/admin/orders/'+encodeURIComponent(order.id)+'/confirm-payment',
+   {method:'POST',body:JSON.stringify({confirm:true,paymentMethod})});
+  const matched=(latest?.orders||[]).find(o=>o.id===order.id);
+  if(matched){matched.payment_status='paid';matched.paid_amount=result.payment.amount;matched.payment_method=paymentMethod;matched.paid_at=new Date().toISOString()}
+  applyOrderFilters();
+  // Refresh is separate; do not overwrite a successful confirmation with a generic notice.
   await reload(false);
-  notice(result.payment.already?'Đơn này đã được ghi nhận thanh toán trước đó.':'Đã xác nhận và ghi sổ '+cash(result.payment.amount)+' cho đơn #'+id.slice(0,8)+'.');
- }catch(e){notice(e.message,'error');button.disabled=false}
+  notice(result.payment.already?'Đơn này đã được ghi nhận trước đó.':
+   'Đã nhận '+cash(result.payment.amount)+' cho đơn #'+order.id.slice(0,8)+'.','ok');
+ }catch(e){
+  paymentNotice(row,'Không thể xác nhận đơn #'+order.id.slice(0,8)+': '+e.message,true);
+  button.disabled=false;button.textContent='Thử xác nhận lại';
+  if(opener)opener.disabled=false;
+ }finally{paymentPending=false}
 }
+// Delegate clicks so cards still work after refresh and mobile layout changes.
+$('#orders').addEventListener('click',e=>{
+ const pay=e.target.closest('button.mark-paid');
+ if(pay){openPaymentConfirmation(pay);return}
+ const cancel=e.target.closest('button.payment-cancel');
+ if(cancel){
+  const row=cancel.closest('tr');row.querySelector('.payment-confirm-panel').hidden=true;
+  row.querySelector('.mark-paid')?.setAttribute('aria-expanded','false');
+  return
+ }
+ const approve=e.target.closest('button.payment-approve');
+ if(approve){void submitPayment(approve)}
+});
+// Re-select a method only changes the pre-confirmation summary, never silently confirms.
+$('#orders').addEventListener('change',e=>{
+ if(!e.target.matches('.pick-method'))return;
+ const row=e.target.closest('tr'),panel=row?.querySelector('.payment-confirm-panel');
+ if(panel&&!panel.hidden){panel.hidden=true;row.querySelector('.mark-paid')?.setAttribute('aria-expanded','false')}
+});
 
 function filteredOrders(){
  if(!latest)return[];

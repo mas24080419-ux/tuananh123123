@@ -1,0 +1,42 @@
+/* Mobile-first order confirmation; scoped ONLY to /admin/orders. */
+.tt6-orders-page .payment-confirm-panel[hidden],
+.tt6-orders-page .payment-row-feedback[hidden]{display:none!important}
+.tt6-orders-page .mark-paid{min-height:44px;min-width:122px;touch-action:manipulation;-webkit-tap-highlight-color:transparent;background:#117e72;color:#fff;font-weight:800;border-radius:11px}
+.tt6-orders-page .mark-paid:focus-visible,
+.tt6-orders-page .payment-approve:focus-visible,
+.tt6-orders-page .payment-cancel:focus-visible{outline:3px solid #66bfa4;outline-offset:3px}
+.tt6-orders-page .payment-confirm-panel{display:block;position:relative;z-index:1;margin-top:10px;padding:12px;border:1px solid #b7dcd0;border-radius:13px;background:#f3fbf8;color:#183d35;box-shadow:0 3px 10px #17452c0b;white-space:normal}
+.tt6-orders-page .payment-confirm-title{font-size:13px;font-weight:850;margin-bottom:6px}
+.tt6-orders-page .payment-confirm-detail{font-size:13px;font-weight:750;margin:0 0 6px;color:#185f4f;overflow-wrap:anywhere}
+.tt6-orders-page .payment-confirm-explain{font-size:11px;line-height:1.6;color:#526f67;margin:0 0 11px}
+.tt6-orders-page .payment-confirm-actions{display:flex;flex-wrap:wrap;gap:8px}
+.tt6-orders-page .payment-confirm-actions button{min-height:45px;border-radius:10px;font-weight:800;font-size:12px;touch-action:manipulation}
+.tt6-orders-page .payment-cancel{background:#e2ebe8;color:#28594d}
+.tt6-orders-page .payment-approve{flex:1;background:#087d68;color:#fff}
+.tt6-orders-page .payment-row-feedback{font-size:12px;line-height:1.5;color:#0d7555;margin:10px 0 0;font-weight:750}
+.tt6-orders-page .payment-row-feedback.is-error{color:#af4435}
+.tt6-orders-page .row-actions{flex-wrap:wrap;gap:9px}
+.tt6-orders-page .row-actions select{min-height:44px;max-width:190px}
+@media(max-width:760px){
+ body.tt6-orders-page:has(#dashboard) .table-scroll{overflow:visible!important;border:0!important;background:transparent}
+ body.tt6-orders-page:has(#dashboard) .data-table{display:block!important;min-width:0!important;width:100%!important;table-layout:auto}
+ .tt6-orders-page .data-table thead{display:none}
+ .tt6-orders-page .data-table tbody{display:grid;width:100%;grid-template-columns:minmax(0,1fr);gap:12px}
+ .tt6-orders-page .data-table tr{display:grid!important;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:7px 12px;background:#fff;border:1px solid #dce7eb;border-radius:14px;padding:14px;min-width:0;width:100%;box-shadow:0 4px 14px #18455a0a}
+ .tt6-orders-page .data-table tr td{display:flex!important;flex-direction:column;min-width:0;gap:4px;padding:0!important;border:0!important;white-space:normal;overflow-wrap:anywhere;font-size:13px}
+ .tt6-orders-page .data-table tr td::before{content:attr(data-label);color:#718799;font-size:10px;letter-spacing:.2px;font-weight:750}
+ .tt6-orders-page .data-table tr td:nth-child(1){grid-column:1}
+ .tt6-orders-page .data-table tr td:nth-child(2){grid-column:2}
+ .tt6-orders-page .data-table tr td:nth-child(3){grid-column:1}
+ .tt6-orders-page .data-table tr td:nth-child(4){grid-column:2}
+ .tt6-orders-page .data-table tr td:nth-child(5){grid-column:1 / -1;padding:9px 0!important;border-top:1px solid #edf1f4!important}
+ .tt6-orders-page .data-table tr td:nth-child(6){grid-column:1 / -1;border-top:1px solid #edf1f4!important;padding:10px 0 0!important}
+ .tt6-orders-page .row-actions{display:flex;flex-direction:column;align-items:stretch;width:100%}
+ .tt6-orders-page .row-actions select{width:100%;max-width:none!important}
+ .tt6-orders-page .mark-paid{width:100%;min-height:49px!important;font-size:14px!important}
+ .tt6-orders-page .payment-confirm-panel{margin-top:12px;width:100%;padding:14px}
+ .tt6-orders-page .payment-confirm-actions{display:grid;grid-template-columns:1fr 1.6fr}
+ .tt6-orders-page .payment-confirm-actions button{width:100%;min-height:48px;font-size:12px}
+ .tt6-orders-page #orders tr:has(td[colspan]){display:block!important}
+ .tt6-orders-page #orders tr:has(td[colspan]) td::before{content:none}
+}
