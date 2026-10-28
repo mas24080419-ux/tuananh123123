@@ -85,6 +85,8 @@
         </div>
       </div>
       <div class="deep-kpi-band" aria-label="Bộ đếm dữ liệu PostgreSQL thực theo thời gian">
+        <div class="deep-metric deep-qr-metric"><span>KHÁCH ĐANG XEM QR</span><strong id="deepQrViewers">—</strong><small>Phiên trình duyệt đang mở thực đơn</small></div>
+        <div class="deep-metric deep-qr-metric"><span>BÀN ĐANG CÓ KHÁCH XEM</span><strong id="deepQrTables">—</strong><small>Số bàn có ít nhất 1 phiên QR</small></div>
         <div class="deep-metric"><span>ĐƠN / 24 GIỜ</span><strong id="deepMetricOrders">—</strong><small>Đơn đã lưu trên PostgreSQL</small></div>
         <div class="deep-metric"><span>ĐƠN CHƯA HOÀN TẤT</span><strong id="deepMetricInProgress">—</strong><small>Có món new / preparing / ready</small></div>
         <div class="deep-metric"><span>ĐƠN ĐANG CHẾ BIẾN</span><strong id="deepMetricOrderPreparing">—</strong><small>Có ít nhất một món preparing</small></div>
@@ -94,6 +96,11 @@
         <div class="deep-metric"><span>ĐANG XỬ LÝ API</span><strong id="deepMetricActive">—</strong><small>Request ghi dữ liệu trong RAM</small></div>
         <div class="deep-metric"><span>BIẾN ĐỘNG KHO / 24H</span><strong id="deepMetricStock">—</strong><small>inventory_movements</small></div>
       </div>
+      <section class="deep-qr-presence" aria-label="Theo dõi người đang mở QR theo bàn" aria-live="off">
+        <div class="deep-qr-presence-title"><strong><span class="deep-qr-live-dot"></span> NGƯỜI ĐANG XEM QR THEO BÀN</strong><small id="deepQrSummary">Đang kết nối số phiên thực…</small></div>
+        <div id="deepQrTableBreakdown" class="deep-qr-table-list"><span class="deep-qr-no-viewers">Chưa có dữ liệu QR.</span></div>
+        <p>Đếm các tab đang mở thực đơn, không đếm lượt camera quét hoặc số người duy nhất. Cập nhật khoảng 4 giây; phiên mất tín hiệu sẽ hết hạn sau 55 giây.</p>
+      </section>
       <div class="deep-trace-dock" aria-label="Theo dõi yêu cầu thực qua từng bước backend">
         <div class="deep-trace-head"><div><strong>REQUEST TRACE / REAL EXECUTION</strong><span>Nhận request → xử lý nghiệp vụ → SQL → COMMIT hoặc lỗi → HTTP response</span></div>
           <span id="deepTraceCount">Chưa có yêu cầu ghi dữ liệu</span></div>
