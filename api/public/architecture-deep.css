@@ -149,3 +149,21 @@
 .deep-qr-table-chip small{font-size:9px;color:#b2c9c9}
 .deep-qr-no-viewers{font-size:11px;color:#8caeaf;line-height:1.5}
 .deep-qr-presence p{font-size:9px;color:#88a9ae;line-height:1.5;margin:0}
+
+
+/* Selection activity is live QR browser telemetry, not a database transaction. */
+.deep-qr-selecting{background:#173b38;border-color:#32947e}
+.deep-qr-selecting strong{color:#9bf5dc}
+.deep-qr-table-list{align-items:stretch}
+.deep-qr-table-chip{display:flex;flex:1 1 225px;flex-direction:column;align-items:stretch;gap:8px;min-width:190px;max-width:310px;padding:10px 12px}
+.deep-qr-table-main{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.deep-qr-table-main strong{font-size:12px;color:#e9faf6}
+.deep-qr-table-main span{font-size:10px;color:#b8ced0;font-variant-numeric:tabular-nums}
+.deep-qr-table-stages{display:flex;flex-wrap:wrap;gap:6px}
+.deep-qr-table-stages span{font-size:9px;color:#bdccd3;background:#102b35;border:1px solid #2e5b65;padding:4px 7px;border-radius:7px;font-weight:650}
+.deep-qr-table-stages .is-selecting{background:#164337;color:#9df2c9;border-color:#36886b}
+.deep-qr-table-stages .is-cart{background:#233d53;color:#a6d7ff;border-color:#3d668b}
+.deep-qr-table-stages .is-submitting{background:#413525;color:#f9dca0;border-color:#8f7240}
+.deep-node[data-id="cart"].is-cart-live{border-color:#59dda8;box-shadow:0 0 0 2px #34ce8940,0 7px 15px #0005;background:#163c37}
+.deep-node[data-id="cart"].is-cart-live .deep-node-count{background:#1b5748;border-color:#5ed4a8;color:#c0fce4}
+@media(max-width:690px){.deep-qr-table-chip{flex-basis:100%;max-width:100%}}
