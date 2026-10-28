@@ -64,7 +64,12 @@ test('staff page, links and browser controller parse and expose safe actions',()
  assert(js.includes('btn.disabled||state.saving'),'disabled items cannot be selected by tap');
  assert(js.includes('cartTotal<60')&&js.includes('q<n&&q<20'),'preserve stock and quantity guards');
  assert(html.includes('Chạm vào món để thêm vào đơn'),'mobile UI describes tap-to-select');
- assert(html.includes('/staff-orders.js?v=staff-tap-card-v2'));
+ assert(html.includes('/staff-orders.js?v=payment-feedback-v3'));
+ assert(js.includes('Chỉ Thu ngân / Quản lý xác nhận thu tiền'));
+ assert(js.includes('paymentFeedback(o.id'));
+ assert(js.includes("o.payment_status='paid'"));
+ assert(read('public/orders.js').includes('await reload(false)'));
+ assert(read('public/orders.html').includes('/orders.js?v=payment-feedback-v3'));
  assert(!js.includes('/api/admin/finance')&&!js.includes('/api/admin/summary'));
  assert(read('public/staff.js').includes("location.replace('/staff/orders')"));
  assert(read('public/users.html').includes('Phục vụ bàn — tạo & quản lý đơn'));

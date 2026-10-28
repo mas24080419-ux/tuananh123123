@@ -14,6 +14,15 @@
   return result;
  }
  const canPay=()=>['admin','manager','cashier'].includes(state.role);
+ // Each payment action reports next to the order itself, not only above the mobile page.
+ function paymentFeedback(orderId,text,error=false){
+  const card=[...$('orders').querySelectorAll('article.order')].find(el=>el.dataset.orderId===orderId);
+  if(!card)return;
+  let note=card.querySelector('.paymentFeedback');
+  if(!note){note=document.createElement('p');note.className='paymentFeedback';note.setAttribute('role','status');note.setAttribute('aria-live','polite');card.appendChild(note)}
+  note.textContent=text;
+  note.classList.toggle('is-error',error);
+ }
  // Send ONLY counts and a table identifier, never item names, prices, notes or customer data.
  const activity=()=>({
   sessionId:staffPresence.sessionId,tableId:$('table').value||null,
@@ -100,10 +109,13 @@
   $('count').textContent=rows.length+' đơn phù hợp · danh sách tự cập nhật';
   $('orders').innerHTML=rows.map(o=>{
    const total=Number(o.total_vnd)||0,paid=o.payment_status==='paid',pay=canPay()&&!paid&&o.payment_status==='unpaid'&&total>0;
-   return '<article class="order"><div class="orderHead"><div><strong>'+esc(o.table_name)+'</strong><small>#'+esc(o.id.slice(0,8))+' · '+esc(date(o.created_at))+'</small></div><span class="pill '+(paid?'paid':'')+'">'+(paid?'Đã thu':o.payment_status==='refunded'?'Đã hoàn tiền':'Chưa thu')+'</span></div>'+
+   return '<article class="order" data-order-id="'+esc(o.id)+'"><div class="orderHead"><div><strong>'+esc(o.table_name)+'</strong><small>#'+esc(o.id.slice(0,8))+' · '+esc(date(o.created_at))+'</small></div><span class="pill '+(paid?'paid':'')+'">'+(paid?'Đã thu':o.payment_status==='refunded'?'Đã hoàn tiền':'Chưa thu')+'</span></div>'+
     (o.note?'<p class="hint">Ghi chú: '+esc(o.note)+'</p>':'')+
     o.items.map(i=>'<div class="line"><div><b>'+Number(i.quantity)+' × '+esc(i.name)+'</b><small>'+esc(textStatus[i.status]||i.status)+' · '+(i.station==='bar'?'Bar':'Bếp')+'</small></div><div class="lineActions">'+actions(i)+'</div></div>').join('')+
-    '<div class="orderFooter"><div><strong>'+money(total)+'</strong><small>'+(o.payment_method==='bank_transfer'?'Chuyển khoản':o.payment_method==='cash'?'Tiền mặt':'Chưa rõ phương thức')+'</small></div>'+(pay?'<button type="button" class="pay" data-pay="'+esc(o.id)+'">Đã nhận tiền</button>':'')+'</div></article>';
+    '<div class="orderFooter"><div><strong>'+money(total)+'</strong><small>'+(o.payment_method==='bank_transfer'?'Chuyển khoản':o.payment_method==='cash'?'Tiền mặt':'Chưa rõ phương thức')+'</small></div>'+
+   (pay?'<button type="button" class="pay" data-pay="'+esc(o.id)+'">Đã nhận tiền</button>':
+    (!canPay()&&!paid&&o.payment_status==='unpaid'&&total>0?'<span class="payRestricted">Chỉ Thu ngân / Quản lý xác nhận thu tiền</span>':''))+
+    '</div></article>';
   }).join('')||'<div class="empty">Không có đơn phù hợp.</div>';
  }
  async function loadOrders(silent=false){
@@ -149,7 +161,20 @@
   let method=o.payment_method;
   if(!['cash','bank_transfer'].includes(method)){method=prompt('Đơn cũ: nhập cash hoặc bank_transfer','cash');if(!['cash','bank_transfer'].includes(method))return}
   if(!confirm('Xác nhận đã nhận đủ '+money(o.total_vnd)+' bằng '+(method==='cash'?'tiền mặt':'chuyển khoản')+'?'))return;
-  pay.disabled=true;try{await api('/api/staff/orders/'+encodeURIComponent(o.id)+'/confirm-payment',{method:'POST',body:JSON.stringify({confirm:true,paymentMethod:method})});await loadOrders(true);message('Đã xác nhận thu tiền đơn #'+o.id.slice(0,8)+'.')}catch(error){message(error.message,true)}finally{pay.disabled=false}
+  pay.disabled=true;paymentFeedback(o.id,'Đang ghi nhận thanh toán…');
+  try{
+   const result=await api('/api/staff/orders/'+encodeURIComponent(o.id)+'/confirm-payment',{method:'POST',body:JSON.stringify({confirm:true,paymentMethod:method})});
+   // The background 5s poll may be in flight; update the visible state immediately.
+   o.payment_status='paid';o.paid_amount=result.payment.amount;o.paid_at=new Date().toISOString();
+   drawOrders();
+   const success=result.payment.already?'Đơn này đã được xác nhận trước đó.':'Đã ghi nhận '+money(result.payment.amount)+' thành công.';
+   paymentFeedback(o.id,success);
+   message('Đã xác nhận thu tiền đơn #'+o.id.slice(0,8)+'.');
+   await loadOrders(true);
+  }catch(error){
+   paymentFeedback(o.id,'Không xác nhận được: '+error.message,true);
+   message('Đơn #'+o.id.slice(0,8)+': '+error.message,true);
+  }finally{pay.disabled=false}
  });
  $('filter').addEventListener('input',drawOrders);
  $('status').addEventListener('change',drawOrders);
@@ -162,7 +187,7 @@
    if(me.workArea||!['admin','waiter','cashier','manager'].includes(me.role)){$('gate').textContent='Vai trò này không có quyền gọi món. Quay lại màn hình Bếp hoặc khu vực được giao.';return}
    state.role=me.role;$('employeeName').textContent=me.displayName||me.username||'Chủ cửa hàng';
    $('gate').hidden=true;$('app').hidden=false;await loadCatalog();state.ready=true;void pulsePresence();await loadOrders(true);
-   message('Sẵn sàng gọi món. Đơn mới được kiểm tra tồn kho trước khi tạo.');
+   message(canPay()?'Sẵn sàng gọi món và xác nhận thanh toán theo quyền.':'Sẵn sàng gọi món. Tài khoản Phục vụ không có quyền nhấn Đã nhận tiền; hãy dùng tài khoản Thu ngân / Quản lý để xác nhận thu tiền.');
   }catch(error){message(error.message,true);$('gate').textContent='Không kết nối được hoặc phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.'}
  })();
  setInterval(()=>{if(!document.hidden)loadOrders(true)},5000);

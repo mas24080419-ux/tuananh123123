@@ -43,8 +43,11 @@ async function markPaid(button){
  button.disabled=true;
  try{
   const result=await request('/api/admin/orders/'+encodeURIComponent(id)+'/confirm-payment',{method:'POST',body:JSON.stringify({confirm:true,paymentMethod})});
+  // Refresh the row immediately; do not silently leave a paid order clickable if a separate poll is running.
+  const matched=(latest?.orders||[]).find(o=>o.id===id);
+  if(matched){matched.payment_status='paid';matched.paid_amount=result.payment.amount;matched.payment_method=paymentMethod;matched.paid_at=new Date().toISOString();applyOrderFilters()}
+  await reload(false);
   notice(result.payment.already?'Đơn này đã được ghi nhận thanh toán trước đó.':'Đã xác nhận và ghi sổ '+cash(result.payment.amount)+' cho đơn #'+id.slice(0,8)+'.');
-  await reload();
  }catch(e){notice(e.message,'error');button.disabled=false}
 }
 
@@ -79,7 +82,7 @@ $('#adminPaymentFilter').addEventListener('change',applyOrderFilters);
 $('#adminMethodFilter').addEventListener('change',applyOrderFilters);
 $('#adminExportOrders').addEventListener('click',exportOrderRows);
 
-async function reload(){
+async function reload(announce=true){
  if(loading)return;
  loading=true;
  try{
@@ -90,7 +93,7 @@ async function reload(){
  for(const [key,v] of [['#totalOrders',s.order_count],['#orderValue',cash(s.order_value)],['#collected',cash(s.collected)],['#outstanding',cash(s.outstanding)],['#unpaidOrders',s.unpaid_orders],['#paidCash',cash(s.paid_cash)],['#paidTransfer',cash(s.paid_transfer)],['#paidUnknown',cash(s.paid_unknown)],['#paidOrders',s.paid_orders]])text(key,v??'0');
  renderBarChart(data.daily||[]);renderTop(data.top_items||[]);applyOrderFilters();
 
- notice(data.mode==='pilot'?'Đang ở chế độ thử nghiệm: dữ liệu sẽ mất nếu khởi động lại máy chủ.':'Đã đồng bộ với dữ liệu PostgreSQL · '+new Date().toLocaleTimeString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}),'ok');
+ if(announce)notice(data.mode==='pilot'?'Đang ở chế độ thử nghiệm: dữ liệu sẽ mất nếu khởi động lại máy chủ.':'Đã đồng bộ với dữ liệu PostgreSQL · '+new Date().toLocaleTimeString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}),'ok');
  }catch(e){notice(e.message,'error');if(e.status===401||e.status===403)screen(false)}
  finally{loading=false}
 }
