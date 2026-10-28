@@ -6,7 +6,7 @@
 2. `PremiumLowStockAlert.jsx` — React JSX + Tailwind CSS + lucide-react component pasted in conversation; same visual design presented as component.
 3. `Markdown đã dán (1).md` — second standalone HTML/CSS/JavaScript copy, 714 lines. Very similar to reference #1.
 
-Complete source copies are bundled in the conversation artifact `SalesHub_Premium_Stock_Source_References_20261028.zip`. The examples contain fixed demo product records (Wireless Headphones, Smart Watch, Bluetooth Speaker) and demo button behavior; they **are not** seeded into production.
+Both standalone source files are also preserved unchanged in GitHub at `docs/source-reference/premium-stock-original.html` and `docs/source-reference/premium-stock-original-second.md`. The original React JSX plus both source files are bundled together in the conversation artifact `SalesHub_Premium_Stock_Source_References_20261028.zip`. The examples contain fixed demo product records (Wireless Headphones, Smart Watch, Bluetooth Speaker) and demo button behavior; they **are not** seeded into production.
 
 ## Mapping to the live SalesHub code
 
