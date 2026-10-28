@@ -31,6 +31,39 @@ module.exports=function operations({pool,id}){
    low_stock_count:inventory.filter(i=>i.low_stock).length,stock_value_estimate:Math.round(inventory.reduce((s,i)=>s+Number(i.quantity)*Number(i.avg_unit_cost),0))},
    inventory,recipes:recipes.rows,movements:movements.rows,entries:entries.rows,menu:menu.rows,daily:days.rows};
  }
+ // Inventory alerts are computed from actual persisted stock; never seed sample stock.
+ async function inventoryDashboard(){
+  if(!pool)throw bad('Quản lý kho cần kết nối PostgreSQL.',503);
+  const [items,movements]=await Promise.all([
+   pool.query('SELECT id,name,unit,quantity,reorder_level,avg_unit_cost,created_at FROM inventory_items WHERE active=true ORDER BY name'),
+   pool.query("SELECT m.id,m.created_at,m.kind,m.delta,m.note,i.name AS item_name,i.unit FROM inventory_movements m JOIN inventory_items i ON i.id=m.inventory_item_id ORDER BY m.created_at DESC LIMIT 20")
+  ]);
+  const rows=items.rows.map(row=>({...row,low_stock:Number(row.quantity)<=Number(row.reorder_level)}));
+  const status=row=>{
+   const qty=Number(row.quantity),level=Number(row.reorder_level);
+   return qty<=0||(level>0&&qty<=level*.25)?'critical':qty<=level?'low':'healthy';
+  };
+  return {items:rows,movements:movements.rows,
+   summary:{total:rows.length,low:rows.filter(row=>row.low_stock).length,
+    critical:rows.filter(row=>status(row)==='critical').length,
+    healthy:rows.filter(row=>!row.low_stock).length}};
+ }
+ async function updateReorderLevel(itemId,b){
+  checkId(itemId,'Mã nguyên liệu');
+  const raw=b?.reorderLevel;
+  const level=Number(raw);
+  if(raw===null||raw===undefined||String(raw).trim()===''||!Number.isFinite(level)||level<0||level>1000000||Math.abs(level*1000-Math.round(level*1000))>0.000001)
+   throw bad('Mức cảnh báo phải từ 0 đến 1.000.000 và có tối đa 3 chữ số thập phân.');
+  return transaction(async c=>{
+   const old=(await c.query('SELECT id,name,reorder_level FROM inventory_items WHERE id=$1 AND active=true FOR UPDATE',[itemId])).rows[0];
+   if(!old)throw bad('Nguyên liệu không tồn tại.',404);
+   if(Number(old.reorder_level)===level)return {id:old.id,reorder_level:old.reorder_level,unchanged:true};
+   const updated=(await c.query('UPDATE inventory_items SET reorder_level=$2 WHERE id=$1 RETURNING id,name,unit,quantity,reorder_level',[itemId,level])).rows[0];
+   await c.query("INSERT INTO pos_audit(id,actor,entity,entity_id,action,before_state,after_state) VALUES($1,'admin','inventory_item',$2,'reorder_level_changed',$3::jsonb,$4::jsonb)",
+    [id(),itemId,JSON.stringify({reorder_level:old.reorder_level}),JSON.stringify({reorder_level:updated.reorder_level})]);
+   return updated;
+  });
+ }
  async function createItem(b){
   const name=cleaned(b.name,80),unit=cleaned(b.unit,16),limit=Number(b.reorderLevel||0);
   if(name.length<2||!unit||!Number.isFinite(limit)||limit<0||limit>1000000||Math.abs(limit*1000-Math.round(limit*1000))>0.000001)throw bad('Tên nguyên liệu, đơn vị hoặc mức cảnh báo không hợp lệ.');
@@ -108,5 +141,5 @@ module.exports=function operations({pool,id}){
    await c.query("INSERT INTO inventory_movements(id,inventory_item_id,delta,kind,unit_cost,note,order_line_id) VALUES($1,$2,$3,'restore',$4,'Khôi phục do hủy món chưa làm',$5)",[id(),line.inventory_item_id,line.amount,line.unit_cost,lineId]);
   }
  }
- return {overview,createItem,setRecipe,entry,move,consume,restore};
+ return {overview,inventoryDashboard,updateReorderLevel,createItem,setRecipe,entry,move,consume,restore};
 };

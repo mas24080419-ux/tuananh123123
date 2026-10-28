@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f5f7fc">
+<title>Tắm Tráng 6 · Quản lý kho và cảnh báo tồn</title>
+<link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
+<link rel="stylesheet" href="/inventory.css?v=stock-v1-20261028">
+<script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
+<script defer src="/inventory.js?v=stock-v1-20261028"></script>
+</head>
+<body class="tt6-inventory-page">
+<div class="shell">
+<aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Điều hướng cửa hàng"><nav class="tt6-fallback-nav"><a href="/admin">Tổng quan</a> <a href="/admin/inventory">Quản lý kho</a> <a href="/admin/operations">Thu–chi</a></nav></aside>
+<main class="stock-main">
+ <header class="stock-page-header">
+  <div><span class="stock-eyebrow">TẮM TRÁNG 6 / QUẢN TRỊ TỒN KHO</span><h1>Quản lý kho</h1><p>Theo dõi số lượng nguyên liệu, ngưỡng nhập thêm và lịch sử cập nhật kho.</p></div>
+  <div class="stock-head-actions"><span id="syncLabel" class="stock-sync" role="status">Đang kết nối…</span><button id="refreshStock" class="stock-btn stock-btn-outline" type="button">↻ Làm mới</button><button id="addStockItem" class="stock-btn stock-btn-primary" type="button">＋ Thêm nguyên liệu</button></div>
+ </header>
+ <section id="accessGate" class="stock-access" aria-live="polite" hidden><h2>Chỉ chủ cửa hàng được quản lý kho</h2><p>Vui lòng đăng nhập tài khoản quản trị để xem số lượng thực tế và điều chỉnh tồn kho.</p><a class="stock-btn stock-btn-primary" href="/admin">Đến trang đăng nhập</a></section>
+ <div id="stockContent" hidden>
+  <section class="stock-metrics" aria-label="Tổng quan tình trạng kho">
+   <div class="stock-metric"><span class="stock-metric-icon stock-icon-purple" aria-hidden="true">▣</span><small>TỔNG NGUYÊN LIỆU</small><strong id="stockTotal">—</strong><p>Đang theo dõi</p></div>
+   <div class="stock-metric"><span class="stock-metric-icon stock-icon-amber" aria-hidden="true">!</span><small>CẦN NHẬP THÊM</small><strong id="stockLow">—</strong><p>Dưới hoặc bằng ngưỡng</p></div>
+   <div class="stock-metric"><span class="stock-metric-icon stock-icon-rose" aria-hidden="true">⚠</span><small>NGUY CẤP</small><strong id="stockCritical">—</strong><p>Hết hàng hoặc dưới 25% ngưỡng</p></div>
+   <div class="stock-metric"><span class="stock-metric-icon stock-icon-green" aria-hidden="true">✓</span><small>ĐỦ TỒN KHO</small><strong id="stockHealthy">—</strong><p>Cao hơn mức cảnh báo</p></div>
+  </section>
+  <div id="stockError" class="stock-error" role="alert" hidden></div>
+  <div class="stock-columns">
+   <section class="stock-alert-card" aria-labelledby="stockAlertTitle">
+    <div class="stock-alert-header"><span class="stock-square stock-square-purple" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 8 12 4l9 4-9 4zM3 8v8l9 4 9-4V8M12 12v8"/></svg></span><div><h2 id="stockAlertTitle">Cảnh báo tồn kho</h2><p>Ưu tiên nhập các mặt hàng sắp hết</p></div><span class="stock-live"><span class="stock-live-dot" aria-hidden="true"></span> Theo dõi kho</span></div>
+    <div class="stock-summary-banner"><div><span class="stock-summary-kicker">⚠ CẦN KIỂM TRA TỒN KHO</span><p><strong id="alertNumber">—</strong> nguyên liệu cần nhập thêm</p><small>Kiểm tra số lượng và mức cảnh báo trước khi đặt hàng.</small></div><span class="stock-alert-graphic" aria-hidden="true">!</span></div>
+    <div class="stock-section-bar"><div><h3>Nguyên liệu cần chú ý</h3><p>Dựa trên số liệu PostgreSQL hiện tại</p></div><span id="alertBadge" class="stock-pill">— MỤC</span></div>
+    <div id="stockAlertList" class="stock-alert-list" aria-live="polite"><p class="stock-empty">Đang tải tồn kho thực tế…</p></div>
+    <footer class="stock-alert-footer"><div class="stock-footer-note"><span class="stock-shield" aria-hidden="true">✓</span><div><strong>Kiểm soát tồn kho</strong><small>Số liệu chỉ thay đổi theo giao dịch thực tế</small></div></div><button id="viewAllAlerts" type="button" class="stock-btn stock-btn-accent">Xem tất cả <span aria-hidden="true">→</span></button></footer>
+   </section>
+   <section class="stock-management" id="stockManage" aria-labelledby="stockManageTitle">
+    <div class="stock-management-header"><div><span class="stock-eyebrow">DANH MỤC KHO</span><h2 id="stockManageTitle">Tồn kho đang quản lý</h2><p>Chạm vào nguyên liệu để nhập kho hoặc điều chỉnh số lượng.</p></div></div>
+    <div class="stock-filter-bar"><label class="stock-search"><span aria-hidden="true">⌕</span><input type="search" id="stockSearch" placeholder="Tìm nguyên liệu..." autocomplete="off" aria-label="Tìm nguyên liệu"></label><div class="stock-filter-pills" role="group" aria-label="Lọc tình trạng kho"><button type="button" data-stock-filter="all" aria-pressed="true" class="active">Tất cả</button><button type="button" data-stock-filter="low" aria-pressed="false">Cần nhập</button><button type="button" data-stock-filter="healthy" aria-pressed="false">Đủ hàng</button></div></div>
+    <div class="stock-list-head"><span id="stockResultCount">Đang tải…</span><span><i class="stock-dot low"></i> Cần nhập <i class="stock-dot healthy"></i> Đủ hàng</span></div>
+    <div id="stockItemList" class="stock-item-list" aria-live="polite"><p class="stock-empty">Đang tải nguyên liệu…</p></div>
+    <section class="stock-history"><div class="stock-history-head"><h3>Cập nhật kho gần đây</h3><small>20 hoạt động mới nhất</small></div><div id="stockMovementList"><p class="stock-empty">Chưa có lịch sử cập nhật.</p></div></section>
+   </section>
+  </div>
+ </div>
+</main>
+</div>
+<dialog id="itemDialog" class="stock-dialog" aria-labelledby="itemDialogTitle"><form id="itemForm" class="stock-dialog-inner">
+<header><div><span class="stock-eyebrow">NGUYÊN LIỆU MỚI</span><h2 id="itemDialogTitle">Thêm vào kho</h2></div><button class="stock-close" data-close-dialog type="button" aria-label="Đóng">×</button></header>
+<label>Tên nguyên liệu <span class="stock-required">*</span><input name="name" required minlength="2" maxlength="80" placeholder="Ví dụ: Nước suối 500ml"></label>
+<div class="stock-form-grid"><label>Đơn vị <span class="stock-required">*</span><input name="unit" required maxlength="16" placeholder="chai, kg, g, hộp..."></label><label>Mức cảnh báo <span class="stock-required">*</span><input name="reorderLevel" type="number" inputmode="decimal" min="0" max="1000000" step="0.001" value="10" required></label></div>
+<p class="stock-dialog-note">Nguyên liệu được tạo với số lượng ban đầu bằng 0. Sau đó hãy dùng chức năng nhập tồn đầu kỳ hoặc nhập hàng.</p><p id="itemFeedback" class="stock-form-feedback" role="alert"></p><button class="stock-btn stock-btn-primary stock-submit" type="submit">Lưu nguyên liệu</button>
+</form></dialog>
+<dialog id="movementDialog" class="stock-dialog" aria-labelledby="movementTitle"><form id="movementForm" class="stock-dialog-inner">
+<header><div><span class="stock-eyebrow">GIAO DỊCH KHO</span><h2 id="movementTitle">Cập nhật tồn kho</h2><p id="movementSubtitle"></p></div><button class="stock-close" data-close-dialog type="button" aria-label="Đóng">×</button></header>
+<label>Loại thao tác <select name="kind" id="movementKind" required><option value="purchase">Nhập mua hàng</option><option value="opening">Nhập tồn đầu kỳ</option><option value="adjustment_in">Điều chỉnh tăng</option><option value="adjustment_out">Điều chỉnh giảm</option></select></label>
+<div class="stock-form-grid"><label>Số lượng <span class="stock-required">*</span><input name="quantity" type="number" inputmode="decimal" min="0.001" max="1000000" step="0.001" required placeholder="0"></label><label id="purchaseUnitPriceLabel">Giá nhập / đơn vị (đ) <span class="stock-required">*</span><input name="unitCost" type="number" min="1" step="1" placeholder="0"></label></div>
+<label id="purchasePaymentLabel">Đã thanh toán bằng <select name="paymentMethod"><option value="cash">Tiền mặt</option><option value="bank_transfer">Chuyển khoản</option></select></label>
+<label>Ghi chú <span id="movementNoteRequired" class="stock-required">*</span><textarea name="note" rows="2" maxlength="250" placeholder="Diễn giải lý do nhập / xuất"></textarea></label>
+<p id="movementAccounting" class="stock-dialog-note">Nhập mua hàng sẽ tự động ghi khoản chi vào sổ Thu–chi. Không nhập lại thủ công.</p><p id="movementFeedback" class="stock-form-feedback" role="alert"></p><button class="stock-btn stock-btn-primary stock-submit" type="submit">Xác nhận cập nhật kho</button>
+</form></dialog>
+<dialog id="reorderDialog" class="stock-dialog" aria-labelledby="reorderTitle"><form id="reorderForm" class="stock-dialog-inner">
+<header><div><span class="stock-eyebrow">NGƯỠNG CẢNH BÁO</span><h2 id="reorderTitle">Thiết lập mức tồn tối thiểu</h2></div><button class="stock-close" data-close-dialog type="button" aria-label="Đóng">×</button></header>
+<label>Số lượng cần cảnh báo <input name="reorderLevel" type="number" inputmode="decimal" min="0" max="1000000" step="0.001" required></label>
+<p class="stock-dialog-note">Mức cảnh báo dùng để xác định nguyên liệu cần nhập thêm. Thay đổi được ghi vào nhật ký quản trị.</p><p id="reorderFeedback" class="stock-form-feedback" role="alert"></p><button class="stock-btn stock-btn-primary stock-submit" type="submit">Lưu mức cảnh báo</button>
+</form></dialog>
+</body></html>
