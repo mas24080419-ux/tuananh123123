@@ -65,13 +65,22 @@ function makeSystemFlow({pool,intervalMs=4000,maxClients=4,now=()=>new Date().to
  ].join(' ');
  async function recent(){
    if(!pool)throw fail('Luồng dữ liệu thực yêu cầu PostgreSQL.');
-   const [result,countResult]=await Promise.all([
+   const [result,countResult,orderAudit]=await Promise.all([
     pool.query({text:sql,query_timeout:4500}),
-    pool.query({text:telemetry.metricsSql,query_timeout:4500})
+    pool.query({text:telemetry.metricsSql,query_timeout:4500}),
+    pool.query({text:"SELECT id::text AS id, order_id::text AS order_id, action, created_at FROM dining_audit WHERE created_at>now()-interval '4 hours' AND action IN ('order_validated','inventory_checked','order_created','item_status_changed','payment_confirmed') ORDER BY created_at DESC,id DESC LIMIT 150",query_timeout:4500})
    ]);
+   // Only durable audit records; no inferred HTTP/SQL spans and no personal data.
+   const grouped=new Map();
+   for(const a of (orderAudit.rows||[]).slice().reverse()){
+    if(!a.order_id||!a.action||!a.id)continue;
+    if(!grouped.has(a.order_id))grouped.set(a.order_id,[]);
+    grouped.get(a.order_id).push({id:a.id,action:a.action,at:a.created_at});
+   }
+   const verifiedOrders=[...grouped].map(([orderId,steps])=>({orderId,steps,latestAt:steps[steps.length-1]?.at})).reverse().slice(0,35);
    return {checkedAt:now(),source:'postgresql + process-memory',
     events:result.rows.map(r=>({id:r.id,module:r.module,action:r.action,occurredAt:r.occurred_at,source:r.source})),
-    requests:requests.slice(0,50),metrics:countResult.rows[0]||null,...telemetry.summary(),
+    requests:requests.slice(0,50),metrics:countResult.rows[0]||null,verifiedOrders,...telemetry.summary(),
     connectedOwners:subscribers.size,
     scope:'24h PostgreSQL counts and SSE execution steps in RAM; individual SQL statements are not traced'};
   }
