@@ -21,7 +21,7 @@ function makeOrderFlow({pool,intervalMs=2500,maxClients=5,now=()=>new Date().toI
        FROM dining_order_lines WHERE order_id=ANY($1::uuid[])
        ORDER BY created_at,id LIMIT 350`,values:[ids],query_timeout:4000}),
    pool.query({text:`SELECT id::text,order_id,item_id,action,created_at,
-       detail->>'from' AS previous_status,detail->>'to' AS next_status
+       actor,detail->>'from' AS previous_status,detail->>'to' AS next_status
        FROM dining_audit
        WHERE order_id=ANY($1::uuid[]) AND action=ANY($2::text[])
        ORDER BY id DESC LIMIT 400`,values:[ids,auditActions],query_timeout:4000})
@@ -32,6 +32,7 @@ function makeOrderFlow({pool,intervalMs=2500,maxClients=5,now=()=>new Date().toI
    lines.get(item.order_id)?.push(line);
   }
   const itemNames=new Map(items.rows.map(x=>[x.id,x.name]));
+  const sourceByOrder=new Map(audits.rows.filter(e=>e.action==='order_created').map(e=>[e.order_id,e.actor==='staff'?'staff':e.actor==='guest'?'guest':'unknown']));
   const events=audits.rows.reverse().map(e=>({
    id:String(e.id),orderId:e.order_id,itemId:e.item_id||null,action:e.action,
    at:e.created_at,from:e.previous_status||null,to:e.next_status||null,
@@ -40,7 +41,7 @@ function makeOrderFlow({pool,intervalMs=2500,maxClients=5,now=()=>new Date().toI
   const maxCursor=audits.rows.reduce((max,e)=>BigInt(e.id)>BigInt(max)?e.id:max,'0');
   return {
    checkedAt:now(),source:'postgresql',cursor:String(maxCursor),
-   orders:orders.rows.map(o=>({id:o.id,tableName:o.table_name,createdAt:o.created_at,paymentStatus:o.payment_status,items:lines.get(o.id)||[]})),
+   orders:orders.rows.map(o=>({id:o.id,tableName:o.table_name,createdAt:o.created_at,paymentStatus:o.payment_status,source:sourceByOrder.get(o.id)||'unknown',items:lines.get(o.id)||[]})),
    events
   };
  }

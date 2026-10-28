@@ -389,6 +389,7 @@ if(req.method==='POST'&&p==='/api/orders'){if(!throttle(req,'orders',25))return 
   if(!await requireAuth(req,res))return;
   const actor=await identity(req);
   if(!canManageOrders(actor))return err(res,403,'Không có quyền quản lý đơn.');
+  systemFlow.mark(req,'auth','Quyền gọi món nhân viên đã được xác minh');
   if(req.method==='GET'){
    if(!throttle(req,'staff-orders-read',120))return err(res,429,'Làm mới quá nhanh.');
    const all=await getOrders();
@@ -405,10 +406,14 @@ if(req.method==='POST'&&p==='/api/orders'){if(!throttle(req,'orders',25))return 
   if(!await requireAuth(req,res))return;
   const actor=await identity(req);
   if(!canConfirmOrderPayment(actor))return err(res,403,'Chỉ Thu ngân hoặc Quản lý được xác nhận thanh toán.');
+  systemFlow.mark(req,'auth','Đã xác minh quyền xác nhận thanh toán');
   if(!throttle(req,'staff-payment',40))return err(res,429,'Xác nhận quá nhanh.');
   const b=await input(req);
   if(b.confirm!==true)return err(res,400,'Hãy xác nhận đã nhận đủ tiền.');
-  return send(res,200,{payment:await confirmPayment(p.split('/')[4],b.paymentMethod,actor)});
+  systemFlow.mark(req,'finance','Đang xác nhận thanh toán đơn hàng');
+  const payment=await confirmPayment(p.split('/')[4],b.paymentMethod,actor);
+  systemFlow.mark(req,'pg',payment.already?'Đơn đã thu tiền từ trước':'Thanh toán đã lưu PostgreSQL');
+  return send(res,200,{payment});
  }
 
 
