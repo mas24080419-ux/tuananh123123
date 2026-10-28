@@ -52,7 +52,7 @@
  ];
  const filters=[['all','Tất cả'],['orders','QR Order'],['kds','Bếp / Bar'],['inventory','Kho'],['finance','Thu–chi'],['rental','Phao & Tủ'],['admin','Quản trị'],['access','API / Quyền'],['database','PostgreSQL'],['observe','Giám sát']];
  const colors={client:'#53c8ed',gateway:'#5fe0ad',module:'#f6c74f',database:'#a998ff',observe:'#ffa361'};
- let selected='orders',filter='all',scale=1,source=null,timer=null,last=null,view='events',followLive=true;
+ let selected='orders',filter='all',scale=1,source=null,timer=null,last=null,view='events',followLive=true,focusedTrace=null,hasSnapshot=false;
  function node(id){return nodes.find(n=>n.id===id)}
  const nameFor=id=>services[id]?.name||node(id)?.label||id;
  function line(a,b){
@@ -62,7 +62,7 @@
   const d=Math.max(24,(x2-x1)*.45);return 'M'+x1+' '+y1+' C'+(x1+d)+' '+y1+' '+(x2-d)+' '+y2+' '+x2+' '+y2
  }
  function renderGraph(){
-  $('deepNodes').innerHTML=nodes.map(n=>'<button type="button" class="deep-node deep-'+escape(n.kind)+'" data-id="'+escape(n.id)+'" style="left:'+n.x+'px;top:'+n.y+'px;width:'+n.w+'px;--nodecolor:'+colors[n.kind]+'" aria-pressed="false"><span class="deep-node-top"><span class="deep-node-light"></span><strong>'+escape(n.label)+'</strong></span><span class="deep-node-desc">'+escape(n.subtitle)+'</span><span class="deep-node-end">'+escape(services[n.id]?.tag||n.kind.toUpperCase())+'</span></button>').join('');
+  $('deepNodes').innerHTML=nodes.map(n=>'<button type="button" class="deep-node deep-'+escape(n.kind)+'" data-id="'+escape(n.id)+'" style="left:'+n.x+'px;top:'+n.y+'px;width:'+n.w+'px;--nodecolor:'+colors[n.kind]+'" aria-pressed="false"><span class="deep-node-top"><span class="deep-node-light"></span><strong>'+escape(n.label)+'</strong></span><span class="deep-node-desc">'+escape(n.subtitle)+'</span><span class="deep-node-end">'+escape(services[n.id]?.tag||n.kind.toUpperCase())+'</span><span class="deep-node-count" data-live-node="'+escape(n.id)+'">—</span></button>').join('');
   $('deepWires').innerHTML='<defs><marker id="deepArrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="6" markerHeight="6" orient="auto"><path d="M1 2 L10 6 L1 10" fill="none" stroke="#90a3bd" stroke-width="1.3"/></marker></defs>'+edges.map(([a,b,f])=>'<path class="deep-edge" data-flow="'+f+'" data-src="'+a+'" data-dst="'+b+'" d="'+line(a,b)+'" marker-end="url(#deepArrow)"/>').join('');
   $('deepFilters').innerHTML=filters.map(([id,title])=>'<button type="button" data-flow="'+id+'" class="deep-filter">'+escape(title)+'</button>').join('');
   $('deepNodes').addEventListener('click',e=>{const b=e.target.closest('[data-id]');if(b){followLive=false;updateFollow();select(b.dataset.id)}});
@@ -96,6 +96,7 @@
    p.classList.toggle('is-muted',!inFlow);
    p.classList.toggle('is-selected',related&&inFlow);
   });
+  updateTraceHighlights();
  }
  function select(id){
   if(!services[id])return;
@@ -111,7 +112,7 @@
  }
  function receive(data){
   const previous=last;
-  last=data;renderEvents();
+  last=data;hasSnapshot=true;renderEvents();renderMetrics();renderTraces();
   if(previous&&followLive){
    const oldDb=new Set(previous.events.map(e=>e.id));
    const oldHttp=new Set(previous.requests.map(e=>e.id));
@@ -146,6 +147,7 @@
   if(typeof EventSource==='undefined'){setConnection('Không hỗ trợ SSE · cập nhật 10s',false);timer=setInterval(fallback,10000);void fallback();return}
   source=new EventSource('/api/admin/architecture/system/live');
   source.addEventListener('system',e=>{try{receive(JSON.parse(e.data));setConnection('Đang kết nối SSE · dữ liệu thực',true);if(timer){clearInterval(timer);timer=null}}catch{}});
+  source.addEventListener('trace',e=>{try{traceUpdate(JSON.parse(e.data))}catch{}});
   source.addEventListener('offline',()=>setConnection('DB tạm mất kết nối',false));
   source.onerror=()=>{
    setConnection('SSE gián đoạn · cập nhật qua API',false);
@@ -155,7 +157,8 @@
  }
  function init(){
   if(!$('deepStage'))return;
-  renderGraph();select('orders');updateFollow();
+  renderGraph();select('orders');updateFollow();renderMetrics();
+  $('deepTraceList').addEventListener('click',e=>{const el=e.target.closest('[data-trace-id]');if(!el)return;followLive=false;updateFollow();focusedTrace=el.dataset.traceId;const t=currentTrace();if(t){selected=t.steps?.at(-1)?.node||t.module;filter=t.module;select(selected);renderTraces()}});
   $('deepFollow').addEventListener('click',()=>{followLive=!followLive;updateFollow()});
   $('deepEventItems').addEventListener('click',e=>{const el=e.target.closest('[data-event-module]');if(el&&services[el.dataset.eventModule]){followLive=false;updateFollow();select(el.dataset.eventModule)}});
   document.querySelectorAll('[data-deep-event-view]').forEach(b=>b.addEventListener('click',()=>{
