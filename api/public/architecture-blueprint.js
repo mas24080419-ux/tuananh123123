@@ -23,7 +23,7 @@
    // Steps 1–23 describe the successful lifecycle; 24 is a conditional error branch.
    // Branches to rollback are real alternatives, never a final post-payment stage.
    const success=nodes.slice(1,-1).map((x,i)=>({from:nodes[i].id,to:x.id}));
-   const errors=['step-5','step-8','step-12','step-15'].map(from=>({from,to:'step-24',kind:'rollback',label:'Validation / thiếu tồn → ROLLBACK'}));
+   const errors=['step-4','step-5','step-12','step-15'].map(from=>({from,to:'step-24',kind:'rollback',label:'Từ chối trước BEGIN hoặc ROLLBACK sau BEGIN'}));
    return {nodes,edges:[...success,...errors],width:1720,height:1000};
   }
   const priority=['dining','stock','finance','rental','access','audit','legacy'];
@@ -35,7 +35,7 @@
  function renderTop(){
   $('bpTabLabel').textContent=tabNames[state.tab];
   $('bpStatus').textContent=state.tab==='schema'?state.model.schema.tableCount+' bảng · '+state.model.schema.relationCount+' khóa ngoại':
-   state.tab==='order'?state.model.architecture.orderSteps.length+' mốc nghiệp vụ · 4 nhánh lỗi / ROLLBACK thể hiện bằng đường đỏ':
+   state.tab==='order'?state.model.architecture.orderSteps.length+' mốc nghiệp vụ · 4 nhánh bị từ chối / ROLLBACK bằng đường đỏ':
    state.model.architecture.blocks.length+' khối · '+state.model.architecture.connects.length+' quan hệ logic';
   $('bpFilters').hidden=state.tab!=='topology';
   $('bpTabs').querySelectorAll('[data-bp-tab]').forEach(b=>{
@@ -43,7 +43,7 @@
   });
   $('bpSearch').value='';
   $('bpHint').textContent=state.tab==='schema'?'Bảng và khóa ngoại được trích từ schema.sql. Các bảng legacy chỉ còn trong schema, không đồng nghĩa còn dùng trên UI.':
-   state.tab==='order'?'Đường đỏ: rẽ lỗi → ROLLBACK (trong giao dịch). Bếp/Bar và xác nhận thanh toán là những request sau COMMIT, không cùng giao dịch tạo đơn.':
+   state.tab==='order'?'Đường đỏ: lỗi trước BEGIN → HTTP từ chối; lỗi sau BEGIN → ROLLBACK. Bếp/Bar và xác nhận thanh toán là những request riêng sau COMMIT.':
    'Sơ đồ cấu trúc mã nguồn, không phải các microservice độc lập. Các khối sáng LIVE chỉ khi nhận được trạng thái quan sát thực.';
  }
  function renderNodes(){

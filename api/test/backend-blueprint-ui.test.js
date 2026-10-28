@@ -29,7 +29,7 @@ test('all six architecture layers are grounded in source and ERD has real FK edg
 test('rollback is a separate failure path, not the final step after successful payment',()=>{
  const js=read('architecture-blueprint.js');
  assert(js.includes("nodes.slice(1,-1).map"));
- assert(js.includes("['step-5','step-8','step-12','step-15']"));
+ assert(js.includes("['step-4','step-5','step-12','step-15']"));
  assert(js.includes("kind:'rollback'"));
  assert(js.includes('bp-rollback-wire'));
  assert(!js.includes('nodes.slice(1).map((x,i)=>({from:nodes[i].id,to:x.id}))'));
