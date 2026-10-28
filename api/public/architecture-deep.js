@@ -93,7 +93,7 @@
    const id=b.dataset.id,selectedNow=id===selected;
    const traceNodes=new Set(currentTrace()?.steps?.map(x=>x.node)||[]);
    const staffNodes=new Set(['stafforder','staffcart','http','auth','validate','orders','inventory','kds','finance','tx','pg','audit','stream','app']);
-   const isFlow=traceNodes.has(id)||filter==='all'||(filter==='stafforder'&&staffNodes.has(id))||(filter==='orders'&&id==='cart')||id==='http'||id==='pg'||id==='tx'||id==='audit'||id==='stream'||id==='app'||id==='auth'||id==='validate'||id===filter;
+   const isFlow=traceNodes.has(id)||filter==='all'||(filter==='stafforder'&&staffNodes.has(id))||(filter==='staffcart'&&['staffcart','stafforder','http','auth','app','stream'].includes(id))||(filter==='orders'&&id==='cart')||id==='http'||id==='pg'||id==='tx'||id==='audit'||id==='stream'||id==='app'||id==='auth'||id==='validate'||id===filter;
    b.classList.toggle('is-muted',!isFlow);
    b.classList.toggle('is-selected',selectedNow);
    b.setAttribute('aria-pressed',String(selectedNow));
