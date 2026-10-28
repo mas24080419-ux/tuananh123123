@@ -39,3 +39,16 @@ test('unified auth endpoint chooses account by email; only server may assign rol
  assert(js.includes("fetch('/api/me'"));
  assert(!js.includes('Tuan123456&'));
 });
+
+test('login inputs have consistent focus and autofill appearance on Chrome and Edge',()=>{
+ const css=read('unified-login.css');
+ const html=read('login.html');
+ assert(css.includes(':-webkit-autofill'));
+ assert(css.includes('input:autofill'));
+ assert(css.includes('-webkit-text-fill-color:#163440!important'));
+ assert(css.includes('-webkit-box-shadow:0 0 0 1000px #eaf0f6 inset!important'));
+ assert(css.includes('.mqn-input input:focus-visible'));
+ assert(css.includes('outline:none!important'));
+ assert(css.includes('.mqn-input:focus-within'));
+ assert(html.includes('/unified-login.css?v=2'));
+});

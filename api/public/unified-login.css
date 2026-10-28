@@ -35,5 +35,34 @@ h1{font-size:clamp(23px,5vw,27px);line-height:1.2;letter-spacing:-.7px;text-alig
 .mqn-smallprint{font-size:11px;text-align:center;line-height:1.6;margin:25px 8px 0;color:#77909d}
 .mqn-error{font-size:12px;line-height:1.5;color:#a13642;background:#fff1f1;border:1px solid #e8bbbb;border-radius:11px;padding:11px;margin:0 0 13px}
 .mqn-error:empty{display:none}
-:is(button,input):focus-visible{outline:3px solid #0b8588;outline-offset:3px}
+/* Keep browser/password-manager autofill visually identical to the regular field.
+   Chrome/Edge force their own blue autofill surface unless an inset fill overrides it. */
+.tt6-unified-login .mqn-input{background:#eaf0f6;overflow:hidden}
+.tt6-unified-login .mqn-input input,
+.tt6-unified-login .mqn-input input:focus,
+.tt6-unified-login .mqn-input input:focus-visible{
+ background:transparent!important;
+ background-color:transparent!important;
+ border:0!important;
+ border-radius:0!important;
+ outline:none!important;
+ box-shadow:none!important;
+ -webkit-appearance:none;
+ appearance:none;
+ caret-color:#163440;
+}
+.tt6-unified-login .mqn-input input:is(:-webkit-autofill,:-webkit-autofill:hover,:-webkit-autofill:focus),
+.tt6-unified-login .mqn-input input:autofill{
+ -webkit-text-fill-color:#163440!important;
+ caret-color:#163440!important;
+ -webkit-box-shadow:0 0 0 1000px #eaf0f6 inset!important;
+ box-shadow:0 0 0 1000px #eaf0f6 inset!important;
+ border-radius:0!important;
+ outline:none!important;
+}
+.tt6-unified-login .mqn-input:focus-within{
+ border-color:#087f83;
+ box-shadow:inset 5px 5px 10px rgba(162,177,195,.47),inset -5px -5px 10px #fff,0 0 0 2px rgba(8,127,131,.12);
+}
+.tt6-unified-login :is(button,a):focus-visible{outline:3px solid #0b8588;outline-offset:3px}
 @media(max-width:540px){body.tt6-unified-login{display:block;padding:23px 15px}.login-main{margin:0 auto}.mqn-topline{font-size:9px;flex-wrap:wrap}.mqn-security{font-size:8px}.mqn-face{padding:25px 19px 20px;border-radius:24px}.mqn-brand{margin:0 0 25px}.mqn-brand b{font-size:21px}}
