@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a1220">
+<title>Tắm Tráng 6 · Kiến trúc và luồng dữ liệu</title>
+<link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
+<link rel="stylesheet" href="/architecture.css?v=20261028-arch1">
+<script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
+<script defer src="/architecture.js?v=20261028-arch1"></script>
+</head>
+<body class="tt6-architecture-page">
+<div class="shell">
+<aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Điều hướng quản trị"><nav class="tt6-fallback-nav"><a href="/admin">Tổng quan</a><a href="/admin/architecture">Luồng dữ liệu</a></nav></aside>
+<main class="arch-main">
+  <header class="arch-header">
+    <div class="arch-title">
+      <p class="arch-eyebrow"><span class="arch-prod-dot"></span> PRODUCTION <span class="arch-slash">/</span> SALES<span class="arch-accent">HUB</span> <span class="arch-head-separator">/</span> SYSTEM ARCHITECTURE</p>
+      <h1>Kiến trúc & luồng dữ liệu</h1>
+      <p class="arch-intro">Theo dõi hệ thống từ QR gọi món, xử lý đơn, kho, thu–chi đến PostgreSQL. Chọn một khối hoặc đường kết nối để kiểm tra.</p>
+    </div>
+    <div class="arch-header-actions"><span class="arch-readonly"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Zm-4-10 3 3 5-6"/></svg> Chỉ xem · tài khoản chủ</span><button type="button" id="archRefresh" class="arch-refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-5L4 8M4 4v4h4M4 13a8 8 0 0 0 14 5l2-2M20 20v-4h-4"/></svg> Cập nhật trạng thái</button></div>
+  </header>
+  <section id="archError" class="arch-error" role="alert" hidden></section>
+  <div id="archContent" hidden>
+    <section class="arch-health" aria-label="Sức khỏe hệ thống">
+      <div class="arch-health-pill"><span class="arch-light" id="archAppLight"></span><div><span class="arch-health-label">RENDER / NODE</span><strong id="archAppState">—</strong></div></div>
+      <div class="arch-health-divider"></div>
+      <div class="arch-health-pill"><span class="arch-light" id="archDbLight"></span><div><span class="arch-health-label">POSTGRESQL</span><strong id="archDbState">—</strong></div></div>
+      <div class="arch-health-divider"></div>
+      <div class="arch-health-pill"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l4 2"/></svg><div><span class="arch-health-label">DB QUERY</span><strong id="archLatency">—</strong></div></div>
+      <div class="arch-health-time" id="archCheckedAt" role="status">Đang kiểm tra…</div>
+    </section>
+    <section class="arch-kpis" aria-label="Số liệu vận hành tại thời điểm kiểm tra">
+      <div class="arch-kpi"><span>ĐƠN / 24H</span><strong id="statOrders">—</strong><small>Đơn mới</small></div>
+      <div class="arch-kpi"><span>CHỜ BẾP / BAR</span><strong id="statKitchen">—</strong><small>Món mới / đang chế biến</small></div>
+      <div class="arch-kpi"><span>TỒN KHO THẤP</span><strong id="statStock">—</strong><small>Nguyên liệu cần chú ý</small></div>
+      <div class="arch-kpi"><span>THU–CHI / 24H</span><strong id="statFinance">—</strong><small>Phiếu ghi sổ</small></div>
+      <div class="arch-kpi"><span>TỦ ĐANG THUÊ</span><strong id="statLockers">—</strong><small>Chưa trả tủ</small></div>
+      <div class="arch-kpi"><span>CHƯA THANH TOÁN</span><strong id="statUnpaid">—</strong><small>Đơn đang ghi nợ</small></div>
+    </section>
+    <section class="arch-workbench" aria-label="Sơ đồ kiến trúc tương tác">
+      <div class="arch-workbench-header">
+        <div class="arch-workbench-caption"><span class="arch-pulse-static"></span><strong>Bản đồ xử lý dữ liệu</strong><span class="arch-workbench-hint">Kiến trúc logic · không phải distributed tracing</span></div>
+        <div class="arch-view-tools"><button type="button" id="archZoomOut" aria-label="Thu nhỏ sơ đồ" title="Thu nhỏ"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M8 11h6m3 6 4 4"/></svg></button><span id="archZoomLabel" aria-live="polite">100%</span><button type="button" id="archZoomIn" aria-label="Phóng to sơ đồ" title="Phóng to"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M8 11h6m-3-3v6m6 3 4 4"/></svg></button><button type="button" id="archFit" title="Vừa màn hình" aria-label="Điều chỉnh sơ đồ vừa khung"><svg viewBox="0 0 24 24"><path d="M8 3H3v5m13-5h5v5M3 16v5h5m13-5v5h-5"/></svg></button></div>
+      </div>
+      <div id="archFlowFilters" class="arch-filters" role="group" aria-label="Chọn luồng dữ liệu"></div>
+      <div class="arch-workarea">
+        <div class="arch-map-column">
+          <div id="archViewport" class="arch-viewport" tabindex="0" aria-label="Sơ đồ hệ thống, cuộn ngang để xem thêm">
+            <div id="archStageSizer" class="arch-stage-sizer">
+              <div id="archStage" class="arch-stage">
+                <div class="arch-zone zone-client"><span><i></i> KHÁCH HÀNG & NHÂN VIÊN</span></div>
+                <div class="arch-zone zone-gateway"><span><i></i> ỨNG DỤNG / QUYỀN TRUY CẬP</span></div>
+                <div class="arch-zone zone-module"><span><i></i> CÁC MÔ-ĐUN CÙNG MỘT BACKEND</span></div>
+                <div class="arch-zone zone-data"><span><i></i> DỮ LIỆU & ĐỐI SOÁT</span></div>
+                <svg id="archWires" class="arch-wires" viewBox="0 0 1440 825" xmlns="http://www.w3.org/2000/svg" aria-label="Các kết nối dữ liệu giữa mô-đun">
+                  <defs><marker id="archArrow" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 2 10 6 2 10" stroke="#6689ab" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+                  <g id="archEdges"></g>
+                </svg>
+                <div id="archNodes" class="arch-nodes"></div>
+              </div>
+            </div>
+          </div>
+          <div class="arch-map-footer"><span><span class="arch-legend-line"></span> Mũi tên = hướng xử lý logic</span><span>Chọn nút / đường nối để xem API</span><span id="archCounts">— khối · — kết nối</span></div>
+        </div>
+        <aside class="arch-inspector" aria-labelledby="archInspectorTitle">
+          <div class="arch-inspector-top"><span class="arch-detail-kicker">CHI TIẾT LUỒNG DỮ LIỆU</span><span class="arch-inspector-marker">INSPECT</span></div>
+          <div id="archInspector" aria-live="polite"><h2 id="archInspectorTitle">Chọn một khối</h2><p>Nhấn vào khối hoặc đường nối trong sơ đồ để biết luồng dữ liệu, API và bảng lưu trữ.</p></div>
+        </aside>
+      </div>
+    </section>
+    <footer class="arch-disclaimer"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/></svg><p><strong>Giới hạn giám sát:</strong> Chỉ số là ảnh chụp tổng hợp từ PostgreSQL tại thời điểm kiểm tra. Đường nối thể hiện logic mã nguồn, không chứng minh mọi yêu cầu đang hoạt động hay thời gian thực. Muốn theo dõi từng request cần triển khai request ID, tracing, metrics và cảnh báo riêng.</p></footer>
+  </div>
+  <section id="archAccess" class="arch-access" hidden><h2>Truy cập dành cho chủ cửa hàng</h2><p>Vui lòng đăng nhập tài khoản chủ cửa hàng để xem kiến trúc vận hành và số liệu tổng hợp.</p><a href="/admin">Đến trang đăng nhập</a></section>
+</main>
+</div>
+</body>
+</html>
