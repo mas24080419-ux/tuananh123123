@@ -455,7 +455,9 @@ if(p==='/api/admin/users'||/^\/api\/admin\/users\/[0-9a-f-]{36}$/.test(p)){
  if(req.method==='GET'&&p==='/api/admin/users')return send(res,200,{users:await staffAccounts.list()});
  if(req.method==='POST'&&p==='/api/admin/users'){
   if(!throttle(req,'staff-create',15))return err(res,429,'Thao tác quá nhanh.');
-  return send(res,201,{user:await staffAccounts.create(await input(req))});
+  const details=await input(req);
+  if(await ownerAccounts.emailExists(String(details.username||'').trim().toLowerCase()))return err(res,409,'Email đã được sử dụng bởi tài khoản chủ cửa hàng.');
+  return send(res,201,{user:await staffAccounts.create(details)});
  }
  if(req.method==='PATCH'){
   if(!throttle(req,'staff-update',20))return err(res,429,'Thao tác quá nhanh.');

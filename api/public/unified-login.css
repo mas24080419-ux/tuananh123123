@@ -1,16 +1,39 @@
-/* Single responsive employee/owner sign-in entry. No animation. */
-:root{font-family:'Plus Jakarta Sans',Inter,system-ui,sans-serif}
+/* Tắm Tráng 6 — unified sign-in, MediQueue-inspired and static (no animations). */
+:root{font-family:'Plus Jakarta Sans',Inter,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+*{box-sizing:border-box}
 html,body{min-height:100%;margin:0}
-body.tt6-unified-login{display:flex;align-items:center;justify-content:center;background:#f4f7fb;color:#172434}
-.login-main{width:min(100%,550px);padding:24px 18px;box-sizing:border-box}
-.tt6-unified-login .mqn-auth{width:100%;max-width:100%}
-.tt6-unified-login .mqn-brand{justify-content:center}
-.tt6-unified-login .mqn-stage{width:100%}
-.tt6-unified-login .mqn-card{width:100%;max-width:none;box-sizing:border-box}
-.tt6-unified-login .mqn-main{width:100%;box-sizing:border-box}
-.tt6-unified-login h1{font-size:clamp(23px,5vw,30px);margin:0 0 12px}
-.tt6-unified-login .mqn-field input{font-size:16px}
-.tt6-unified-login #loginError:empty{display:none}
-.tt6-unified-login button{cursor:pointer}
-.tt6-unified-login button:disabled{cursor:wait;opacity:.7}
-@media(max-width:520px){.login-main{padding:18px 12px}.tt6-unified-login .mqn-brand{margin-top:4px}}
+body.tt6-unified-login{--bg:#eaf0f6;--teal:#087f83;--ink:#163440;--muted:#687f91;min-height:100svh;background:var(--bg);color:var(--ink);display:grid;place-items:center;padding:20px 12px;font-size:14px}
+.login-main{width:min(100%,520px);margin:auto}
+.mqn-auth{width:100%}
+.mqn-brand{display:flex;justify-content:center;align-items:center;gap:12px;margin:0 0 28px}
+.mqn-brand b{display:block;color:#183d4a;font-size:23px;font-weight:800;letter-spacing:-.8px}
+.mqn-brand small{display:block;margin-top:5px;font-size:9px;letter-spacing:1.4px;font-weight:800;color:#8096a4}
+.tt6-mqn-brand-logo{flex:0 0 auto;border-radius:14px}
+.mqn-topline{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:0 5px 17px;font-size:10px;font-weight:800;letter-spacing:.7px;color:#6a8190}
+.mqn-security{font-size:9px;color:#087b7c;padding:7px 9px;border-radius:100px;border:1px solid #afd9d5;white-space:nowrap}
+.mqn-card{width:100%}
+.mqn-face{border-radius:27px;background:var(--bg);box-shadow:16px 16px 32px rgba(160,177,195,.42),-15px -15px 30px rgba(255,255,255,.96);padding:26px 29px 21px}
+.mqn-main{width:100%}
+.mqn-icon{display:grid;place-items:center;width:56px;height:56px;margin:0 auto 14px;border-radius:50%;font-size:23px;color:var(--teal);box-shadow:6px 6px 13px rgba(160,177,195,.6),-6px -6px 13px #fff}
+h1{font-size:clamp(23px,5vw,27px);line-height:1.2;letter-spacing:-.7px;text-align:center;margin:0;font-weight:800}
+.mqn-description{font-size:12px;color:#687f91;line-height:1.75;max-width:360px;text-align:center;margin:10px auto 23px}
+.mqn-field{display:block;margin:0 0 17px}
+.mqn-field>span:first-child{display:block;margin:0 0 8px 4px;font-weight:750;font-size:12px;color:#4a6474}
+.mqn-input{display:flex;align-items:center;min-height:52px;padding:0 14px;gap:7px;border:1px solid transparent;border-radius:16px;box-shadow:inset 5px 5px 10px rgba(162,177,195,.47),inset -5px -5px 10px #fff}
+.mqn-input:focus-within{border-color:#37a7a6}
+.mqn-input input{border:0;background:transparent;outline:none;min-width:0;flex:1;color:#163440;font:inherit;font-size:16px;padding:12px 3px}
+.mqn-input input::placeholder{color:#95a5b1}
+.mqn-show-pass{font:inherit;font-weight:700;font-size:12px;white-space:nowrap;border:0;color:#4b7380;background:transparent;cursor:pointer;padding:7px 3px}
+.mqn-submit{width:100%;min-height:51px;margin-top:5px;padding:12px;border:0;border-radius:16px;background:#087f83;color:#fff;font:inherit;font-size:14px;font-weight:800;cursor:pointer}
+.mqn-submit:hover{background:#056b70}
+.mqn-submit:disabled{opacity:.6;cursor:wait}
+.mqn-note{font-size:11px;color:#607f8b;line-height:1.6;margin:15px 0 0}
+.mqn-footer{display:flex;align-items:center;justify-content:space-between;gap:15px;border-top:1px solid #d3dee6;padding-top:17px;margin-top:21px}
+.mqn-footer p{font-size:11px;line-height:1.6;margin:0;color:#6e8794}
+.mqn-footer strong{color:#087f83}
+.mqn-secure-mark{display:grid;place-items:center;font-weight:800;width:29px;height:29px;flex-shrink:0;border-radius:50%;color:#087f83;border:1px solid #afd9d5}
+.mqn-smallprint{font-size:11px;text-align:center;line-height:1.6;margin:25px 8px 0;color:#77909d}
+.mqn-error{font-size:12px;line-height:1.5;color:#a13642;background:#fff1f1;border:1px solid #e8bbbb;border-radius:11px;padding:11px;margin:0 0 13px}
+.mqn-error:empty{display:none}
+:is(button,input):focus-visible{outline:3px solid #0b8588;outline-offset:3px}
+@media(max-width:540px){body.tt6-unified-login{display:block;padding:23px 15px}.login-main{margin:0 auto}.mqn-topline{font-size:9px;flex-wrap:wrap}.mqn-security{font-size:8px}.mqn-face{padding:25px 19px 20px;border-radius:24px}.mqn-brand{margin:0 0 25px}.mqn-brand b{font-size:21px}}
