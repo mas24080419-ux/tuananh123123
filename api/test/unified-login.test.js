@@ -7,7 +7,8 @@ const read=name=>fs.readFileSync(path.join(__dirname,'../public',name),'utf8');
 test('one login form for owner and employees; no duplicates in role dashboards',()=>{
  const login=read('login.html');
  assert(login.includes('id="loginForm"'));
- assert(login.includes('type="email"'));
+ assert(login.includes('name="email"'));
+ assert(login.includes('Email hoặc tên đăng nhập'));
  assert(login.includes('src="/unified-login.js'));
  for(const page of ['admin.html','orders.html','staff.html'])
   assert(!read(page).includes('id="loginForm"'),page+' should not have a secondary login');
