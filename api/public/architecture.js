@@ -11,7 +11,7 @@
  external:'<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 10h18m-6 5h4"/>'
  };
  const icon=group=>'<svg viewBox="0 0 24 24" aria-hidden="true">'+(iconPaths[group]||iconPaths.module)+'</svg>';
- const appLinks={owner:'/admin',orders:'/admin/orders',kds:'/staff',inventory:'/admin/inventory',finance:'/admin/operations',rental:'/staff/lockers',backoffice:'/admin/core'};
+ const appLinks={owner:'/admin',stafforder:'/staff/orders',orders:'/admin/orders',kds:'/staff',inventory:'/admin/inventory',finance:'/admin/operations',rental:'/staff/lockers',backoffice:'/admin/core'};
  const baseW=1440,baseH=825,modelState={model:null,monitor:null,filter:'all',selected:null,scale:.7,refreshing:false};
  let initialized=false;
  const groupNames={client:'ĐẦU VÀO',gateway:'ỨNG DỤNG / TRUY CẬP',module:'MÔ-ĐUN XỬ LÝ',storage:'POSTGRESQL',observe:'NHẬT KÝ',external:'QUY TRÌNH THANH TOÁN'};
@@ -20,6 +20,7 @@
  const edgeById=id=>modelState.model?.edges.find(e=>e.id===id);
  const activeGroups=()=>modelState.filter==='all'?null:new Set(
   modelState.filter==='dining'?['dining','ingress']:
+   modelState.filter==='stafforder'?['stafforder','access','inventory','dining','finance']:
   modelState.filter==='access'?['access','ingress']:
   modelState.filter==='finance'?['finance','access']:
   modelState.filter==='rental'?['rental','access']:

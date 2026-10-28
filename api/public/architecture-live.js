@@ -28,9 +28,9 @@
   $('liveOrderList').innerHTML=orders.length?orders.map(o=>
    '<button type="button" role="option" class="live-order-option '+(o.id===selected?'selected':'')+'" data-order="'+escape(o.id)+'" aria-selected="'+String(o.id===selected)+'">'+
    '<span class="live-order-option-row"><strong>'+escape(o.tableName)+'</strong><span class="live-order-mini '+statusClass(o)+'">'+escape(getState(o))+'</span></span>'+
-   '<span class="live-order-option-sub">#'+escape(shortId(o.id))+' · '+escape(time(o.createdAt))+'</span>'+
+   '<span class="live-order-option-sub">'+(o.source==='staff'?'Nhân viên':o.source==='guest'?'QR khách':'Không rõ nguồn')+' · #'+escape(shortId(o.id))+' · '+escape(time(o.createdAt))+'</span>'+
    '<span class="live-order-option-qty">'+(o.items||[]).reduce((sum,x)=>sum+Number(x.quantity||0),0)+' món</span></button>'
-  ).join(''):'<div class="live-order-empty">Chưa có đơn QR nào trong 24 giờ qua hoặc đang xử lý.<small>Đơn mới sẽ tự xuất hiện sau khi được lưu thành công.</small></div>';
+  ).join(''):'<div class="live-order-empty">Chưa có đơn QR hoặc nhân viên nào trong 24 giờ qua hoặc đang xử lý.<small>Đơn mới sẽ tự xuất hiện sau khi được lưu thành công.</small></div>';
  }
  const actionLabel=e=>({
   order_validated:'API đã kiểm tra đơn hợp lệ',
@@ -69,7 +69,7 @@
    (e.itemName?'<p>'+escape(e.itemName)+'</p>':'')+
    '<time>'+escape(time(e.at))+'</time></div></li>'
   ).join('')||'<li class="live-timeline-missing">Đang chờ sự kiện audit được lưu. Không suy diễn trạng thái thành công khi chưa có bản ghi.</li>';
-  $('liveOrderDetail').innerHTML='<div class="live-order-detail-top"><div><p class="live-order-detail-kicker">ĐƠN QR / '+escape(shortId(o.id))+'</p>'+
+  $('liveOrderDetail').innerHTML='<div class="live-order-detail-top"><div><p class="live-order-detail-kicker">'+(o.source==='staff'?'ĐƠN NHÂN VIÊN':o.source==='guest'?'ĐƠN KHÁCH QR':'ĐƠN CHƯA RÕ NGUỒN')+' / '+escape(shortId(o.id))+'</p>'+
    '<h3>'+escape(o.tableName)+'</h3><small>Nhận đơn: '+escape(time(o.createdAt))+'</small></div>'+
    '<span class="live-order-state '+statusClass(o)+'">'+escape(getState(o))+'</span></div>'+
    '<div class="live-flow-stages">'+bar+'</div>'+
@@ -78,7 +78,10 @@
   highlight(audit);
  }
  function highlight(audit){
-  const roots=new Set(['guest','http','orders']);
+  const origin=current()?.source;
+  const roots=new Set(['http','orders']);
+  if(origin==='staff'){roots.add('stafforder');roots.add('auth')}
+  if(origin==='guest')roots.add('guest');
   for(const e of audit){
    const stage=actionStage(e);
    roots.add(stage);
@@ -87,7 +90,9 @@
   if(audit.some(e=>e.action==='order_created'))roots.add('postgres');
   for(const el of document.querySelectorAll('#archNodes [data-arch-node]'))
    el.classList.toggle('arch-live-node-active',Boolean(selected&&roots.has(el.dataset.archNode)));
-  const connections=new Set(['guest-http','http-orders','orders-postgres']);
+  const connections=new Set(['orders-postgres']);
+  if(origin==='staff'){connections.add('stafforder-http');connections.add('http-auth');connections.add('auth-orders')}
+  if(origin==='guest'){connections.add('guest-http');connections.add('http-orders')}
   if(roots.has('inventory'))connections.add('orders-inventory');
   if(roots.has('kds')){connections.add('orders-kds');connections.add('kds-postgres')}
   if(roots.has('audit'))connections.add('postgres-audit');
