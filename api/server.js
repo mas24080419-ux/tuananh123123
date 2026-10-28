@@ -29,6 +29,7 @@ const ops=require('./operations')({pool,id});
 const createAsyncTtlCache=require('./async-ttl-cache');
 const analytics=require('./finance-analytics')({pool});
 const paymentRecipient=require('./payment-recipient')({pool});
+const sepaySandbox=require('./sepay-sandbox')({secret:process.env.SEPAY_SANDBOX_SECRET||''});
 const sepayWebhook=require('./bank-webhook').createWebhook({
  pool,secret:process.env.SEPAY_WEBHOOK_SECRET||'',
  autoConfirm:process.env.SEPAY_AUTO_CONFIRM==='true',
@@ -424,6 +425,14 @@ if(req.method==='GET'&&p==='/api/payment/recipient'){
 if(req.method==='GET'&&p==='/api/admin/payment-banks'){
  if(!await requireAdmin(req,res))return;
  return send(res,200,await paymentRecipient.banks());
+}
+if(p==='/api/admin/sepay-sandbox'&&req.method==='GET'){
+ if(!await requireAdmin(req,res))return;
+ return send(res,200,sepaySandbox.snapshot());
+}
+if(p==='/api/webhooks/sepay-sandbox'&&req.method==='POST'){
+ const result=await sepaySandbox.receive(req);
+ return send(res,200,{success:result.success});
 }
 if(p==='/api/admin/bank-transactions'&&req.method==='GET'){
  if(!await requireAdmin(req,res))return;

@@ -1,5 +1,5 @@
 <!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#f7f8fa"><title>Tắm Tráng 6 · QR chuyển khoản</title><link rel="stylesheet" href="/admin-minimal.css">
-<link rel="stylesheet" href="/payment.css?v=two-bank-activity-v2"><link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
+<link rel="stylesheet" href="/payment.css?v=sepay-sandbox-v1"><link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
 </head><body><div class="shell tt6-payment-shell"><aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside><main class="wrap tt6-payment-content"><header class="top"><strong class="sh-payment-brand"><img class="sh-brand-logo" src="/tam-trang-6-logo.svg" width="40" height="40" alt="">Tắm Tráng 6</strong><nav><a href="/admin">Tổng quan</a> · <a href="/admin/operations">Thu–chi</a></nav></header>
 <h1>MB Bank & VietinBank</h1>
@@ -26,6 +26,15 @@
  <div class="tt6-bank-preview" hidden><p><b>QR kiểm tra</b> — chỉ quét để đối chiếu, không chuyển tiền.</p>
   <img class="bankPreviewQr" alt="QR kiểm tra ngân hàng" width="172" height="172" loading="lazy" referrerpolicy="no-referrer"><p class="bankPreviewInfo"></p></div>
 </section></div>
+<section class="card tt6-sandbox-card">
+ <div class="tt6-reconcile-head"><div><h2>SePay Test mode — thử webhook không dùng tiền thật</h2>
+ <p class="small">Đường thử nghiệm độc lập: không ghi vào đơn hàng, doanh thu hoặc nhật ký ngân hàng thật.</p></div>
+ <button type="button" id="refreshSandbox">Làm mới</button></div>
+ <p class="small">URL SePay Test mode: <code id="sepaySandboxUrl"></code></p>
+ <p id="sepaySandboxStatus" role="status">Đang kiểm tra trạng thái…</p>
+ <div id="sepaySandboxEvents" class="tt6-bank-tx-list"></div>
+ <p class="small">Để sử dụng, tạo webhook HMAC-SHA256 trong SePay Test mode rồi nhập cùng một secret vào biến môi trường Render <code>SEPAY_SANDBOX_SECRET</code>. Không gửi secret qua chat. Khi Render khởi động lại, nhật ký thử tạm thời được xóa.</p>
+</section>
 <section class="card"><h2>Đối soát tự động SePay</h2>
 <p id="sepayState">Đang kiểm tra webhook…</p>
 <p>Webhook: <code id="sepayWebhookUrl"></code></p>
@@ -38,4 +47,4 @@
  <div class="tt6-bank-tx-list" id="bankTxList" aria-live="polite"></div>
 </section>
 <div class="info">Hãy thử quét QR để kiểm tra tên chủ tài khoản và số tài khoản, không chuyển khoản thử với QR kiểm tra. Thanh toán thật cần được đối soát từ nguồn giao dịch.</div></main></div>
-<script src="/payment.js?v=two-bank-activity-v2"></script></body></html>
+<script src="/payment.js?v=sepay-sandbox-v1"></script></body></html>

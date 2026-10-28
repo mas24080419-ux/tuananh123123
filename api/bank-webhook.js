@@ -75,4 +75,4 @@ function createWebhook({pool,secret='',autoConfirm=false,onPaid=()=>{}}){
  }
  return {receive,ingest,enabled:secret.length>=24,autoConfirm:Boolean(autoConfirm&&secret.length>=24)};
 }
-module.exports={bankBin,referenceFrom,verify,parse,createWebhook};
+module.exports={bankBin,referenceFrom,verify,parse,rawBody,createWebhook};

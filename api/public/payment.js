@@ -43,6 +43,28 @@ document.querySelectorAll('.receivingBankForm').forEach(form=>form.addEventListe
   notice('Đã lưu '+label[account.bankBin]+' trên PostgreSQL. Hãy quét QR kiểm tra thông tin.');
  }catch(e){notice(e.message,true)}finally{btn.disabled=false}
 }));
+async function refreshSandbox(){
+ const status=$('#sepaySandboxStatus'),feed=$('#sepaySandboxEvents');
+ if(!status||!feed)return;
+ try{
+  const r=await api('/api/admin/sepay-sandbox');
+  $('#sepaySandboxUrl').textContent=location.origin+'/api/webhooks/sepay-sandbox';
+  status.textContent=!r.configured?'Chưa kết nối — cần cấu hình khóa HMAC sandbox trên Render.':
+    'Đã sẵn sàng nhận webhook sandbox. Tổng '+r.events.length+' thông báo đã xác thực kể từ khi server khởi động.';
+  feed.replaceChildren();
+  for(const e of r.events){
+   const row=document.createElement('div');row.className='tt6-bank-tx-row';
+   const name=document.createElement('strong');
+   name.textContent=(label[e.bankBin]||'Ngân hàng')+' · '+money(e.amount);
+   const info=document.createElement('small');
+   info.textContent=(e.type||'')+' · '+(e.reference||'Không có mã đơn')+' · '+e.accountTail+' · '+new Date(e.receivedAt).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'});
+   const state=document.createElement('span');state.className='tt6-bank-tx-state';
+   state.textContent='TEST · Không ghi doanh thu';
+   row.append(name,info,state);feed.append(row);
+  }
+ }catch(e){status.textContent='Không tải được trạng thái SePay Test mode: '+e.message}
+}
+$('#refreshSandbox')?.addEventListener('click',refreshSandbox);
 function money(v){return new Intl.NumberFormat('vi-VN',{maximumFractionDigits:0}).format(Number(v)||0)+'đ'}
 async function refreshTransactions(){
  const status=$('#bankTxStatus'),list=$('#bankTxList');
@@ -68,3 +90,4 @@ async function refreshTransactions(){
 $('#refreshBankTx')?.addEventListener('click',refreshTransactions);
 init();
 void refreshTransactions();
+void refreshSandbox();

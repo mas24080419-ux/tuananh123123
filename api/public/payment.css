@@ -38,3 +38,9 @@ button:disabled{opacity:.6}.row{display:grid;grid-template-columns:1fr 1fr;gap:1
 .tt6-bank-tx-row small{font-size:11px;color:#71828c;overflow-wrap:anywhere}
 .tt6-bank-tx-state{font-size:11px;font-weight:750;color:#8b641d}
 @media(max-width:760px){.tt6-reconcile-head #refreshBankTx{width:100%}}
+
+.tt6-sandbox-card{border-color:#d3e3d8;background:#fcfefd}
+#sepaySandboxStatus{font-size:12px;font-weight:750;padding:10px 12px;background:#edf8f3;border-radius:9px;color:#28704f}
+#sepaySandboxUrl{overflow-wrap:anywhere;font-size:12px}
+.tt6-sandbox-card .small{line-height:1.6}
+#refreshSandbox{background:#edf6f4;color:#176d5a;min-height:42px}
