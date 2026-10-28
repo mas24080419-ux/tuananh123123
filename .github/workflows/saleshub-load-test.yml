@@ -1,0 +1,60 @@
+name: SalesHub isolated 50-100 concurrent order load
+on:
+  push:
+    branches: ['perf/load-50-100-20261028']
+    paths:
+      - 'api/loadtest/**'
+      - '.github/workflows/saleshub-load-test.yml'
+  workflow_dispatch:
+jobs:
+  load-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: saleshub_test
+          POSTGRES_PASSWORD: local-loadtest-only
+          POSTGRES_DB: saleshub_loadtest
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U saleshub_test -d saleshub_loadtest"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+    env:
+      DATABASE_URL: postgresql://saleshub_test:local-loadtest-only@127.0.0.1:5432/saleshub_loadtest
+      PORT: 3210
+      STAFF_PASSWORD: this-is-a-local-test-secret
+      SESSION_SECRET: isolated-github-runner-not-for-production-2026
+      SALESHUB_LOADTEST_ONLY: isolated-postgres
+      SALESHUB_LOADTEST_URL: http://127.0.0.1:3210
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install SalesHub dependencies
+        run: cd api && npm install --no-audit --no-fund
+      - name: Boot SalesHub against disposable local PostgreSQL
+        run: |
+          cd api
+          node server.js > "$RUNNER_TEMP/saleshub-server.log" 2>&1 &
+          echo $! > "$RUNNER_TEMP/saleshub.pid"
+          for i in {1..80}; do
+            if curl -fsS http://127.0.0.1:3210/api/health > /dev/null; then break; fi
+            sleep 1
+          done
+          curl -fsS http://127.0.0.1:3210/api/health
+      - name: Simulate 50 and 100 concurrent client orders, verify Bep/Bar and inventory
+        run: cd api && node loadtest/traffic-50-100.js
+      - name: Attach JSON report and local backend logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: isolated-saleshub-50-100-results
+          path: |
+            api/loadtest/results/stress-report.json
+            ${{ runner.temp }}/saleshub-server.log
+          if-no-files-found: warn
