@@ -1,0 +1,714 @@
+```
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Premium Low Stock Alert UI</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background-color: #f1f4f9;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px 16px;
+  color: #1e293b;
+}
+
+/* =========================================
+   PREMIUM CARD CONTAINER
+   ========================================= */
+.stock-card.premium-card {
+  width: 100%;
+  max-width: 440px;
+  background: radial-gradient(circle at 100% 0%, rgba(119, 102, 255, 0.09), transparent 32%), #ffffff;
+  border-radius: 28px;
+  padding: 28px 24px;
+  box-shadow: 0 15px 45px rgba(47, 77, 158, 0.075), 0 2px 10px rgba(47, 77, 158, 0.025);
+  border: 1px solid rgba(226, 232, 240, 0.8);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Header */
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.header-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 18px;
+  box-shadow: 0 6px 14px rgba(99, 102, 241, 0.3);
+}
+
+.header-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.header-subtitle {
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.live-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 11px;
+  border-radius: 9999px;
+  background-color: #ecfdf5;
+  color: #059669;
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid rgba(16, 185, 129, 0.18);
+}
+
+.pulse-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background-color: #10b981;
+  position: relative;
+}
+
+.pulse-dot::after {
+  content: '';
+  position: absolute;
+  top: -2px;
+  left: -2px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background-color: rgba(16, 185, 129, 0.4);
+  animation: pulse 2s infinite ease-out;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* =========================================
+   ALERT SUMMARY BANNER
+   ========================================= */
+.alert-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid #ffdced;
+  border-radius: 18px;
+  background: linear-gradient(115deg, #fff2f4, #fff4f6 55%, #fbf8fe);
+  padding: 16px 18px;
+  margin-bottom: 22px;
+  box-shadow: 0 4px 14px rgba(239, 68, 68, 0.04);
+}
+
+.summary-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #ef4444;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 3px;
+}
+
+.summary-count {
+  font-size: 15px;
+  color: #1e293b;
+  font-weight: 600;
+}
+
+.summary-count strong {
+  color: #ef4444;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.summary-subtext {
+  font-size: 11px;
+  color: #64748b;
+  margin-top: 3px;
+}
+
+.summary-badge-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ff5757, #ef4444);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  box-shadow: 0 6px 16px rgba(239, 68, 68, 0.28);
+  flex-shrink: 0;
+}
+
+/* =========================================
+   SECTION HEADER
+   ========================================= */
+.section-title-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.section-subtitle {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.badge-pill {
+  padding: 3px 9px;
+  background-color: #f1f5f9;
+  color: #64748b;
+  font-size: 10px;
+  font-weight: 700;
+  border-radius: 9999px;
+  letter-spacing: 0.04em;
+}
+
+/* =========================================
+   PRODUCT LIST & CARDS
+   ========================================= */
+.premium-product-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.premium-product {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 12px;
+  border-radius: 16px;
+  background-color: #ffffff;
+  border: 1px solid #f1f5f9;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.premium-product:hover {
+  background-color: #f8fafc;
+  border-color: #e2e8f0;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.04);
+}
+
+.premium-product:hover .arrow-icon {
+  transform: translateX(3px);
+  color: #4f46e5;
+}
+
+/* Product image container */
+.premium-product-image {
+  width: 55px;
+  height: 55px;
+  border-radius: 14px;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.premium-product-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.bg-amber {
+  background: linear-gradient(135deg, #fef3c7, #fde68a);
+}
+
+.bg-gray {
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+}
+
+.bg-dark {
+  background: linear-gradient(135deg, #334155, #1e293b);
+}
+
+.product-number {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  background-color: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(4px);
+  color: #ffffff;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 2px 5px;
+  border-radius: 6px;
+  letter-spacing: 0.02em;
+}
+
+/* Product Details */
+.premium-product-details {
+  flex: 1;
+  min-width: 0;
+}
+
+.product-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.product-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.product-sku {
+  font-size: 10px;
+  color: #94a3b8;
+  display: block;
+  margin-bottom: 7px;
+}
+
+/* Status Badges */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  flex-shrink: 0;
+}
+
+.badge-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+}
+
+.status-low {
+  background-color: #fffbeb;
+  color: #d97706;
+  border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.status-low .badge-dot {
+  background-color: #f59e0b;
+}
+
+.status-critical {
+  background-color: #fef2f2;
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.status-critical .badge-dot {
+  background-color: #ef4444;
+}
+
+/* Progress bar container */
+.progress-container {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.progress-bar-bg {
+  flex: 1;
+  height: 5px;
+  background-color: #edf2f7;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.4s ease;
+}
+
+.fill-low {
+  background: linear-gradient(90deg, #6366f1, #818cf8);
+}
+
+.fill-critical {
+  background: linear-gradient(90deg, #f43f5e, #fb7185);
+}
+
+.fill-amber {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
+}
+
+.stock-fraction {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+  min-width: 26px;
+  text-align: right;
+}
+
+/* Product Quantity Right side */
+.product-quantity {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  padding-left: 6px;
+  position: relative;
+}
+
+.product-quantity strong {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+}
+
+.product-quantity .text-critical {
+  color: #dc2626;
+}
+
+.product-quantity span {
+  font-size: 9px;
+  color: #94a3b8;
+  font-weight: 500;
+}
+
+.arrow-icon {
+  position: absolute;
+  right: -8px;
+  font-size: 9px;
+  color: #cbd5e1;
+  transition: all 0.2s ease;
+}
+
+/* =========================================
+   FOOTER
+   ========================================= */
+.premium-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.footer-note {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.footer-shield-icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+  background-color: #eef2ff;
+  color: #6366f1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+}
+
+.footer-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.footer-subtitle {
+  font-size: 9px;
+  color: #94a3b8;
+}
+
+.premium-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 18px;
+  border-radius: 13px;
+  border: none;
+  cursor: pointer;
+  background: linear-gradient(105deg, #6250f5, #6538f7 50%, #4d6afe);
+  box-shadow: 0 8px 18px rgba(101, 80, 245, 0.21);
+  color: #ffffff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  transition: all 0.25s ease;
+  white-space: nowrap;
+}
+
+.premium-button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 22px rgba(101, 80, 245, 0.32);
+  filter: brightness(1.05);
+}
+
+.premium-button:active {
+  transform: translateY(0);
+}
+
+  </style>
+</head>
+<body>
+  <div class="stock-card premium-card">
+    
+    <!-- Header -->
+    <header class="card-header">
+      <div class="header-info">
+        <div class="header-icon">
+          <i class="fa-solid fa-boxes-stacked"></i>
+        </div>
+        <div>
+          <h3 class="header-title">Inventory Alerts</h3>
+          <p class="header-subtitle">Stay ahead of stock shortages</p>
+        </div>
+      </div>
+      <span class="live-badge">
+        <span class="pulse-dot"></span>
+        Live Monitoring
+      </span>
+    </header>
+
+    <!-- Alert Summary Banner -->
+    <section class="alert-summary">
+      <div class="summary-content">
+        <span class="summary-label">
+          <i class="fa-solid fa-triangle-exclamation"></i>
+          STOCK ATTENTION REQUIRED
+        </span>
+        <div class="summary-count">
+          <strong>03</strong> products running low
+        </div>
+        <p class="summary-subtext">Restock your inventory before items run out.</p>
+      </div>
+      <div class="summary-badge-icon">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+      </div>
+    </section>
+
+    <!-- Section Title -->
+    <div class="section-title-wrap">
+      <div>
+        <h4 class="section-title">Low Stock Products</h4>
+        <p class="section-subtitle">Products below minimum stock level</p>
+      </div>
+      <span class="badge-pill">03 ITEMS</span>
+    </div>
+
+    <!-- Product List -->
+    <div class="premium-product-list" id="productList">
+
+      <!-- Product 1: Wireless Headphones -->
+      <article class="premium-product" data-stock="4" data-limit="10">
+        <div class="premium-product-image bg-amber">
+          <img src="https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=160&auto=format&fit=crop&q=80" alt="Wireless Headphones">
+          <span class="product-number">01</span>
+        </div>
+        <div class="premium-product-details">
+          <div class="product-header">
+            <h5 class="product-name">Wireless Headphones</h5>
+            <span class="status-badge status-low">
+              <span class="badge-dot"></span>
+              Low Stock
+            </span>
+          </div>
+          <span class="product-sku">SKU: WH-204</span>
+          <div class="progress-container">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill fill-low" style="width: 40%"></div>
+            </div>
+            <span class="stock-fraction">4/10</span>
+          </div>
+        </div>
+        <div class="product-quantity">
+          <strong>04</strong>
+          <span>units left</span>
+          <i class="fa-solid fa-chevron-right arrow-icon"></i>
+        </div>
+      </article>
+
+      <!-- Product 2: Smart Watch -->
+      <article class="premium-product" data-stock="2" data-limit="10">
+        <div class="premium-product-image bg-gray">
+          <img src="https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=160&auto=format&fit=crop&q=80" alt="Smart Watch">
+          <span class="product-number">02</span>
+        </div>
+        <div class="premium-product-details">
+          <div class="product-header">
+            <h5 class="product-name">Smart Watch</h5>
+            <span class="status-badge status-critical">
+              <span class="badge-dot"></span>
+              Critical
+            </span>
+          </div>
+          <span class="product-sku">SKU: SW-108</span>
+          <div class="progress-container">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill fill-critical" style="width: 20%"></div>
+            </div>
+            <span class="stock-fraction">2/10</span>
+          </div>
+        </div>
+        <div class="product-quantity">
+          <strong class="text-critical">02</strong>
+          <span>units left</span>
+          <i class="fa-solid fa-chevron-right arrow-icon"></i>
+        </div>
+      </article>
+
+      <!-- Product 3: Bluetooth Speaker -->
+      <article class="premium-product" data-stock="5" data-limit="10">
+        <div class="premium-product-image bg-dark">
+          <img src="https://images.unsplash.com/photo-1545454675-3531b543be5d?w=160&auto=format&fit=crop&q=80" alt="Bluetooth Speaker">
+          <span class="product-number">03</span>
+        </div>
+        <div class="premium-product-details">
+          <div class="product-header">
+            <h5 class="product-name">Bluetooth Speaker</h5>
+            <span class="status-badge status-low">
+              <span class="badge-dot"></span>
+              Low Stock
+            </span>
+          </div>
+          <span class="product-sku">SKU: BS-315</span>
+          <div class="progress-container">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill fill-amber" style="width: 50%"></div>
+            </div>
+            <span class="stock-fraction">5/10</span>
+          </div>
+        </div>
+        <div class="product-quantity">
+          <strong>05</strong>
+          <span>units left</span>
+          <i class="fa-solid fa-chevron-right arrow-icon"></i>
+        </div>
+      </article>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="premium-footer">
+      <div class="footer-note">
+        <div class="footer-shield-icon">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h6 class="footer-title">Never miss a restock</h6>
+          <p class="footer-subtitle">Keep your inventory healthy</p>
+        </div>
+      </div>
+      <button class="premium-button" type="button" id="manageBtn">
+        <span>Manage Inventory</span>
+        <i class="fa-solid fa-arrow-right"></i>
+      </button>
+    </footer>
+
+  </div>
+
+  
+  <script>
+/**
+ * Premium Low Stock Alert UI - Dynamic Calculator & Interactions
+ */
+document.addEventListener('DOMContentLoaded', () => {
+  const products = document.querySelectorAll('.premium-product');
+  const manageBtn = document.getElementById('manageBtn');
+
+  // Update product stock bars & dynamic percentage
+  products.forEach((product) => {
+    const stock = parseInt(product.getAttribute('data-stock'), 10) || 0;
+    const limit = parseInt(product.getAttribute('data-limit'), 10) || 10;
+
+    const progressBar = product.querySelector('.progress-bar-fill');
+    const stockFraction = product.querySelector('.stock-fraction');
+
+    // Calculate percentage up to 100%
+    const percentage = limit > 0 ? Math.min((stock / limit) * 100, 100) : 0;
+    
+    if (progressBar) {
+      progressBar.style.width = `${percentage}%`;
+    }
+    if (stockFraction) {
+      stockFraction.textContent = `${stock}/${limit}`;
+    }
+
+    // Interactive click to inspect or restock
+    product.addEventListener('click', () => {
+      const name = product.querySelector('.product-name')?.textContent;
+      console.log(`Clicked product: ${name} (Stock: ${stock}/${limit})`);
+    });
+  });
+
+  // Manage Inventory button click handler
+  if (manageBtn) {
+    manageBtn.addEventListener('click', () => {
+      alert('Opening Inventory Management Dashboard...');
+    });
+  }
+});
+
+  </script>
+</body>
+</html>
+```
