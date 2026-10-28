@@ -196,6 +196,8 @@
    const data=await response.json();
    if(!data?.model||!Array.isArray(data.model.nodes)||!Array.isArray(data.model.edges)||!Array.isArray(data.model.flows)||!data.monitor)throw Error('Dữ liệu kiến trúc không hợp lệ.');
    modelState.model=data.model;
+   // Reveal the graph before measuring its width for the initial fit.
+   $('archContent').hidden=false;$('archAccess').hidden=true;
    if(!initialized){drawGraph();initialized=true;fit();}
    else{drawFilters();updateHighlight();}
    monitorView(data.monitor);
