@@ -5,6 +5,10 @@
 function makeSystemFlow({pool,intervalMs=4000,maxClients=4,now=()=>new Date().toISOString()}){
  const subscribers=new Set(),requests=[];
  let timer=null,running=false,revision=0;
+ const telemetry=require('./processing-telemetry')({now,publish:message=>{
+  const line='event: trace\n'+'data: '+JSON.stringify(message)+'\n\n';
+  for(const sub of subscribers)if(!sub.res.destroyed&&!sub.res.writableEnded)try{sub.res.write(line)}catch{}
+ }});
  const fail=(message,status=503)=>Object.assign(Error(message),{status});
  const classify=(method,path)=>{
   if(!path.startsWith('/api/')||path.startsWith('/api/admin/architecture')||path==='/api/me'||path==='/api/health'||/login|logout|password|activate-owner|recipient|payment-banks/.test(path))return null;
@@ -33,6 +37,7 @@ function makeSystemFlow({pool,intervalMs=4000,maxClients=4,now=()=>new Date().to
   const path=(req.url||'').split('?')[0];
   const target=classify(req.method||'GET',path);
   if(!target)return;
+  telemetry.start(req,res,target);
   const started=process.hrtime.bigint();
   res.once('finish',()=>{
    const durationMs=Math.round(Number(process.hrtime.bigint()-started)/1e6);
@@ -59,11 +64,18 @@ function makeSystemFlow({pool,intervalMs=4000,maxClients=4,now=()=>new Date().to
   ') e ORDER BY occurred_at DESC,id DESC LIMIT 100'
  ].join(' ');
  async function recent(){
-  if(!pool)throw fail('Luồng dữ liệu thực yêu cầu PostgreSQL.');
-  const result=await pool.query({text:sql,query_timeout:4500});
-  return {checkedAt:now(),source:'postgresql + process-memory',events:result.rows.map(r=>({id:r.id,module:r.module,action:r.action,occurredAt:r.occurred_at,source:r.source})),requests:requests.slice(0,50),scope:'24h, tối đa 100 sự kiện DB; 50 request gần nhất trong bộ nhớ; không phải SQL distributed tracing'};
- }
- function send(res,payload){
+   if(!pool)throw fail('Luồng dữ liệu thực yêu cầu PostgreSQL.');
+   const [result,countResult]=await Promise.all([
+    pool.query({text:sql,query_timeout:4500}),
+    pool.query({text:telemetry.metricsSql,query_timeout:4500})
+   ]);
+   return {checkedAt:now(),source:'postgresql + process-memory',
+    events:result.rows.map(r=>({id:r.id,module:r.module,action:r.action,occurredAt:r.occurred_at,source:r.source})),
+    requests:requests.slice(0,50),metrics:countResult.rows[0]||null,...telemetry.summary(),
+    connectedOwners:subscribers.size,
+    scope:'24h PostgreSQL counts and SSE execution steps in RAM; individual SQL statements are not traced'};
+  }
+  function send(res,payload){
   if(res.destroyed||res.writableEnded)return;
   res.write('event: system\n'+'data: '+JSON.stringify(payload)+'\n\n');
  }
@@ -99,6 +111,6 @@ function makeSystemFlow({pool,intervalMs=4000,maxClients=4,now=()=>new Date().to
   if(!timer)timer=setInterval(()=>{void pulse()},intervalMs);
   void pulse();
  }
- return {recent,attach,trackRequest,classify,pulse};
+ return {recent,attach,trackRequest,classify,mark:telemetry.mark,pulse};
 }
 module.exports=makeSystemFlow;
