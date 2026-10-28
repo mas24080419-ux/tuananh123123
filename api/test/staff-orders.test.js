@@ -69,7 +69,7 @@ test('staff page, links and browser controller parse and expose safe actions',()
  assert(js.includes('paymentFeedback(o.id'));
  assert(js.includes("o.payment_status='paid'"));
  assert(read('public/orders.js').includes('await reload(false)'));
- assert(read('public/orders.html').includes('/orders.js?v=payment-feedback-v3'));
+ assert(read('public/orders.html').includes('/orders.js?v=20261028-owner-payment-v1'));
  assert(!js.includes('/api/admin/finance')&&!js.includes('/api/admin/summary'));
  assert(read('public/staff.js').includes("location.replace('/staff/orders')"));
  assert(read('public/users.html').includes('Phục vụ bàn — tạo & quản lý đơn'));
