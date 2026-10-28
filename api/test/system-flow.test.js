@@ -1,0 +1,58 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const {EventEmitter}=require('node:events');
+const makeSystemFlow=require('../system-flow');
+
+function fakeFlow(){
+ const seen=[];
+ const pool={query:async statement=>{
+  seen.push(statement);
+  return {rows:[{id:'dining:1',module:'orders',action:'order_created',occurred_at:'2026-10-28T07:00:00.000Z',source:'dining_audit'}]};
+ }};
+ return {flow:makeSystemFlow({pool,now:()=> '2026-10-28T07:01:00.000Z'}),seen};
+}
+test('Sanitize dynamic routes and exclude owner authentication and observability self traffic',()=>{
+ const {flow}=fakeFlow();
+ assert.deepEqual(flow.classify('POST','/api/orders'),{module:'orders',route:'/api/orders',method:'POST'});
+ assert.equal(flow.classify('POST','/api/admin/login'),null);
+ assert.equal(flow.classify('POST','/api/admin/change-password'),null);
+ assert.equal(flow.classify('GET','/api/admin/architecture/system/live'),null);
+ assert.equal(flow.classify('GET','/api/health'),null);
+ assert.deepEqual(flow.classify('POST','/api/lockers/A1/rent'),{module:'rental',route:'/api/lockers/*',method:'POST'});
+ assert.deepEqual(flow.classify('GET','/api/menu/secret-qr-token'),{module:'orders',route:'/api/menu/:token',method:'GET'});
+});
+test('Live model contains committed DB evidence and sanitized, ephemeral API telemetry',async()=>{
+ const {flow,seen}=fakeFlow();
+ const req={method:'POST',url:'/api/lockers/A30/rent?secret=token-and-user-phone'};
+ const res=new EventEmitter();res.statusCode=201;
+ flow.trackRequest(req,res);res.emit('finish');
+ const data=await flow.recent();
+ assert.equal(data.events[0].action,'order_created');
+ assert.equal(data.events[0].source,'dining_audit');
+ assert.equal(data.requests[0].module,'rental');
+ assert.equal(data.requests[0].route,'/api/lockers/*');
+ assert.equal(data.requests[0].status,201);
+ assert.equal(data.requests[0].source,'http-memory');
+ assert.ok(seen[0].text.includes('inventory_movements'));
+ assert.ok(seen[0].text.includes('finance_entries'));
+ assert.ok(seen[0].text.includes('pos_audit'));
+ assert.ok(seen[0].text.includes('area_receipts'));
+ assert.doesNotMatch(JSON.stringify(data),/token-and-user-phone/);
+ assert.doesNotMatch(JSON.stringify(data),/\/api\/lockers\/A30\/rent/);
+});
+test('System stream rejects PostgreSQL-less pilot instead of generating fake events',async()=>{
+ const flow=makeSystemFlow({pool:null});
+ await assert.rejects(()=>flow.recent(),{status:503});
+});
+test('Production routes enforce owner access before system events and streams',()=>{
+ const fs=require('node:fs');
+ const path=require('node:path');
+ const source=fs.readFileSync(path.join(__dirname,'..','server.js'),'utf8');
+ for(const route of ['/api/admin/architecture/system/recent','/api/admin/architecture/system/live']){
+  const pos=source.indexOf("p==='"+route+"'");
+  assert.ok(pos>0,'route missing: '+route);
+  const snippet=source.slice(pos,pos+260);
+  assert.match(snippet,/requireAdmin\(req,res\)/);
+ }
+});
