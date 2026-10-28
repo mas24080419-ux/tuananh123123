@@ -50,7 +50,7 @@
       <div class="deep-header">
         <div><p class="deep-eyebrow">PROD / BACKEND INTERNALS</p><h2 id="deepTitle">Bản đồ xử lý toàn hệ thống · Chi tiết bên trong Backend</h2>
           <p>Kiến trúc thực tế: một Node.js service, nhiều module logic, PostgreSQL dùng chung. Đường nối biểu thị quan hệ mã nguồn; sự kiện ở dưới lấy từ DB thật.</p></div>
-        <div class="deep-head-actions"><span id="deepStreamStatus" class="deep-status" role="status">Đang kết nối luồng hệ thống…</span>
+        <div class="deep-head-actions"><button type="button" id="deepFollow" class="deep-follow" aria-pressed="true">Theo dõi tự động: BẬT</button><span id="deepStreamStatus" class="deep-status" role="status">Đang kết nối luồng hệ thống…</span>
           <div class="deep-zooms" role="group" aria-label="Thu phóng sơ đồ Backend">
             <button type="button" id="deepZoomOut" aria-label="Thu nhỏ" title="Thu nhỏ">−</button><span id="deepScale">100%</span>
             <button type="button" id="deepZoomIn" aria-label="Phóng to" title="Phóng to">+</button>
@@ -74,7 +74,7 @@
               </div>
             </div>
           </div>
-          <div class="deep-map-caption"><span><strong>●</strong> Chọn module để xem logic xử lý, bước thực thi, API và SQL</span><span>Không có hiệu ứng giả lập</span><span>Sự kiện DB chỉ xuất hiện sau khi được ghi thành công</span></div>
+          <div class="deep-map-caption"><span id="deepLivePath">Chưa có sự kiện mới kể từ khi mở trang</span><span><strong>●</strong> Chọn module để xem logic xử lý, bước thực thi, API và SQL</span><span>Không có hiệu ứng giả lập</span><span>Sự kiện DB chỉ xuất hiện sau khi được ghi thành công</span></div>
         </div>
         <aside id="deepInspector" class="deep-inspector" aria-live="polite" aria-label="Chi tiết module backend">
           <p>Chọn một khối để xem quy trình xử lý thật trong backend.</p>
