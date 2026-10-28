@@ -12,11 +12,13 @@
 <link rel="stylesheet" href="/architecture-live.css?v=20261028-arch-live1">
 <link rel="stylesheet" href="/architecture-deep.css?v=20261028-path-v5">
 <link rel="stylesheet" href="/architecture-path.css?v=20261028-path-v5">
+<link rel="stylesheet" href="/architecture-qr.css?v=20261028-qr-v1">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
 <script defer src="/architecture.js?v=20261028-arch1"></script>
 <script defer src="/architecture-live.js?v=20261028-arch-live1"></script>
 <script defer src="/architecture-deep.js?v=20261028-path-v5"></script>
 <script defer src="/architecture-path.js?v=20261028-path-v5"></script>
+<script defer src="/architecture-qr.js?v=20261028-qr-v1"></script>
 </head>
 <body class="tt6-architecture-page">
 <div class="shell">
@@ -28,8 +30,30 @@
       <h1>Kiến trúc & luồng dữ liệu</h1>
       <p class="arch-intro">Theo dõi hệ thống từ QR gọi món, xử lý đơn, kho, thu–chi đến PostgreSQL. Chọn một khối hoặc đường kết nối để kiểm tra.</p>
     </div>
-    <div class="arch-header-actions"><span class="arch-readonly"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Zm-4-10 3 3 5-6"/></svg> Chỉ xem · tài khoản chủ</span><button type="button" id="archRefresh" class="arch-refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-5L4 8M4 4v4h4M4 13a8 8 0 0 0 14 5l2-2M20 20v-4h-4"/></svg> Cập nhật trạng thái</button></div>
+    <div class="arch-header-actions"><button type="button" id="archQrLaunch" class="arch-qr-launch" aria-haspopup="dialog" aria-controls="archQrDialog"><svg width="17" height="17" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3m7-3h-2m-3 7h-2m7-4v4h-4"/></svg> Hiện QR để điện thoại quét</button><span class="arch-readonly"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10Zm-4-10 3 3 5-6"/></svg> Chỉ xem · tài khoản chủ</span><button type="button" id="archRefresh" class="arch-refresh"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14-5L4 8M4 4v4h4M4 13a8 8 0 0 0 14 5l2-2M20 20v-4h-4"/></svg> Cập nhật trạng thái</button></div>
   </header>
+  <dialog id="archQrDialog" class="arch-qr-dialog" aria-labelledby="archQrTitle" aria-describedby="archQrIntro">
+    <div class="arch-qr-dialog-head">
+      <div><span class="arch-qr-eyebrow">QR ORDER / QUÉT TRÊN ĐIỆN THOẠI</span><h2 id="archQrTitle">Mã QR gọi món tại bàn</h2><p id="archQrIntro">Chọn bàn rồi quét mã bằng camera điện thoại. Đơn sẽ gửi tới backend thực và xuất hiện trên bản đồ xử lý.</p></div>
+      <button type="button" class="arch-qr-close" id="archQrClose" aria-label="Đóng mã QR">×</button>
+    </div>
+    <div class="arch-qr-dialog-content">
+      <label class="arch-qr-picker">Chọn bàn cần quét
+        <select id="archQrTable" aria-label="Chọn bàn có mã QR hoạt động" disabled><option>Đang tải danh sách bàn…</option></select>
+      </label>
+      <div class="arch-qr-image-shell">
+        <img id="archQrImage" alt="Mã QR gọi món tại bàn được chọn" width="256" height="256" hidden>
+        <div id="archQrPlaceholder" class="arch-qr-placeholder" role="status">Đang tải mã QR thực từ hệ thống…</div>
+      </div>
+      <div class="arch-qr-table-name" id="archQrSelectedName"></div>
+      <div class="arch-qr-dialog-actions">
+        <a id="archQrGuestLink" class="arch-qr-guest-link" rel="noopener" target="_blank" hidden>Kiểm tra trang gọi món</a>
+        <a id="archQrPrintLink" class="arch-qr-print-link" rel="noopener" target="_blank" hidden>Mở QR để in</a>
+      </div>
+      <p id="archQrFeedback" class="arch-qr-feedback" role="status" aria-live="polite">Chỉ mã QR của bàn đang hoạt động mới được hiển thị.</p>
+    </div>
+    <div class="arch-qr-dialog-foot"><span>QR lấy từ API /api/tables và /qr/:token.svg · Không dùng mã demo.</span><button type="button" id="archQrDone">Đóng QR và xem luồng backend</button></div>
+  </dialog>
   <section id="archError" class="arch-error" role="alert" hidden></section>
   <div id="archContent" hidden>
     <section class="arch-health" aria-label="Sức khỏe hệ thống">
