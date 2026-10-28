@@ -6,7 +6,7 @@
  const $=id=>document.getElementById(id);
  const ns='http://www.w3.org/2000/svg';
  const seen=new Map(),known=new Map(),queue=[];
- let started=false,running=false,timeout=null,linger=null,lastTrace=null,skipped=0;
+ let started=false,running=false,timeout=null,linger=null,lastTrace=null,skipped=0,restoredIds=new Set();
  const stage=$('deepStage');
  if(!stage)return;
  const svg=$('deepWires'),nodes=$('deepNodes');
@@ -75,7 +75,7 @@
   const step=steps[upto],n=upto+1;
   workbench?.classList.add('path-running');
   dot.className='path-runtime-dot '+(trace.state==='failed'?'error':'active');
-  bar.textContent=(frame.replay?'PHÁT LẠI':'MỐC BACKEND THỰC')+' · '+(titles[trace.module]||trace.module)+' · #'+trace.id.slice(0,8).toUpperCase();
+  bar.textContent=(frame.replay?'PHÁT LẠI MỐC THỰC':'MỐC BACKEND THỰC')+' · '+(titles[trace.module]||trace.module)+' · #'+trace.id.slice(0,8).toUpperCase();
   description.textContent=step.label+' · ghi nhận +'+step.elapsedMs+' ms'+(trace.count!=null?' · '+trace.count+' món':'');
   progress.textContent=n+' / '+steps.length+' mốc';
   pending.textContent=queue.length+' mốc còn chờ hiển thị';
@@ -135,16 +135,33 @@
   if(followEnabled()&&t.steps.length>from)addFrames(t,from);
  }
  function onSnapshot(data){
-  // Replay recovery only for an already observed trace. Historic traces stay historic.
+  // SSE events can arrive and finish before a browser attaches (or during
+  // an interrupted connection). The owner snapshot contains the real steps
+  // recorded in the Node process; replay recent, completed QR requests once.
+  // Such restoration is explicitly labelled playback, never a live in-flight step.
+  const snapshotTime=Date.parse(data?.checkedAt)||Date.now();
   for(const trace of [...(data?.active||[]),...(data?.traces||[])]){
    if(!trace?.id||!Array.isArray(trace.steps))continue;
-   const old=seen.get(trace.id);store(trace);
-   if(old!==undefined&&trace.steps.length>old&&followEnabled())addFrames(trace,old);
+   const previous=seen.get(trace.id);
+   store(trace);
+   if(followEnabled()){
+    if(previous!==undefined&&trace.steps.length>previous){
+     addFrames(trace,previous,true);
+    }else if(previous===undefined&&!restoredIds.has(trace.id)&&
+      trace.state!=='running'&&trace.method==='POST'&&trace.route==='/api/orders'&&
+      trace.steps.length>1&&
+      snapshotTime-Date.parse(trace.finishedAt||trace.createdAt)>=0&&
+      snapshotTime-Date.parse(trace.finishedAt||trace.createdAt)<180000){
+      // A recovered trace never invents stages: use only stored execution marks.
+      restoredIds.add(trace.id);
+      addFrames(trace,0,true);
+    }
+   }
    seen.set(trace.id,trace.steps.length);
   }
   if(!started){
    started=true;bar.textContent='Đã kết nối nguồn trace thực';
-   description.textContent='Mỗi request mới được phát qua từng mốc đã ghi, không tự chạy khi không có hoạt động. Nhấn Xem lại trace để phát lại một yêu cầu cũ.';
+   description.textContent='Các mốc xử lý thật sẽ chạy qua sơ đồ. Nếu SSE bị ngắt, request QR vừa hoàn tất sẽ được khôi phục từ trace của server; không mô phỏng trạng thái.';
   }
  }
  replay.addEventListener('click',()=>{
