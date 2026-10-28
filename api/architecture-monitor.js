@@ -4,7 +4,8 @@
 const nodes=[
  {id:'guest',name:'Khách / QR tại bàn',group:'client',x:35,y:95,w:205,sub:'Trình duyệt web · mã QR',tag:'PUBLIC',detail:'Khách mở trang /t/:token, xem thực đơn hợp lệ và gửi yêu cầu gọi món bằng requestId để chống gửi lặp.',routes:['GET /api/menu/:token','POST /api/orders','GET /api/order-status/:id'],data:['Token bàn','Mã món và số lượng','Request ID']},
  {id:'stafforder',name:'Nhân viên gọi món',group:'client',x:35,y:211,w:205,sub:'Phục vụ · Thu ngân · Quản lý',tag:'POS',detail:'Trang /staff/orders cho phép nhân viên gọi món và kiểm soát đơn trong phạm vi vai trò. Backend xác minh session, kiểm tra kho và xử lý giao dịch như đơn QR.',routes:['GET /api/staff/menu','GET /api/staff/orders','POST /api/staff/orders','POST /api/staff/orders/:id/confirm-payment'],data:['Role / khu vực','Bàn & món','Request ID']},
- {id:'staff',name:'Bếp / Bar & nhân viên khu vực',group:'client',x:35,y:325,w:205,sub:'Chế biến · phao / tủ đồ',tag:'STAFF',detail:'Bếp/Bar cập nhật tiến độ món theo trạm; nhân viên khu vực xử lý tủ/phao theo phân công.',routes:['GET /api/kds','PATCH /api/items/:id','GET /api/lockers'],data:['Session nhân viên','Trạng thái món','Khu vực phân công']},
+ {id:'staffcart',name:'NV đang chọn món',group:'client',x:35,y:325,w:205,sub:'Giỏ tạm · chưa gửi đơn',tag:'CART',detail:'Trạng thái chọn bàn và số phần từ giao diện nhân viên đã xác thực; chỉ lưu RAM. Không tạo đơn hoặc trừ kho.',routes:['POST /api/staff/order-presence','api/staff-order-presence.js'],data:['Phiên xem','Số phần tạm','Bàn đang chọn']},
+ {id:'staff',name:'Bếp / Bar & nhân viên khu vực',group:'client',x:35,y:439,w:205,sub:'Chế biến · phao / tủ đồ',tag:'STAFF',detail:'Bếp/Bar cập nhật tiến độ món theo trạm; nhân viên khu vực xử lý tủ/phao theo phân công.',routes:['GET /api/kds','PATCH /api/items/:id','GET /api/lockers'],data:['Session nhân viên','Trạng thái món','Khu vực phân công']},
  {id:'owner',name:'Chủ cửa hàng',group:'client',x:35,y:567,w:205,sub:'Tài khoản chủ · quản trị',tag:'OWNER',detail:'Chủ cửa hàng quản lý thực đơn, thu chi, nhân sự, báo cáo và sơ đồ này. Truy vấn quản trị được xác thực ở backend.',routes:['GET /api/admin/core/catalog','GET /api/admin/analytics','GET /api/admin/architecture'],data:['Phiên chủ cửa hàng','Cấu hình nghiệp vụ']},
  {id:'http',name:'Render / HTTP API',group:'gateway',x:309,y:322,w:215,sub:'Node.js · một web service',tag:'HTTP',detail:'Một tiến trình ứng dụng xử lý giao diện tĩnh và HTTP API. Không có lớp gateway/nginx độc lập được chứng minh trong repository.',routes:['api/server.js','api/static-files.js'],data:['HTTPS từ trình duyệt','JSON API','Cookie phiên'],health:'app'},
  {id:'auth',name:'Xác thực & phân quyền',group:'gateway',x:309,y:560,w:215,sub:'Session · RBAC · khu vực',tag:'RBAC',detail:'Backend xác minh cookie phiên chủ/nhân viên, quyền theo vai trò và khu vực; token QR bàn được kiểm tra riêng ở luồng khách.',routes:['identity()','requireAdmin()','requireAuth()','area-access.js'],data:['Cookie HttpOnly','Vai trò & khu vực','Quyền truy cập']},
@@ -22,6 +23,8 @@ const edge=(from,to,group,label,detail)=>({id:from+'-'+to,from,to,group,label,de
 const edges=[
  edge('guest','http','ingress','HTTPS / QR','Khách chỉ gửi request từ mã QR bàn đã xác thực theo token.'),
  edge('staff','http','ingress','HTTPS / Session','Nhân viên gọi API theo khu vực quyền.'),
+ edge('stafforder','staffcart','stafforder','Nhân viên đang chọn','Giỏ tạm trên điện thoại được ghi nhận theo session; chưa tạo đơn.'),
+ edge('staffcart','http','stafforder','POST /api/staff/order-presence','Backend ghi trạng thái giỏ tạm vào RAM sau khi xác thực, không COMMIT đơn.'),
  edge('stafforder','http','stafforder','POS nhân viên','Nhân viên tạo/kiểm soát đơn qua HTTP API có session.'),
  edge('owner','http','ingress','HTTPS / Owner','Chủ cửa hàng truy cập các API quản trị.'),
  edge('http','auth','access','Cookie / RBAC','Các API cần đăng nhập được xác minh quyền tại server.'),
@@ -55,7 +58,7 @@ const flows=[
  {id:'access',name:'Phân quyền',color:'#88b7ef',description:'Phiên đăng nhập và kiểm tra role ở backend; không tự nâng quyền qua giao diện.'},
  {id:'audit',name:'Nhật ký',color:'#e4a66e',description:'Bản ghi audit trong PostgreSQL; chưa phải ghi trace từng HTTP request.'}
 ];
-const model=Object.freeze({version:'2026-10-28-stafforder-v2',title:'SalesHub / Kiến trúc thực tế',implementation:'Single Node.js service on Render + PostgreSQL',nodes,edges,flows});
+const model=Object.freeze({version:'2026-10-28-staffcart-v3',title:'SalesHub / Kiến trúc thực tế',implementation:'Single Node.js service on Render + PostgreSQL',nodes,edges,flows});
 const query=`SELECT
  (SELECT count(*)::int FROM dining_orders WHERE created_at >= now()-interval '24 hours') AS "orders24h",
  (SELECT count(*)::int FROM dining_order_lines WHERE status IN ('new','preparing')) AS "pendingKitchen",

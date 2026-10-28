@@ -6,6 +6,7 @@
  const services={
   guest:{name:'Khách / QR',tag:'CLIENT',kind:'client',summary:'Khách dùng trình duyệt mở link bàn từ QR để xem món và gửi order.',paths:['/t/:token','GET /api/menu/:token','POST /api/orders'],steps:['Trình duyệt đọc QR trên bàn và nhận token của bàn','Tải thực đơn qua API và gửi requestId cùng món đã chọn','Backend kiểm tra token, món và số lượng; khách không có quyền truy cập các API quản trị'],tables:[]},
   cart:{name:'Đang chọn món · Giỏ QR',tag:'BROWSER CART',kind:'client',summary:'Theo dõi các phiên QR có món trong giỏ trên điện thoại trước khi khách xác nhận. Dữ liệu trạng thái do trình duyệt báo về và chỉ giữ tạm trong RAM.',paths:['api/public/guest.js → cart Map','window.saleshubQrActivity()','POST /api/qr/presence','api/qr-presence.js'],steps:['Khách mở thực đơn, phiên được ghi nhận là đang xem','Khi thay đổi giỏ, frontend gửi trạng thái selecting và tổng số phần','Backend thống kê số phiên đang chọn và số phần tạm theo từng bàn, không lưu giỏ vào PostgreSQL','Khách bấm xác nhận: chuyển sang submitting; backend xử lý POST /api/orders riêng','Chỉ sau khi HTTP trả thành công mới ghi nhận ordered trên phiên; số đơn đã lưu nằm trong PostgreSQL','Khi khách rời trang, thông tin tạm tự hết hạn sau khoảng 55 giây'],tables:['process memory: qrPresence (tạm)']},
+  staffcart:{name:'Nhân viên đang chọn món',tag:'STAFF CART',kind:'client',summary:'Giỏ tạm từ nhân viên đã đăng nhập: chỉ theo dõi bàn, số phần và giai đoạn trên điện thoại; không phải đơn PostgreSQL.',paths:['/staff/orders','POST /api/staff/order-presence','api/staff-order-presence.js'],steps:['Nhân viên đăng nhập, mở giao diện gọi món','UI gửi trạng thái viewing / selecting khi chọn bàn hoặc thay đổi giỏ','Backend kiểm tra cookie, quyền và bàn; lưu phiên tạm trong RAM','Sơ đồ hiển thị số người đang chọn theo bàn; tự hết hạn nếu rời trang','Nhấn Gửi đơn mới gọi POST /api/staff/orders và bắt đầu transaction thật'],tables:['process memory: staffOrderPresence']},
   stafforder:{name:'Nhân viên gọi món',tag:'STAFF POS',kind:'client',summary:'Gọi món và kiểm soát đơn qua quyền Phục vụ, Thu ngân, Quản lý.',paths:['/staff/orders','POST /api/staff/orders','GET /api/staff/orders','POST /api/staff/orders/:id/confirm-payment'],steps:['Đăng nhập nhân viên, kiểm tra quyền tại server','Chọn bàn và món đang còn trong kho','Lưu đơn và trừ kho trong transaction PostgreSQL','Bếp Bar nhận món; nhân viên cập nhật đơn','Thu ngân hoặc quản lý xác nhận đã nhận đủ tiền'],tables:['staff_users','dining_orders','dining_order_lines','dining_audit']},
   staff:{name:'Nhân viên / Bếp / Bar',tag:'STAFF',kind:'client',summary:'Giao diện nội bộ dành cho các vai trò theo tài khoản và khu vực.',paths:['/staff','/staff/lockers','GET /api/kds','GET /api/lockers'],steps:['Đăng nhập và nhận cookie phiên HttpOnly','Backend kiểm tra role / work_area tại mỗi request','Nhân viên bếp/bar đổi trạng thái món; khu vực thiết bị xử lý phao và tủ'],tables:[]},
   owner:{name:'Chủ cửa hàng',tag:'OWNER',kind:'client',summary:'Điều hành toàn bộ hệ thống qua giao diện quản trị; dữ liệu giám sát chỉ chủ cửa hàng mới được đọc.',paths:['/admin','/admin/architecture','/admin/inventory','/admin/operations'],steps:['Xác thực chủ qua session HMAC và dữ liệu owner_accounts','Truy cập API quản trị và số liệu tổng hợp','Xem sự kiện DB đã commit và telemetry API đã chuẩn hóa trên bản đồ'],tables:['owner_accounts']},
@@ -28,8 +29,9 @@
   {id:'guest',label:'Khách gọi món',subtitle:'QR / trình duyệt',kind:'client',x:25,y:100,w:190},
    {id:'cart',label:'Đang chọn món',subtitle:'Giỏ hàng · trước đặt đơn',kind:'client',x:25,y:230,w:190},
   {id:'stafforder',label:'Nhân viên gọi món',subtitle:'POS / quản lý đơn',kind:'client',x:25,y:350,w:190},
-  {id:'staff',label:'Bếp / Bar / Dịch vụ',subtitle:'KDS / dịch vụ',kind:'client',x:25,y:460,w:190},
-  {id:'owner',label:'Chủ cửa hàng',subtitle:'Quản trị / báo cáo',kind:'client',x:25,y:575,w:190},
+  {id:'staffcart',label:'NV đang chọn món',subtitle:'Giỏ tạm · chưa gửi đơn',kind:'client',x:25,y:460,w:190},
+  {id:'staff',label:'Bếp / Bar / Dịch vụ',subtitle:'KDS / dịch vụ',kind:'client',x:25,y:570,w:190},
+  {id:'owner',label:'Chủ cửa hàng',subtitle:'Quản trị / báo cáo',kind:'client',x:25,y:685,w:190},
   {id:'http',label:'Render · HTTP Router',subtitle:'server.js · API',kind:'gateway',x:265,y:285,w:215},
   {id:'auth',label:'Session & RBAC',subtitle:'HMAC / role / work area',kind:'gateway',x:265,y:450,w:215},
   {id:'validate',label:'Validation',subtitle:'requestId / giá server',kind:'gateway',x:265,y:125,w:215},
@@ -46,7 +48,7 @@
   {id:'app',label:'Architecture UI',subtitle:'event log / inspector',kind:'observe',x:1370,y:525,w:210}
  ];
  const edges=[
-  ['guest','http','orders'],['guest','cart','orders'],['cart','http','orders'],['staff','http','kds'],['stafforder','http','stafforder'],['owner','http','admin'],['http','validate','access'],
+  ['guest','http','orders'],['guest','cart','orders'],['cart','http','orders'],['staff','http','kds'],['stafforder','http','stafforder'],['stafforder','staffcart','stafforder'],['staffcart','http','stafforder'],['owner','http','admin'],['http','validate','access'],
   ['http','auth','access'],['validate','orders','orders'],['auth','orders','stafforder'],['auth','kds','kds'],['auth','inventory','inventory'],
   ['auth','finance','finance'],['auth','rental','rental'],['auth','admin','admin'],
   ['orders','inventory','orders'],['orders','kds','orders'],
@@ -54,7 +56,7 @@
   ['rental','tx','rental'],['admin','tx','admin'],['tx','pg','database'],['pg','audit','database'],
   ['audit','stream','observe'],['stream','app','observe'],['owner','app','observe']
  ];
- const filters=[['all','Tất cả'],['orders','QR Order'],['stafforder','Nhân viên gọi món'],['cart','Đang chọn món'],['kds','Bếp / Bar'],['inventory','Kho'],['finance','Thu–chi'],['rental','Phao & Tủ'],['admin','Quản trị'],['access','API / Quyền'],['database','PostgreSQL'],['observe','Giám sát']];
+ const filters=[['all','Tất cả'],['orders','QR Order'],['stafforder','Nhân viên gọi món'],['cart','Đang chọn món QR'],['staffcart','NV đang chọn món'],['kds','Bếp / Bar'],['inventory','Kho'],['finance','Thu–chi'],['rental','Phao & Tủ'],['admin','Quản trị'],['access','API / Quyền'],['database','PostgreSQL'],['observe','Giám sát']];
  const colors={client:'#53c8ed',gateway:'#5fe0ad',module:'#f6c74f',database:'#a998ff',observe:'#ffa361'};
  let selected='orders',filter='all',scale=1,source=null,timer=null,last=null,view='events',followLive=true,focusedTrace=null,hasSnapshot=false;
  function node(id){return nodes.find(n=>n.id===id)}
@@ -90,7 +92,7 @@
   document.querySelectorAll('#deepNodes [data-id]').forEach(b=>{
    const id=b.dataset.id,selectedNow=id===selected;
    const traceNodes=new Set(currentTrace()?.steps?.map(x=>x.node)||[]);
-   const staffNodes=new Set(['stafforder','http','auth','validate','orders','inventory','kds','finance','tx','pg','audit','stream','app']);
+   const staffNodes=new Set(['stafforder','staffcart','http','auth','validate','orders','inventory','kds','finance','tx','pg','audit','stream','app']);
    const isFlow=traceNodes.has(id)||filter==='all'||(filter==='stafforder'&&staffNodes.has(id))||(filter==='orders'&&id==='cart')||id==='http'||id==='pg'||id==='tx'||id==='audit'||id==='stream'||id==='app'||id==='auth'||id==='validate'||id===filter;
    b.classList.toggle('is-muted',!isFlow);
    b.classList.toggle('is-selected',selectedNow);
@@ -98,8 +100,8 @@
   });
   document.querySelectorAll('#deepWires [data-flow]').forEach(p=>{
    const traceNodes=new Set(currentTrace()?.steps?.map(x=>x.node)||[]);
-   const staffRoute=new Set(['stafforder-http','http-auth','auth-orders','orders-inventory','orders-kds','orders-tx','inventory-tx','kds-tx','tx-pg','pg-audit','auth-finance','finance-tx']);
-   const inFlow=filter==='all'||(filter==='stafforder'&&staffRoute.has(p.dataset.src+'-'+p.dataset.dst))||(filter==='cart'&&(p.dataset.src==='cart'||p.dataset.dst==='cart'))||p.dataset.flow===filter||(traceNodes.has(p.dataset.src)&&traceNodes.has(p.dataset.dst));
+   const staffRoute=new Set(['stafforder-staffcart','staffcart-http','stafforder-http','http-auth','auth-orders','orders-inventory','orders-kds','orders-tx','inventory-tx','kds-tx','tx-pg','pg-audit','auth-finance','finance-tx']);
+   const inFlow=filter==='all'||(filter==='stafforder'&&staffRoute.has(p.dataset.src+'-'+p.dataset.dst))||(filter==='cart'&&(p.dataset.src==='cart'||p.dataset.dst==='cart'))||(filter==='staffcart'&&(p.dataset.src==='staffcart'||p.dataset.dst==='staffcart'))||p.dataset.flow===filter||(traceNodes.has(p.dataset.src)&&traceNodes.has(p.dataset.dst));
    const related=p.dataset.src===selected||p.dataset.dst===selected;
    p.classList.toggle('is-muted',!inFlow);
    p.classList.toggle('is-selected',related&&inFlow);
@@ -143,18 +145,36 @@
    '<span>'+pretty(t.orderedSessions||0)+' đã nhận xác nhận</span></div></div>'
   ).join(''):'<span class="deep-qr-no-viewers">Hiện chưa có thiết bị đang mở thực đơn QR.</span>';
  }
+ function renderStaffPresence(){
+  const state=last?.staffOrderPresence;
+  for(const [id,key] of [['deepStaffSessions','activeSessions'],['deepStaffSelecting','selectingSessions'],['deepStaffCartItems','cartItems'],['deepStaffSubmitting','submittingSessions']]){
+   const el=$(id);if(el)el.textContent=state?pretty(state[key]):'—';
+  }
+  const summary=$('deepStaffSummary'),list=$('deepStaffTableBreakdown');
+  if(!summary||!list)return;
+  if(!state){summary.textContent='Chưa kết nối giám sát nhân viên';list.textContent='Chưa có dữ liệu phiên.';return}
+  summary.textContent=pretty(state.activeSessions)+' phiên · '+pretty(state.selectingSessions)+' đang chọn · '+pretty(state.submittingSessions)+' đang gửi';
+  const rows=state.tables||[];
+  list.innerHTML=rows.length?rows.map(t=>
+   '<div class="deep-qr-table-chip"><div class="deep-qr-table-main"><strong>'+escape(t.tableName)+'</strong><span>'+pretty(t.activeSessions)+' phiên</span></div>'+
+   '<div class="deep-qr-table-stages"><span>'+pretty(t.viewingSessions)+' xem</span><span class="is-selecting">'+pretty(t.selectingSessions)+' đang chọn</span>'+
+   '<span class="is-cart">'+pretty(t.cartItems)+' phần trong giỏ</span><span class="is-submitting">'+pretty(t.submittingSessions)+' đang gửi</span></div></div>'
+  ).join(''):'<span class="deep-qr-no-viewers">Chưa có nhân viên đang mở màn hình gọi món.</span>';
+ }
  function renderMetrics(){
   const m=last?.metrics||{};
   for(const [key,id] of Object.entries(metricIds))$(id).textContent=last?.metrics?pretty(m[key]):'—';
   $('deepMetricActive').textContent=hasSnapshot?pretty(last?.inFlight??0):'—';
   renderQrPresence();
+  renderStaffPresence();
   const a=last?.active||[];
   const at=node=>a.filter(t=>t.steps?.at(-1)?.node===node).length;
   const values={
    guest:[last?.qrPresence?.activeSessions??null,'phiên QR mở'],
     cart:[last?.qrPresence?.selectingSessions??null,'đang chọn món'],
    staff:[a.filter(t=>['kds','rental'].includes(t.module)).length,'đang chạy'],
-   stafforder:[a.filter(t=>t.module==='stafforder').length,'đang gọi món'],
+   stafforder:[(last?.staffOrderPresence?.activeSessions||0)+a.filter(t=>t.module==='stafforder').length,'phiên / API'],
+   staffcart:[last?.staffOrderPresence?.selectingSessions??null,'đang chọn món'],
    owner:[a.filter(t=>['admin','finance','inventory'].includes(t.module)).length,'đang chạy'],
    http:[last?.inFlight||0,'đang chạy'],auth:[at('auth'),'đang xác thực'],validate:[at('validate'),'đang kiểm tra'],
    orders:[m.ordersInProgress,'đơn chưa xong'],kds:[m.itemsWaiting,'món chờ'],inventory:[m.stockMovements24h,'biến động / 24h'],
@@ -172,6 +192,9 @@
   // real live QR sessions report selecting items.
   const cartNode=document.querySelector('#deepNodes [data-id="cart"]');
   if(cartNode)cartNode.classList.toggle('is-cart-live',Number(last?.qrPresence?.selectingSessions||0)>0);
+  const staffLive=Number(last?.staffOrderPresence?.selectingSessions||0)+Number(last?.staffOrderPresence?.submittingSessions||0)>0;
+  for(const id of ['staffcart','stafforder'])document.querySelector('#deepNodes [data-id="'+id+'"]')?.classList.toggle('is-staff-cart-live',staffLive);
+  for(const [from,to] of [['stafforder','staffcart'],['staffcart','http']])document.querySelector('#deepWires [data-src="'+from+'"][data-dst="'+to+'"]')?.classList.toggle('is-staff-presence-live',staffLive);
  }
  function updateTraceHighlights(){
   // During auto-follow, the packet overlay owns progressive node/path highlights.
@@ -247,6 +270,7 @@
   const previous=last;
   last=data;hasSnapshot=true;renderEvents();renderMetrics();renderTraces();
   document.dispatchEvent(new CustomEvent('saleshub:snapshot',{detail:data}));
+  document.dispatchEvent(new CustomEvent('saleshub:staff-presence',{detail:data.staffOrderPresence||null}));
   if(previous&&followLive&&!focusedTrace){
    const oldDb=new Set(previous.events.map(e=>e.id));
    const oldHttp=new Set(previous.requests.map(e=>e.id));

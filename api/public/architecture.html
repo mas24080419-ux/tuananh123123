@@ -8,15 +8,15 @@
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
-<link rel="stylesheet" href="/architecture.css?v=20261028-arch1">
+<link rel="stylesheet" href="/architecture.css?v=20261028-staffcart-v3">
 <link rel="stylesheet" href="/architecture-live.css?v=20261028-arch-live1">
-<link rel="stylesheet" href="/architecture-deep.css?v=20261028-selecting-v1">
+<link rel="stylesheet" href="/architecture-deep.css?v=20261028-staffcart-v3">
 <link rel="stylesheet" href="/architecture-path.css?v=20261028-path-v5">
 <link rel="stylesheet" href="/architecture-qr.css?v=20261028-qr-v1">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
-<script defer src="/architecture.js?v=20261028-staff-orders-map-v2"></script>
+<script defer src="/architecture.js?v=20261028-staffcart-v3"></script>
 <script defer src="/architecture-live.js?v=20261028-staff-orders-map-v2"></script>
-<script defer src="/architecture-deep.js?v=20261028-staff-orders-map-v2"></script>
+<script defer src="/architecture-deep.js?v=20261028-staffcart-v3"></script>
 <script defer src="/architecture-path.js?v=20261028-staff-orders-map-v2"></script>
 <script defer src="/architecture-qr.js?v=20261028-qr-v1"></script>
 </head>
@@ -90,7 +90,11 @@
         <div class="deep-metric deep-qr-metric deep-qr-selecting"><span>ĐANG CHỌN MÓN</span><strong id="deepQrSelecting">—</strong><small>Phiên QR có món trong giỏ (chưa đặt)</small></div>
         <div class="deep-metric deep-qr-metric"><span>SỐ PHẦN TRONG GIỎ</span><strong id="deepQrCartItems">—</strong><small>Số lượng tạm, chưa ghi đơn vào DB</small></div>
         <div class="deep-metric deep-qr-metric"><span>ĐANG GỬI ĐƠN</span><strong id="deepQrSubmitting">—</strong><small>Chờ máy chủ phản hồi POST /api/orders</small></div>
-        <div class="deep-metric"><span>ĐƠN / 24 GIỜ</span><strong id="deepMetricOrders">—</strong><small>Đơn đã lưu trên PostgreSQL</small></div>
+        <div class="deep-metric deep-staff-metric"><span>PHIÊN NHÂN VIÊN</span><strong id="deepStaffSessions">—</strong><small>Đang mở gọi món</small></div>
+         <div class="deep-metric deep-staff-metric"><span>NV ĐANG CHỌN MÓN</span><strong id="deepStaffSelecting">—</strong><small>Giỏ tạm nhân viên · chưa đặt</small></div>
+         <div class="deep-metric deep-staff-metric"><span>PHẦN NV ĐANG CHỌN</span><strong id="deepStaffCartItems">—</strong><small>Chưa trừ tồn kho</small></div>
+         <div class="deep-metric deep-staff-metric"><span>NV ĐANG GỬI ĐƠN</span><strong id="deepStaffSubmitting">—</strong><small>Chờ POST /api/staff/orders</small></div>
+         <div class="deep-metric"><span>ĐƠN / 24 GIỜ</span><strong id="deepMetricOrders">—</strong><small>Đơn đã lưu trên PostgreSQL</small></div>
         <div class="deep-metric"><span>ĐƠN CHƯA HOÀN TẤT</span><strong id="deepMetricInProgress">—</strong><small>Có món new / preparing / ready</small></div>
         <div class="deep-metric"><span>ĐƠN ĐANG CHẾ BIẾN</span><strong id="deepMetricOrderPreparing">—</strong><small>Có ít nhất một món preparing</small></div>
         <div class="deep-metric"><span>MÓN CHỜ BẾP</span><strong id="deepMetricWaiting">—</strong><small>Trạng thái new</small></div>
@@ -104,7 +108,12 @@
         <div id="deepQrTableBreakdown" class="deep-qr-table-list"><span class="deep-qr-no-viewers">Chưa có dữ liệu QR.</span></div>
         <p>Trạng thái giỏ hàng gửi từ trình duyệt (chưa phải đơn bán). Đếm các tab QR đang mở, không đếm người duy nhất. Làm mới khoảng 4 giây; phiên mất tín hiệu hết hạn sau 55 giây. Đơn đã xác nhận được tính riêng từ PostgreSQL.</p>
       </section>
-      <div class="deep-trace-dock" aria-label="Theo dõi yêu cầu thực qua từng bước backend">
+      <section class="deep-qr-presence deep-staff-presence" aria-label="Theo dõi nhân viên đang chọn món" aria-live="off">
+         <div class="deep-qr-presence-title"><strong><span class="deep-qr-live-dot"></span> NHÂN VIÊN ĐANG CHỌN MÓN THEO BÀN</strong><small id="deepStaffSummary">Đang kết nối phiên nhân viên…</small></div>
+         <div id="deepStaffTableBreakdown" class="deep-qr-table-list"><span class="deep-qr-no-viewers">Chưa có dữ liệu.</span></div>
+         <p>Giỏ nhân viên là trạng thái tạm từ điện thoại, <strong>chưa phải đơn bán hoặc giao dịch kho</strong>. Khi nhân viên gửi đơn, trace thật sẽ tiếp tục qua xác thực → kho → Bếp/Bar → COMMIT.</p>
+       </section>
+       <div class="deep-trace-dock" aria-label="Theo dõi yêu cầu thực qua từng bước backend">
         <div class="deep-trace-head"><div><strong>REQUEST TRACE / REAL EXECUTION</strong><span>Nhận request → xử lý nghiệp vụ → SQL → COMMIT hoặc lỗi → HTTP response</span></div>
           <span id="deepTraceCount">Chưa có yêu cầu ghi dữ liệu</span></div>
         <div class="deep-trace-items" id="deepTraceList" role="group" aria-label="Các yêu cầu thực gần đây"></div>

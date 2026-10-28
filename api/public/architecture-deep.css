@@ -167,3 +167,13 @@
 .deep-node[data-id="cart"].is-cart-live{border-color:#59dda8;box-shadow:0 0 0 2px #34ce8940,0 7px 15px #0005;background:#163c37}
 .deep-node[data-id="cart"].is-cart-live .deep-node-count{background:#1b5748;border-color:#5ed4a8;color:#c0fce4}
 @media(max-width:690px){.deep-qr-table-chip{flex-basis:100%;max-width:100%}}
+
+/* Staff cart presence is ephemeral and never treated as a committed sale. */
+.deep-staff-metric{background:#183043;border-color:#416a8a}.deep-staff-metric>span{color:#9dccff}.deep-staff-metric strong{color:#b5e0ff}
+.deep-staff-presence{background:#101f34;border-bottom-color:#355578}
+.deep-staff-presence .deep-qr-presence-title strong{color:#a6d5ff}
+.deep-staff-presence .deep-qr-table-chip{background:#1b3048;border-color:#3b6489}
+.deep-staff-presence .deep-qr-table-chip strong{color:#d0eaff}
+.deep-node[data-id="staffcart"].is-staff-cart-live,.deep-node[data-id="stafforder"].is-staff-cart-live{border-color:#72c9ff;background:#193f52;box-shadow:0 0 0 2px #6ec3ff36,0 7px 15px #0005}
+.deep-node[data-id="staffcart"].is-staff-cart-live .deep-node-count{background:#1d4c65;border-color:#77caff;color:#d4edff}
+.deep-edge.is-staff-presence-live:not(.is-muted){stroke:#7bd1ff;stroke-width:3;opacity:1}

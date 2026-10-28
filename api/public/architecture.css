@@ -145,3 +145,6 @@
  .arch-disclaimer p{font-size:10px}
 }
 @media(prefers-reduced-motion:reduce){.tt6-architecture-page *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+
+.arch-node.is-staff-cart-live{border-color:#6bc9ff!important;box-shadow:0 0 0 2px #58b6ec40,0 6px 20px #0004!important}
+[data-arch-edge].is-staff-presence-live .arch-wire{stroke:#7acfff!important;stroke-width:3;opacity:1}

@@ -226,3 +226,9 @@
  setInterval(()=>{if(!document.hidden&&initialized)refresh()},60000);
  refresh();
 })();
+
+document.addEventListener('saleshub:staff-presence',event=>{
+ const state=event.detail,active=Number(state?.selectingSessions||0)+Number(state?.submittingSessions||0)>0;
+ for(const id of ['staffcart','stafforder'])document.querySelector('#archNodes [data-arch-node="'+id+'"]')?.classList.toggle('is-staff-cart-live',active);
+ for(const id of ['stafforder-staffcart','staffcart-http'])document.querySelector('#archEdges [data-arch-edge="'+id+'"]')?.classList.toggle('is-staff-presence-live',active);
+});
