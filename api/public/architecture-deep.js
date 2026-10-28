@@ -4,6 +4,9 @@
  const escape=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
  const W=1630,H=790;
  const services={
+  guest:{name:'Khách / QR',tag:'CLIENT',kind:'client',summary:'Khách dùng trình duyệt mở link bàn từ QR để xem món và gửi order.',paths:['/t/:token','GET /api/menu/:token','POST /api/orders'],steps:['Trình duyệt đọc QR trên bàn và nhận token của bàn','Tải thực đơn qua API và gửi requestId cùng món đã chọn','Backend kiểm tra token, món và số lượng; khách không có quyền truy cập các API quản trị'],tables:[]},
+  staff:{name:'Nhân viên / Bếp / Bar',tag:'STAFF',kind:'client',summary:'Giao diện nội bộ dành cho các vai trò theo tài khoản và khu vực.',paths:['/staff','/staff/lockers','GET /api/kds','GET /api/lockers'],steps:['Đăng nhập và nhận cookie phiên HttpOnly','Backend kiểm tra role / work_area tại mỗi request','Nhân viên bếp/bar đổi trạng thái món; khu vực thiết bị xử lý phao và tủ'],tables:[]},
+  owner:{name:'Chủ cửa hàng',tag:'OWNER',kind:'client',summary:'Điều hành toàn bộ hệ thống qua giao diện quản trị; dữ liệu giám sát chỉ chủ cửa hàng mới được đọc.',paths:['/admin','/admin/architecture','/admin/inventory','/admin/operations'],steps:['Xác thực chủ qua session HMAC và dữ liệu owner_accounts','Truy cập API quản trị và số liệu tổng hợp','Xem sự kiện DB đã commit và telemetry API đã chuẩn hóa trên bản đồ'],tables:['owner_accounts']},
   http:{name:'HTTP Router / Render',tag:'server.js',kind:'gateway',summary:'Node.js HTTP server trên Render. Nhận HTTPS, định tuyến request, trả JSON và phục vụ giao diện tĩnh.',paths:['api/server.js','api/static-files.js'],steps:['Nhận HTTP request qua web service Render','Kiểm tra same-origin và giới hạn tần suất theo nhóm endpoint','Định tuyến theo method + URL; không có API gateway riêng được xác minh','Trả HTTP status và response; ghi thời gian API vào bộ nhớ tiến trình'],tables:[]},
   auth:{name:'Session / RBAC / Khu vực',tag:'RBAC',kind:'gateway',summary:'Cookie phiên HttpOnly được xác minh ở server. Nhân viên có role và work_area; chủ cửa hàng có quyền riêng.',paths:['identity(req)','requireAuth(req,res)','requireAdmin(req,res)','api/area-access.js','api/staff-auth.js'],steps:['Đọc cookie phiên và kiểm tra chữ ký HMAC','Tra cứu tài khoản, auth_version và active khi cần','Phân quyền role; kiểm tra quyền khu vực equipment/restroom','Từ chối bằng HTTP 401/403 khi thiếu quyền, không tin vào role do frontend gửi'],tables:['staff_users','owner_accounts']},
   validate:{name:'Validation / Idempotency',tag:'INPUT',kind:'gateway',summary:'Xử lý JSON, kiểm tra tham số, định dạng, trùng requestId và giá tiền do server tính. Tùy module có các kiểm tra bổ sung.',paths:['api/server.js','api/operations.js','api/lockers.js','api/area-receipts.js'],steps:['Giới hạn kích thước và kiểm tra dữ liệu đầu vào','Kiểm tra QR token / item / quantity; kiểm tra các trạng thái hợp lệ','Dùng requestId và UNIQUE constraint để chống ghi trùng ở nghiệp vụ hỗ trợ','Giá tủ và phao được quyết định tại backend, không lấy giá từ trình duyệt'],tables:['dining_orders.request_id','finance_entries.request_id','locker_rentals.request_id']},
@@ -77,7 +80,7 @@
   $('deepSizer').style.height=Math.round(H*scale)+'px';
   $('deepScale').textContent=Math.round(scale*100)+'%';
  }
- function fit(){const width=$('deepViewport').clientWidth||1000;setScale(Math.min(1,(width-18)/W))}
+ function fit(){const width=$('deepViewport').clientWidth||1000;setScale(width<760?.7:Math.min(1,(width-18)/W))}
  function highlight(){
   document.querySelectorAll('#deepFilters [data-flow]').forEach(b=>b.classList.toggle('is-active',b.dataset.flow===filter));
   document.querySelectorAll('#deepNodes [data-id]').forEach(b=>{
@@ -124,12 +127,12 @@
  function connect(){
   if(typeof EventSource==='undefined'){setConnection('Không hỗ trợ SSE · cập nhật 10s',false);timer=setInterval(fallback,10000);void fallback();return}
   source=new EventSource('/api/admin/architecture/system/live');
-  source.addEventListener('system',e=>{try{last=JSON.parse(e.data);setConnection('Đang kết nối SSE · dữ liệu thực',true);renderEvents()}catch{}});
+  source.addEventListener('system',e=>{try{last=JSON.parse(e.data);setConnection('Đang kết nối SSE · dữ liệu thực',true);if(timer){clearInterval(timer);timer=null}renderEvents()}catch{}});
   source.addEventListener('offline',()=>setConnection('DB tạm mất kết nối',false));
   source.onerror=()=>{
    setConnection('SSE gián đoạn · cập nhật qua API',false);
    if(!timer){timer=setInterval(fallback,10000);void fallback()}
-   source.close();source=null;
+   // EventSource handles automatic reconnect; fallback polling continues meanwhile.
   };
  }
  function init(){
