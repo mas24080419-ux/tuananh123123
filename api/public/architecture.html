@@ -13,6 +13,7 @@
 <link rel="stylesheet" href="/architecture-deep.css?v=20261028-staffcart-v3">
 <link rel="stylesheet" href="/architecture-path.css?v=20261028-all-parallel-v1">
 <link rel="stylesheet" href="/architecture-qr.css?v=20261028-qr-v1">
+<link rel="stylesheet" href="/architecture-blueprint.css?v=20261028-blueprint-v1">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
 <script defer src="/architecture.js?v=20261028-staffcart-v3"></script>
 <script defer src="/architecture-live.js?v=20261028-staff-orders-map-v2"></script>
@@ -20,6 +21,7 @@
 <script defer src="/architecture-path.js?v=20261028-all-parallel-v1"></script>
 <script defer src="/architecture-parallel.js?v=20261028-all-parallel-v1"></script>
 <script defer src="/architecture-qr.js?v=20261028-qr-v1"></script>
+<script defer src="/architecture-blueprint.js?v=20261028-blueprint-v1"></script>
 </head>
 <body class="tt6-architecture-page">
 <div class="shell">
@@ -163,6 +165,30 @@
         </div>
         <div class="deep-events-info"><strong id="deepEventCount">— sự kiện</strong><span id="deepLastSync">Đang kiểm tra dữ liệu…</span></div>
         <div id="deepEventItems" class="deep-event-list" aria-live="off"><p class="deep-empty">Đang đọc dữ liệu hệ thống…</p></div>
+      </div>
+    </section>
+    <section class="bp-panel" id="backendBlueprint" aria-label="Sơ đồ kỹ thuật toàn bộ backend SalesHub">
+      <header class="bp-titlebar"><div><p class="bp-kicker">TECHNICAL BLUEPRINT · 6 LAYERS · SOURCE-VERIFIED</p><h2>Sơ đồ backend chuyên sâu · Toàn bộ hệ thống</h2>
+        <p>Phân rã từ trình duyệt, HTTP và phân quyền tới nghiệp vụ, transaction, PostgreSQL và SSE. Có thể tra cứu API, 24 bước tạo đơn và ERD trực tiếp từ schema mã nguồn.</p></div>
+        <span class="bp-source-tag">ĐỌC TỪ MÃ NGUỒN · READ ONLY</span></header>
+      <div class="bp-tabs" id="bpTabs" role="tablist" aria-label="Các cách xem sơ đồ backend">
+       <button type="button" role="tab" data-bp-tab="topology" aria-selected="true" class="is-active">01 · Kiến trúc 6 lớp</button>
+       <button type="button" role="tab" data-bp-tab="order" aria-selected="false">02 · Vòng đời đơn hàng (24 bước)</button>
+       <button type="button" role="tab" data-bp-tab="schema" aria-selected="false">03 · CSDL & khóa ngoại (ERD)</button>
+      </div>
+      <div class="bp-toolbar"><div class="bp-toolbar-left"><label for="bpSearch">Tìm khối, bảng hoặc API</label><input id="bpSearch" type="search" placeholder="Ví dụ: FOR UPDATE, inventory, thanh toán" autocomplete="off">
+       <select id="bpFilters" aria-label="Lọc khối kiến trúc"><option value="all">Tất cả</option><option value="orders">QR / Đơn hàng</option><option value="stafforder">Nhân viên</option><option value="kds">Bếp / Bar</option><option value="stock">Kho</option><option value="finance">Thanh toán</option><option value="rental">Phao / Tủ</option><option value="access">Phân quyền</option><option value="admin">Quản trị</option><option value="audit">Audit</option><option value="observe">Giám sát</option></select></div>
+       <div class="bp-toolbar-right"><span id="bpTabLabel" class="bp-count">Kiến trúc 6 lớp</span><button id="bpZoomOut" type="button" aria-label="Thu nhỏ">−</button><span id="bpZoomLabel">78%</span><button id="bpZoomIn" type="button" aria-label="Phóng to">+</button><button id="bpFit" type="button" aria-label="Vừa khung" title="Vừa chiều rộng">⤢</button><button id="bpReset" type="button" title="Hủy lựa chọn">Tất cả</button></div>
+      </div>
+      <p id="bpLoading" class="bp-loading">Đang đọc sơ đồ và bảng dữ liệu từ backend…</p>
+      <div id="bpDiagram" hidden>
+       <div class="bp-layout"><div id="bpViewport" class="bp-viewport" tabindex="0" aria-label="Sơ đồ kỹ thuật, cuộn để xem các lớp">
+        <div id="bpSizer" class="bp-sizer"><div id="bpStage" class="bp-stage"><div id="bpLanes" class="bp-lanes"></div>
+         <svg id="bpWires" class="bp-wires" aria-hidden="true"></svg><div id="bpNodes" class="bp-nodes"></div>
+        </div></div></div>
+        <aside id="bpInspector" class="bp-inspector" aria-live="polite" aria-label="Chi tiết khối được chọn"><p>Chọn một khối để xem mã nguồn, API, điều kiện xử lý và các kết nối liên quan.</p></aside>
+       </div>
+       <div class="bp-foot"><span id="bpStatus">Đang đọc dữ liệu…</span><span id="bpHint">Giám sát LIVE chỉ dựa trên request thật, không suy diễn trạng thái.</span><span class="bp-footer-mark">Tất cả · Không tự chuyển module</span></div>
       </div>
     </section>
     <details class="arch-legacy-details">
