@@ -376,6 +376,10 @@ if(req.method==='GET'&&p==='/api/admin/qr/presence'){
  if(!await requireAdmin(req,res))return;
  return send(res,200,qrPresence.snapshot());
 }
+if(req.method==='GET'&&p==='/api/admin/architecture/blueprint'){
+ if(!await requireAdmin(req,res))return;
+ return send(res,200,require('./backend-blueprint').getModel());
+}
 if(req.method==='GET'&&p==='/api/admin/architecture'){
  if(!await requireAdmin(req,res))return;
  if(!throttle(req,'architecture-read',50))return err(res,429,'Làm mới giám sát quá nhanh.');
