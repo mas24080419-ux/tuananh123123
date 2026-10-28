@@ -9,8 +9,10 @@
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
 <link rel="stylesheet" href="/architecture.css?v=20261028-arch1">
+<link rel="stylesheet" href="/architecture-live.css?v=20261028-arch-live1">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
 <script defer src="/architecture.js?v=20261028-arch1"></script>
+<script defer src="/architecture-live.js?v=20261028-arch-live1"></script>
 </head>
 <body class="tt6-architecture-page">
 <div class="shell">
@@ -41,6 +43,15 @@
       <div class="arch-kpi"><span>THU–CHI / 24H</span><strong id="statFinance">—</strong><small>Phiếu ghi sổ</small></div>
       <div class="arch-kpi"><span>TỦ ĐANG THUÊ</span><strong id="statLockers">—</strong><small>Chưa trả tủ</small></div>
       <div class="arch-kpi"><span>CHƯA THANH TOÁN</span><strong id="statUnpaid">—</strong><small>Đơn đang ghi nợ</small></div>
+    </section>
+    <section class="live-orders-panel" aria-labelledby="liveOrdersTitle">
+      <div class="live-orders-header"><div class="live-orders-heading"><span class="live-orders-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg></span><div><p>QR ORDER / EVENT STREAM</p><h2 id="liveOrdersTitle">Luồng đơn hàng trực tiếp</h2><small>Sự kiện thật đã lưu trong PostgreSQL · không mô phỏng</small></div></div>
+      <div class="live-orders-controls"><span id="liveConnection" class="live-connection" role="status"><span class="live-connection-dot"></span>Đang kết nối…</span><button type="button" id="liveFollowNewest" aria-pressed="true">Theo dõi đơn mới nhất</button></div></div>
+      <div class="live-orders-body">
+        <div class="live-order-list-wrap"><div class="live-order-section-head"><strong>Đơn gọi món</strong><span id="liveOrderCount">—</span></div><div id="liveOrderList" class="live-order-list" role="listbox" aria-label="Danh sách đơn QR"></div></div>
+        <div class="live-order-detail"><div id="liveOrderDetail" aria-live="polite"><p class="live-order-placeholder">Đang tải đơn hàng thực tế từ PostgreSQL…</p></div></div>
+      </div>
+      <div class="live-orders-footer"><span id="liveLastEvent">Chưa có sự kiện.</span><span>Chỉ chủ cửa hàng · cập nhật qua SSE và tải bù khi mất kết nối</span></div>
     </section>
     <section class="arch-workbench" aria-label="Sơ đồ kiến trúc tương tác">
       <div class="arch-workbench-header">
@@ -73,7 +84,7 @@
         </aside>
       </div>
     </section>
-    <footer class="arch-disclaimer"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/></svg><p><strong>Giới hạn giám sát:</strong> Chỉ số là ảnh chụp tổng hợp từ PostgreSQL tại thời điểm kiểm tra. Đường nối thể hiện logic mã nguồn, không chứng minh mọi yêu cầu đang hoạt động hay thời gian thực. Muốn theo dõi từng request cần triển khai request ID, tracing, metrics và cảnh báo riêng.</p></footer>
+    <footer class="arch-disclaimer"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/></svg><p><strong>Giới hạn giám sát:</strong> Chỉ số tổng hợp là ảnh chụp PostgreSQL. Bảng đơn trực tiếp nhận sự kiện SSE dựa trên audit đã commit; đây chưa phải tracing đầy đủ từng HTTP request. Mốc xác thực, xử lý kho và tạo đơn chỉ được công bố cùng nhau sau khi giao dịch thành công. Các yêu cầu thất bại trước khi tạo đơn không có dấu vết trong danh sách này.</p></footer>
   </div>
   <section id="archAccess" class="arch-access" hidden><h2>Truy cập dành cho chủ cửa hàng</h2><p>Vui lòng đăng nhập tài khoản chủ cửa hàng để xem kiến trúc vận hành và số liệu tổng hợp.</p><a href="/admin">Đến trang đăng nhập</a></section>
 </main>

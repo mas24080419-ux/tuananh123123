@@ -23,6 +23,15 @@ Owner/Staff sessions use HttpOnly signed cookies and server-side authorization. 
 ### External payment
 Payment QR is a displayed bank transfer instruction; a human confirms the receipt of funds. **No automated bank webhooks or provider integrations are claimed.** No Redis, Cloudflare, Zalo, Telegram, DeepSeek, MinIO, queue workers, or observability vendor was inferred without source evidence.
 
+## Live QR order pipeline (2026-10-28 upgrade)
+When the owner opens `/admin/architecture`, the application provides an owner-only `GET /api/admin/architecture/live` Server-Sent Events stream and a `GET /api/admin/architecture/recent` fallback/recovery endpoint. Both require the owner session. The SSE stream polls the persisted `dining_audit` watermark approximately every 2.5 seconds and refreshes its snapshot immediately after a newly committed order or kitchen status change. It reconnects automatically; fallback uses owner-authenticated polling approximately every 5 seconds when SSE is unavailable. Streams validate the owner session periodically and are capped at five simultaneous clients.
+
+**Recorded evidence:** New successful guest orders write `order_validated`, `inventory_checked` and `order_created` as separate `dining_audit` entries within the SAME PostgreSQL transaction that creates order lines and applies inventory rules. Those entries become visible only after COMMIT; transaction rollback discards the order and its stages. Therefore a step being displayed does not imply a timestamped network-level trace of the pre-commit handling or a live event at the exact time of each statement. `inventory_checked` means recipe/inventory logic completed; it does not prove every item consumed stock if no recipe was configured. A duplicate `requestId` does not generate duplicate events. Existing `item_status_changed` events (kitchen/bar) and `payment_confirmed` events (if present) are also displayed. Previously created orders may lack the new detailed stage entries; never backfill fictitious successes.
+
+**Data safety:** Live results include the latest 20 orders (most recent 24h and any older unfinished orders), their order-line statuses, table names, and whitelisted audit actions only; not customer phone numbers, order notes, QR tokens, credentials or payment account details. No database schema migration or data deletion. This is an event-backed operational timeline, not a distributed system trace. Rejected requests before a transaction commits are not represented in this persisted order timeline.
+
+**Resilience:** SSE sends committed snapshots, reconnects after outages, monitors audit changes, verifies the owner session periodically, and closes inactive subscriptions. The page pauses the stream when hidden and resumes with a database reload. Dashboard KPIs remain snapshots, separate from streaming per-order audit data.
+
 ## Monitoring currently delivered
 `GET /api/admin/architecture` requires owner role, returns static verified topology plus a read-only PostgreSQL snapshot with:
 - orders in last 24h;
