@@ -7,7 +7,7 @@ const {gzipSync, brotliCompressSync, constants} = require('node:zlib');
 // Only explicit pages and public CSS/JS/images are routable; server source is never exposed.
 const pages = new Map([
   ['/staff/lockers', 'lockers.html'], ['/', 'staff.html'], ['/staff', 'staff.html'], ['/admin', 'admin.html'],
-  ['/admin/operations', 'operations.html'], ['/admin/core', 'core.html'],
+  ['/admin/operations', 'operations.html'], ['/admin/inventory', 'inventory.html'], ['/admin/core', 'core.html'],
   ['/admin/orders', 'orders.html'], ['/admin/users', 'users.html'], ['/admin/payment', 'payment.html']
 ]);
 const mime = {'.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8',
