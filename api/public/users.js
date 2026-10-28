@@ -1,6 +1,6 @@
 'use strict';
 const $=s=>document.querySelector(s),escapeHTML=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const roleNames={equipment_staff:'Phao bơi & tủ đồ',restroom_staff:'Nhà vệ sinh',waiter:'Phục vụ bàn',cashier:'Thu ngân',kitchen:'Bếp',bar:'Bar',manager:'Quản lý ca'};
+const roleNames={equipment_staff:'Phao bơi & tủ đồ',restroom_staff:'Nhà vệ sinh',waiter:'Phục vụ bàn · Đơn hàng',cashier:'Thu ngân · Đơn và tiền',kitchen:'Bếp',bar:'Bar',manager:'Quản lý · Đơn và tiền'};
 const roleOf=u=>u.work_area==='equipment'?'equipment_staff':u.work_area==='restroom'?'restroom_staff':u.role;
 let users=[];
 function msg(s,isError=false){$('#notice').textContent=s;$('#notice').className='alert'+(isError?' error':'')}

@@ -3,9 +3,11 @@ async function api(url,opts){var o=opts||{},r=await fetch(url,{credentials:'same
 var assignedArea=null,areaPending=null;
 function enter(role,workArea){
  if(workArea==='equipment'){location.replace('/staff/lockers');return}
+ if(!workArea&&['waiter','cashier','manager'].includes(role)&&!new URLSearchParams(location.search).has('kds')){location.replace('/staff/orders');return}
  document.body.classList.remove('tt6-staff-auth');
  el('login').classList.add('hidden');el('app').classList.remove('hidden');
  el('qrTab').classList.toggle('hidden',role==='kitchen'||role==='bar');
+ el('staffOrderLink').classList.toggle('hidden',!!workArea||!['admin','waiter','cashier','manager'].includes(role));
  if(role==='kitchen'||role==='bar'){el('station').value=role;el('station').disabled=true;}
  if(workArea){el('lockerAppLink').hidden=workArea!=='equipment';assignedArea=workArea;view='area';el('kdsTab').classList.add('hidden');el('qrTab').classList.add('hidden');el('kds').classList.add('hidden');el('qr').classList.add('hidden');el('areaWorkspace').classList.remove('hidden');loadArea();return}
  refresh();
