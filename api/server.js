@@ -116,6 +116,7 @@ const requireAuth=async(req,res)=>{if(!await identity(req)){err(res,401,'Cần �
 const requireAdmin=async(req,res)=>{if((await identity(req))?.role!=='admin'){err(res,403,'Chỉ chủ cửa hàng có quyền truy cập.');return false}systemFlow.mark(req,'auth','Phiên chủ cửa hàng đã xác thực');return true};
 const canSeeTables=role=>['admin','staff','manager','cashier','waiter'].includes(role);
 const canCook=role=>['admin','staff','manager','kitchen','bar'].includes(role);
+const {canManageOrders,canConfirmOrderPayment,canChangeOrderItem}=require('./staff-order-permissions');
 const input=async req=>{let s='';for await(const ch of req){s+=ch;if(s.length>18000)throw Object.assign(Error('Dữ liệu quá lớn'),{status:413})}try{const data=JSON.parse(s||'{}');systemFlow.mark(req,'validate','JSON đã phân tích cú pháp');if(req._flowTrace)systemFlow.mark(req,req._flowTrace.module,'Bắt đầu xử lý nghiệp vụ');return data}catch{throw Object.assign(Error('JSON không hợp lệ'),{status:400})}};
 const sameOrigin=(req,res)=>{if(!['POST','PATCH','PUT','DELETE'].includes(req.method))return true;const origin=req.headers.origin;if(!origin)return true;const host=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;if(origin!==host){err(res,403,'Nguồn yêu cầu không hợp lệ.');return false}return true};
 const clientIp=req=>(req.headers['x-forwarded-for']||req.socket.remoteAddress||'').split(',')[0].trim();
@@ -144,7 +145,7 @@ const note=String(body.note||'').slice(0,160);const m=await getMenu(),lookup=new
 if(!pool){const exists=orders.find(x=>x.table_id===t.id&&x.request_id===body.requestId);if(exists)return {id:exists.id,duplicate:true};const o={id:id(),table_id:t.id,request_id:body.requestId,note,payment_method:paymentMethod,payment_status:'unpaid',created_at:new Date().toISOString()};orders.push(o);for(const it of items)lines.push({id:id(),order_id:o.id,menu_item_id:it.id,name:it.name,quantity:it.qty,unit_price:it.price,station:it.station,note:it.note,status:'new',created_at:o.created_at});return {id:o.id,duplicate:false}}
 const c=await pool.connect();try{await c.query('BEGIN');systemFlow.mark(flowReq,'tx','Transaction đã BEGIN');const orderId=id();const o=await c.query('INSERT INTO dining_orders(id,table_id,request_id,note,payment_method) VALUES($1,$2,$3,$4,$5) ON CONFLICT(table_id,request_id) DO NOTHING RETURNING id',[orderId,t.id,body.requestId,note,paymentMethod]);if(!o.rowCount){const prev=await c.query('SELECT id FROM dining_orders WHERE table_id=$1 AND request_id=$2',[t.id,body.requestId]);await c.query('COMMIT');systemFlow.mark(flowReq,'pg','RequestId đã tồn tại — không tạo đơn mới');return {id:prev.rows[0].id,duplicate:true}}for(const it of items)await c.query('INSERT INTO dining_order_lines(id,order_id,menu_item_id,name,quantity,unit_price,station,note) VALUES($1,$2,$3,$4,$5,$6,$7,$8)',[id(),orderId,it.id,it.name,it.qty,it.price,it.station,it.note]);systemFlow.mark(flowReq,'orders','Đã ghi đơn và món (chưa COMMIT)');await c.query("INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,'system','order_validated',$2::jsonb)",[orderId,JSON.stringify({checked:'table_menu_quantity_requestId'})]);systemFlow.mark(flowReq,'inventory','Đang kiểm tra và trừ tồn nguyên liệu');await ops.consume(c,orderId);systemFlow.mark(flowReq,'inventory','Đã cập nhật tồn trong transaction');await c.query("INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,'system','inventory_checked',$2::jsonb)",[orderId,JSON.stringify({result:'inventory_rules_processed'})]);await c.query("UPDATE dining_tables SET service_status='occupied' WHERE id=$1 AND service_status='available'",[t.id]);await c.query('INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,$2,$3,$4::jsonb)',[orderId,'guest','order_created',JSON.stringify({table:t.name,item_count:items.length,payment_method:paymentMethod})]);systemFlow.mark(flowReq,'tx','Đang chờ COMMIT');await c.query('COMMIT');systemFlow.mark(flowReq,'pg','PostgreSQL COMMIT thành công');systemFlow.mark(flowReq,'audit','Audit đã được ghi bền vững');void orderLive.pulse(true);console.log('ORDER_COMMITTED',orderId,t.name,items.length);return {id:orderId,duplicate:false}}catch(e){await c.query('ROLLBACK');systemFlow.mark(flowReq,'tx','ROLLBACK: đơn chưa được lưu');throw e}finally{c.release()}}
 async function getOrders(){if(!pool)return orders.map(o=>({...o,table_name:tables.find(t=>t.id===o.table_id)?.name,items:lines.filter(l=>l.order_id===o.id)})).reverse();const q=await pool.query('SELECT o.id,o.created_at,o.note,o.payment_method,o.payment_status,t.name AS table_name,li.id AS line_id,li.name AS item_name,li.quantity,li.unit_price,li.station,li.note AS item_note,li.status FROM dining_orders o JOIN dining_tables t ON o.table_id=t.id LEFT JOIN dining_order_lines li ON li.order_id=o.id WHERE o.created_at > now()- interval \'7 days\' OR EXISTS (SELECT 1 FROM dining_order_lines pending WHERE pending.order_id=o.id AND pending.status IN (\'new\',\'preparing\',\'ready\')) ORDER BY o.created_at DESC');const map=new Map();for(const x of q.rows){let o=map.get(x.id);if(!o){o={id:x.id,table_name:x.table_name,note:x.note,payment_method:x.payment_method,payment_status:x.payment_status,created_at:x.created_at,items:[]};map.set(x.id,o)}if(x.line_id)o.items.push({id:x.line_id,name:x.item_name,quantity:x.quantity,unit_price:x.unit_price,station:x.station,note:x.item_note,status:x.status})}return [...map.values()]}
-async function updateLine(lineId,status,actorRole='staff',flowReq){const allowed={new:['preparing','cancelled'],preparing:['ready','cancelled'],ready:['served'],served:[],cancelled:[]};if(!Object.values(allowed).flat().includes(status))throw Object.assign(Error('Trạng thái không hợp lệ.'),{status:400});systemFlow.mark(flowReq,'kds','Đang kiểm tra chuyển trạng thái món');if(!pool){const line=lines.find(x=>x.id===lineId);if(!line)throw Object.assign(Error('Không tìm thấy món.'),{status:404});if(['kitchen','bar'].includes(actorRole)&&line.station!==actorRole)throw Object.assign(Error('Không thuộc trạm chế biến được phân công.'),{status:403});if(!allowed[line.status].includes(status))throw Object.assign(Error('Chuyển trạng thái không hợp lệ.'),{status:409});line.status=status;return line}const c=await pool.connect();try{await c.query('BEGIN');systemFlow.mark(flowReq,'tx','Đã BEGIN transaction món');const x=(await c.query('SELECT status,station FROM dining_order_lines WHERE id=$1 FOR UPDATE',[lineId])).rows[0];if(!x)throw Object.assign(Error('Không tìm thấy món.'),{status:404});if(['kitchen','bar'].includes(actorRole)&&x.station!==actorRole)throw Object.assign(Error('Không thuộc trạm chế biến được phân công.'),{status:403});if(!allowed[x.status].includes(status))throw Object.assign(Error('Chuyển trạng thái không hợp lệ.'),{status:409});const row=(await c.query('UPDATE dining_order_lines SET status=$2, updated_at=now() WHERE id=$1 RETURNING id,status',[lineId,status])).rows[0];if(status==='cancelled')await ops.restore(c,lineId,x.status);await c.query('INSERT INTO dining_audit(order_id,item_id,actor,action,detail) SELECT order_id,$1,$2,$3,$4::jsonb FROM dining_order_lines WHERE id=$1',[lineId,'staff','item_status_changed',JSON.stringify({from:x.status,to:status})]);systemFlow.mark(flowReq,'tx','Đang COMMIT trạng thái món');await c.query('COMMIT');systemFlow.mark(flowReq,'pg','Đã lưu trạng thái và audit vào PostgreSQL');void orderLive.pulse(true);return row}catch(e){await c.query('ROLLBACK');systemFlow.mark(flowReq,'tx','ROLLBACK trạng thái món');throw e}finally{c.release()}}
+async function updateLine(lineId,status,actor,flowReq){const allowed={new:['preparing','cancelled'],preparing:['ready','cancelled'],ready:['served'],served:[],cancelled:[]};if(!Object.values(allowed).flat().includes(status))throw Object.assign(Error('Trạng thái không hợp lệ.'),{status:400});systemFlow.mark(flowReq,'kds','Đang kiểm tra chuyển trạng thái món');if(!pool){const line=lines.find(x=>x.id===lineId);if(!line)throw Object.assign(Error('Không tìm thấy món.'),{status:404});if(!canChangeOrderItem(actor,line.status,status,line.station))throw Object.assign(Error('Không có quyền chuyển trạng thái món.'),{status:403});if(!allowed[line.status].includes(status))throw Object.assign(Error('Chuyển trạng thái không hợp lệ.'),{status:409});line.status=status;return line}const c=await pool.connect();try{await c.query('BEGIN');systemFlow.mark(flowReq,'tx','Đã BEGIN transaction món');const x=(await c.query('SELECT status,station FROM dining_order_lines WHERE id=$1 FOR UPDATE',[lineId])).rows[0];if(!x)throw Object.assign(Error('Không tìm thấy món.'),{status:404});if(!canChangeOrderItem(actor,x.status,status,x.station))throw Object.assign(Error('Không có quyền chuyển trạng thái món.'),{status:403});if(!allowed[x.status].includes(status))throw Object.assign(Error('Chuyển trạng thái không hợp lệ.'),{status:409});const row=(await c.query('UPDATE dining_order_lines SET status=$2, updated_at=now() WHERE id=$1 RETURNING id,status',[lineId,status])).rows[0];if(status==='cancelled')await ops.restore(c,lineId,x.status);await c.query('INSERT INTO dining_audit(order_id,item_id,actor,action,detail) SELECT order_id,$1,$2,$3,$4::jsonb FROM dining_order_lines WHERE id=$1',[lineId,'staff','item_status_changed',JSON.stringify({from:x.status,to:status,role:actor.role,staffUserId:actor.userId||null})]);systemFlow.mark(flowReq,'tx','Đang COMMIT trạng thái món');await c.query('COMMIT');systemFlow.mark(flowReq,'pg','Đã lưu trạng thái và audit vào PostgreSQL');void orderLive.pulse(true);return row}catch(e){await c.query('ROLLBACK');systemFlow.mark(flowReq,'tx','ROLLBACK trạng thái món');throw e}finally{c.release()}}
 
 async function orderStatus(orderId,qrToken){
  const t=await getTable(qrToken);if(!t)return null;
@@ -241,7 +242,7 @@ async function adminReport(from,to){
  for(const r of received.rows){const d=dayMap.get(r.day)||{day:r.day,orders:0,collected:0};d.collected=Number(r.collected);dayMap.set(r.day,d)}
  return {summary:{...volume.rows[0],...paid.rows[0]},orders:recent.rows,top_items:best.rows,daily:[...dayMap.values()].sort((a,b)=>a.day.localeCompare(b.day)),mode};
 }
-async function confirmPayment(orderId,providedMethod){
+async function confirmPayment(orderId,providedMethod,actor={role:'admin'}){
  if(providedMethod!==undefined&&!['cash','bank_transfer'].includes(providedMethod))throw Object.assign(Error('Phương thức thanh toán không hợp lệ.'),{status:400});
  if(!pool){
   const o=orders.find(o=>o.id===orderId);
@@ -270,7 +271,7 @@ async function confirmPayment(orderId,providedMethod){
   const amount=Number(q.rows[0].amount);
   if(!Number.isSafeInteger(amount)||amount<=0)throw Object.assign(Error('Giá trị đơn không hợp lệ.'),{status:409});
   await c.query("UPDATE dining_orders SET payment_status='paid',paid_amount=$2,paid_at=now(),payment_method=$3 WHERE id=$1",[orderId,amount,actualMethod]);
-  await c.query("INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,'staff','payment_confirmed',$2::jsonb)",[orderId,JSON.stringify({role:'admin',payment_method:actualMethod,amount,method_filled_for_legacy_order:!o.payment_method})]);
+  await c.query("INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,'staff','payment_confirmed',$2::jsonb)",[orderId,JSON.stringify({role:actor.role,staffUserId:actor.userId||null,payment_method:actualMethod,amount,method_filled_for_legacy_order:!o.payment_method})]);
   await c.query('COMMIT');
   return {id:orderId,amount,already:false};
  } catch(e) {await c.query('ROLLBACK');throw e} finally {c.release()}
@@ -379,6 +380,36 @@ if(p==='/api/admin/payment-settings'){
  return err(res,405,'Phương thức không được hỗ trợ.');
 }
 if(req.method==='POST'&&p==='/api/orders'){if(!throttle(req,'orders',25))return err(res,429,'Gửi món quá nhanh.');const a=await placeOrder(await input(req),req);return send(res,a.duplicate?200:201,a)}
+ if(req.method==='GET'&&p==='/api/staff/menu'){
+  if(!await requireAuth(req,res))return;
+  if(!canManageOrders(await identity(req)))return err(res,403,'Không có quyền gọi món.');
+  return send(res,200,{items:await getMenu()});
+ }
+ if(p==='/api/staff/orders'){
+  if(!await requireAuth(req,res))return;
+  const actor=await identity(req);
+  if(!canManageOrders(actor))return err(res,403,'Không có quyền quản lý đơn.');
+  if(req.method==='GET'){
+   if(!throttle(req,'staff-orders-read',120))return err(res,429,'Làm mới quá nhanh.');
+   const all=await getOrders();
+   return send(res,200,{orders:all.slice(0,100).map(o=>({...o,total_vnd:o.items.reduce((s,i)=>s+(i.status==='cancelled'?0:Number(i.unit_price)*Number(i.quantity)),0)}))});
+  }
+  if(req.method==='POST'){
+   if(!throttle(req,'staff-orders-create',35))return err(res,429,'Gọi món quá nhanh.');
+   const order=await placeOrder(await input(req),req);
+   return send(res,order.duplicate?200:201,order);
+  }
+  return err(res,405,'Phương thức không hỗ trợ.');
+ }
+ if(req.method==='POST'&&/^\/api\/staff\/orders\/[0-9a-f-]{36}\/confirm-payment$/.test(p)){
+  if(!await requireAuth(req,res))return;
+  const actor=await identity(req);
+  if(!canConfirmOrderPayment(actor))return err(res,403,'Chỉ Thu ngân hoặc Quản lý được xác nhận thanh toán.');
+  if(!throttle(req,'staff-payment',40))return err(res,429,'Xác nhận quá nhanh.');
+  const b=await input(req);
+  if(b.confirm!==true)return err(res,400,'Hãy xác nhận đã nhận đủ tiền.');
+  return send(res,200,{payment:await confirmPayment(p.split('/')[4],b.paymentMethod,actor)});
+ }
 
 
 
@@ -537,7 +568,7 @@ if(req.method==='GET'&&p==='/api/kds'){if(!await requireAuth(req,res))return;
   items:o.items.filter(line=>actor.role==='kitchen'?line.station==='kitchen':actor.role==='bar'?line.station==='bar':true)
   .map(({unit_price,...line})=>line)})).filter(o=>o.items.length);
  systemFlow.mark(req,'kds','Đã lọc danh sách theo trạm chế biến',visible.reduce((n,o)=>n+o.items.length,0));return send(res,200,{orders:visible})}
-if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!await requireAuth(req,res))return;const a=await identity(req);if(!canUseDining(a)||!canCook(a.role))return err(res,403,'Vai trò này không được cập nhật chế biến.');const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status,a.role,req)})}
+if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!await requireAuth(req,res))return;const a=await identity(req);if(!canUseDining(a)||!(canCook(a.role)||canManageOrders(a)))return err(res,403,'Vai trò này không được cập nhật món.');const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status,a,req)})}
 if(req.method==='GET'&&/^\/qr\/[0-9a-f]{48}\.svg$/.test(p)){if(!await requireAuth(req,res))return;if(!canUseDining(await identity(req))||!canSeeTables((await identity(req)).role))return err(res,403,'Không có quyền lấy QR bàn.');const t=p.slice(4,-4);if(!(await getTable(t)))return err(res,404,'Không tìm thấy bàn.');const origin=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;const svg=await QRCode.toString(origin+'/t/'+t,{type:'svg',margin:2,width:320,errorCorrectionLevel:'M'});res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'no-store'});res.end(svg);return}
 if(req.method==='GET'&&p==='/admin/architecture'&&(await identity(req))?.role!=='admin'){
  res.writeHead(302,{'Location':'/admin','Cache-Control':'no-store'});res.end();return;
