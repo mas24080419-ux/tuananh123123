@@ -82,7 +82,7 @@ test('Architecture client uses persisted order count and recovers verified audit
  const fs=require('node:fs'),path=require('node:path');
  const js=fs.readFileSync(path.join(__dirname,'../public/architecture-deep.js'),'utf8');
  const player=fs.readFileSync(path.join(__dirname,'../public/architecture-path.js'),'utf8');
- assert.match(js,/guest:\[m\.orders24h,'đơn QR \/ 24h'\]/);
+ assert.match(js,/guest:\[last\?\.qrPresence\?\.activeSessions/);
  assert.match(player,/data\?\.verifiedOrders/);
  assert.match(player,/postgresql-audit/);
  assert.match(player,/elapsedMs:null/);
