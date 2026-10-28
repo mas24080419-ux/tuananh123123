@@ -10,11 +10,11 @@
 <link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
 <link rel="stylesheet" href="/architecture.css?v=20261028-arch1">
 <link rel="stylesheet" href="/architecture-live.css?v=20261028-arch-live1">
-<link rel="stylesheet" href="/architecture-deep.css?v=20261028-live-trace-v3">
+<link rel="stylesheet" href="/architecture-deep.css?v=20261028-live-trace-v4">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
 <script defer src="/architecture.js?v=20261028-arch1"></script>
 <script defer src="/architecture-live.js?v=20261028-arch-live1"></script>
-<script defer src="/architecture-deep.js?v=20261028-live-trace-v3"></script>
+<script defer src="/architecture-deep.js?v=20261028-live-trace-v4"></script>
 </head>
 <body class="tt6-architecture-page">
 <div class="shell">
@@ -60,6 +60,8 @@
       </div>
       <div class="deep-kpi-band" aria-label="Bộ đếm dữ liệu PostgreSQL thực theo thời gian">
         <div class="deep-metric"><span>ĐƠN / 24 GIỜ</span><strong id="deepMetricOrders">—</strong><small>Đơn đã lưu trên PostgreSQL</small></div>
+        <div class="deep-metric"><span>ĐƠN CHƯA HOÀN TẤT</span><strong id="deepMetricInProgress">—</strong><small>Có món new / preparing / ready</small></div>
+        <div class="deep-metric"><span>ĐƠN ĐANG CHẾ BIẾN</span><strong id="deepMetricOrderPreparing">—</strong><small>Có ít nhất một món preparing</small></div>
         <div class="deep-metric"><span>MÓN CHỜ BẾP</span><strong id="deepMetricWaiting">—</strong><small>Trạng thái new</small></div>
         <div class="deep-metric"><span>ĐANG CHẾ BIẾN</span><strong id="deepMetricPreparing">—</strong><small>Trạng thái preparing</small></div>
         <div class="deep-metric"><span>MÓN SẴN SÀNG</span><strong id="deepMetricReady">—</strong><small>Trạng thái ready</small></div>
