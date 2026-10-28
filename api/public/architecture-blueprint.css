@@ -26,6 +26,8 @@
 .bp-wires{position:absolute;inset:0;overflow:visible;pointer-events:none;z-index:1}
 .bp-wire{fill:none;stroke:#7594b6;stroke-width:1.65;opacity:.29;vector-effect:non-scaling-stroke}
 .bp-wire.is-faded{opacity:.055}.bp-wire.is-chosen{stroke:#a8e9cc;opacity:1;stroke-width:3}
+.bp-wire.bp-rollback-wire{stroke:#ef9e8d;opacity:.72;stroke-dasharray:6 4}
+.bp-wire.bp-rollback-wire.is-chosen{stroke:#ff857d;opacity:1;stroke-width:3.4}
 .bp-nodes{position:absolute;inset:0;pointer-events:none;z-index:2}
 .bp-node{position:absolute;display:flex;flex-direction:column;gap:9px;text-align:left;padding:11px 12px;border-radius:11px;color:#ebf4ff;border:1px solid #3a5470;border-top:3px solid var(--bp-accent);background:#15283e;box-shadow:0 6px 15px #02081175;pointer-events:auto;cursor:pointer;min-width:0;transition:none!important}
 .bp-node:hover,.bp-node.is-chosen{border-color:#e3ce8d;box-shadow:0 0 0 2px #ecbf5a3b}

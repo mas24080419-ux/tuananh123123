@@ -20,8 +20,11 @@
     const row=Math.floor(i/6),position=i%6,col=row%2===0?position:5-position;
     return {...x,id:'step-'+x.number,domain:x.node,x:30+col*279,y:92+row*215,w:233,h:147};
    });
-   return {nodes,edges:nodes.slice(1).map((x,i)=>({from:nodes[i].id,to:x.id})),
-    width:1720,height:1000};
+   // Steps 1–23 describe the successful lifecycle; 24 is a conditional error branch.
+   // Branches to rollback are real alternatives, never a final post-payment stage.
+   const success=nodes.slice(1,-1).map((x,i)=>({from:nodes[i].id,to:x.id}));
+   const errors=['step-5','step-8','step-12','step-15'].map(from=>({from,to:'step-24',kind:'rollback',label:'Validation / thiếu tồn → ROLLBACK'}));
+   return {nodes,edges:[...success,...errors],width:1720,height:1000};
   }
   const priority=['dining','stock','finance','rental','access','audit','legacy'];
   const tables=source.schema.tables.slice().sort((a,b)=>priority.indexOf(a.domain)-priority.indexOf(b.domain)||a.name.localeCompare(b.name));
@@ -32,7 +35,7 @@
  function renderTop(){
   $('bpTabLabel').textContent=tabNames[state.tab];
   $('bpStatus').textContent=state.tab==='schema'?state.model.schema.tableCount+' bảng · '+state.model.schema.relationCount+' khóa ngoại':
-   state.tab==='order'?state.model.architecture.orderSteps.length+' mốc nghiệp vụ · nhánh ROLLBACK mô tả ở chi tiết':
+   state.tab==='order'?state.model.architecture.orderSteps.length+' mốc nghiệp vụ · 4 nhánh lỗi / ROLLBACK thể hiện bằng đường đỏ':
    state.model.architecture.blocks.length+' khối · '+state.model.architecture.connects.length+' quan hệ logic';
   $('bpFilters').hidden=state.tab!=='topology';
   $('bpTabs').querySelectorAll('[data-bp-tab]').forEach(b=>{
@@ -40,7 +43,7 @@
   });
   $('bpSearch').value='';
   $('bpHint').textContent=state.tab==='schema'?'Bảng và khóa ngoại được trích từ schema.sql. Các bảng legacy chỉ còn trong schema, không đồng nghĩa còn dùng trên UI.':
-   state.tab==='order'?'Đây là thứ tự xử lý trong mã nguồn; mốc không phải số đo thời gian SQL. Bấm từng bước để xem điều kiện và xử lý lỗi.':
+   state.tab==='order'?'Đường đỏ: rẽ lỗi → ROLLBACK (trong giao dịch). Bếp/Bar và xác nhận thanh toán là những request sau COMMIT, không cùng giao dịch tạo đơn.':
    'Sơ đồ cấu trúc mã nguồn, không phải các microservice độc lập. Các khối sáng LIVE chỉ khi nhận được trạng thái quan sát thực.';
  }
  function renderNodes(){
@@ -68,7 +71,7 @@
   const curves=state.edges.map((e,i)=>{
    const from=shownNode.get(e.from),to=shownNode.get(e.to);if(!from||!to)return '';
    const d=curve(from,to);
-   return '<path class="bp-wire" d="'+d+'" data-bp-from="'+esc(e.from)+'" data-bp-to="'+esc(e.to)+'" data-bp-edge="'+i+'" marker-end="url(#bpArrow)"/>';
+   return '<path class="bp-wire'+(e.kind==='rollback'?' bp-rollback-wire':'')+'" d="'+d+'" data-bp-from="'+esc(e.from)+'" data-bp-to="'+esc(e.to)+'" data-bp-edge="'+i+'" marker-end="url(#bpArrow)"/>';
   }).join('');
   wire.innerHTML='<defs><marker id="bpArrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse"><path d="M1 1 L9 5 L1 9" fill="none" stroke="#7191b0" stroke-width="1.6"/></marker></defs>'+curves;
   resize();
@@ -133,8 +136,8 @@
     (n.legacy?'<p class="bp-caution">Bảng tồn tại trong schema vì tương thích dữ liệu cũ; không có nghĩa chức năng còn trên giao diện.</p>':'');
   }else if(state.tab==='order'){
    body='<p>'+esc(n.description)+'</p><h4>Module liên quan</h4>'+tag(n.node.toUpperCase())+
-    '<h4>Thứ tự</h4><p>Mốc '+esc(n.number)+' / '+state.nodes.length+
-    '. Đường nối biểu thị thứ tự logic trong mã nguồn, không phải thời lượng thực thi.</p>';
+    '<h4>Thứ tự / nhánh xử lý</h4><p>Mốc '+esc(n.number)+' / '+state.nodes.length+
+    '. Đường nối biểu thị trình tự logic hoặc điều kiện lỗi, không phải thời lượng thực thi. Bước 24 là nhánh thất bại, không thuộc luồng thành công.</p>';
   }else{
    body='<p>'+esc(n.description)+'</p><h4>Mã nguồn / API</h4>'+tag(n.source)+
     '<h4>Loại thành phần</h4><p>'+esc(iconType[n.lane]||n.lane)+' · '+esc(domains[n.domain]||n.domain)+'</p>';

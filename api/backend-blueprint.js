@@ -126,8 +126,8 @@ const orderSteps=[
  ['20','Phát tín hiệu đơn','Invalidate cache KDS, pulse SSE; Bếp/Bar truy vấn món mới','stream'],
  ['21','Bếp / Bar xử lý','GET /api/kds → PATCH /api/items/:id; quy tắc trạng thái','kds'],
  ['22','Hủy hợp lệ / hoàn nguyên liệu','Hủy món new có restore movements theo transaction riêng','inventory'],
- ['23','Nhân viên xác nhận đã thu tiền','Cập nhật payment_status, không tự xác nhận chuyển khoản','finance'],
- ['24','Mọi yêu cầu lỗi','ROLLBACK khi transaction thất bại; 4xx/5xx tùy nguyên nhân','tx']
+ ['23','Nhân viên xác nhận đã thu tiền','Một HTTP request và transaction RIÊNG cập nhật payment_status; không tự xác nhận chuyển khoản','finance'],
+ ['24','Nhánh lỗi / ROLLBACK','Rẽ từ validation, idempotency hoặc kiểm tra kho nếu thất bại; thao tác trong transaction sẽ rollback. Lỗi trước BEGIN trả 4xx mà không có transaction để rollback.','tx']
 ].map(([number,label,description,node])=>({number,label,description,node}));
 let cache=null;
 function getModel(){
