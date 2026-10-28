@@ -1,0 +1,65 @@
+'use strict';
+const {test}=require('node:test');
+const assert=require('node:assert/strict');
+const fs=require('node:fs'),path=require('node:path');
+const create=require('../qr-presence');
+const source=fs.readFileSync(path.join(__dirname,'..','server.js'),'utf8');
+const guest=fs.readFileSync(path.join(__dirname,'..','public','guest.html'),'utf8');
+const client=fs.readFileSync(path.join(__dirname,'..','public','qr-presence-client.js'),'utf8');
+const arch=fs.readFileSync(path.join(__dirname,'..','public','architecture.html'),'utf8');
+const monitor=fs.readFileSync(path.join(__dirname,'..','public','architecture-deep.js'),'utf8');
+const a='11111111-1111-4111-8111-111111111111',b='22222222-2222-4222-8222-222222222222';
+const t1='a'.repeat(48),t2='b'.repeat(48);
+const lookup=async token=>token===t1?{id:'table1',name:'Bàn 01',active:true}:token===t2?{id:'table2',name:'Bàn 02',active:true}:null;
+test('Two phone tabs can be counted concurrently at one table; repeated heartbeat does not duplicate',async()=>{
+ let clock=1_000_000;
+ const p=create({now:()=>clock,ttlMs:55000});
+ await p.heartbeat({sessionId:a,token:t1},lookup);
+ await p.heartbeat({sessionId:b,token:t1},lookup);
+ await p.heartbeat({sessionId:a,token:t1},lookup);
+ assert.equal(p.snapshot().activeSessions,2);
+ assert.equal(p.snapshot().activeTables,1);
+ assert.deepEqual(p.snapshot().tables.map(x=>[x.tableName,x.activeSessions]),[['Bàn 01',2]]);
+ clock+=56000;
+ assert.equal(p.snapshot().activeSessions,0);
+ assert.equal(p.snapshot().activeTables,0);
+});
+test('Per-table sessions, leaving and expired sessions are handled without tracking personal data',async()=>{
+ let clock=200000;
+ const p=create({now:()=>clock,ttlMs:55000});
+ await p.heartbeat({sessionId:a,token:t1},lookup);
+ await p.heartbeat({sessionId:b,token:t2},lookup);
+ assert.equal(p.snapshot().activeTables,2);
+ assert.equal(p.snapshot().activeSessions,2);
+ p.leave({sessionId:a});
+ assert.equal(p.snapshot().activeSessions,1);
+ assert.equal(p.snapshot().tables[0].tableName,'Bàn 02');
+ const snapshot=JSON.stringify(p.snapshot());
+ assert.doesNotMatch(snapshot,/11111111|22222222|aaaaaaaa|bbbbbbbb|ip|token/i);
+});
+test('Invalid or inactive QR tokens are refused, no fake viewers or allowlist bypass',async()=>{
+ const p=create();
+ await assert.rejects(()=>p.heartbeat({sessionId:a,token:'bad'},lookup),{status:400});
+ await assert.rejects(()=>p.heartbeat({sessionId:a,token:'c'.repeat(48)},lookup),{status:404});
+ assert.equal(p.snapshot().activeSessions,0);
+});
+test('Session cap prevents unbounded memory growth',async()=>{
+ const p=create({maxSessions:1});
+ await p.heartbeat({sessionId:a,token:t1},lookup);
+ await assert.rejects(()=>p.heartbeat({sessionId:b,token:t1},lookup),{status:503});
+ assert.equal(p.snapshot().activeSessions,1);
+});
+test('Presence only reports opened menu tabs and exposes snapshots only to owner',()=>{
+ assert.match(source,/p==='\/api\/qr\/presence'/);
+ assert.match(source,/p==='\/api\/qr\/leave'/);
+ const pos=source.indexOf("p==='/api/admin/qr/presence'");
+ assert(pos>=0);
+ assert.match(source.slice(pos,pos+180),/requireAdmin\(req,res\)/);
+ assert.match(guest,/qr-presence-client\.js/);
+ assert.match(client,/visibilitychange/);
+ assert.match(client,/pagehide/);
+ assert.match(client,/20000/);
+ assert.match(arch,/id="deepQrViewers"/);
+ assert.match(arch,/id="deepQrTableBreakdown"/);
+ assert.match(monitor,/last\?\.qrPresence\?\.activeSessions/);
+});
