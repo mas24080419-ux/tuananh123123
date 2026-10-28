@@ -13,6 +13,8 @@ const stockStatus=item=>{
  return qty<=0||(level>0&&qty<=level*.25)?'critical':qty<=level?'low':'healthy';
 };
 const stockLabel=status=>status==='critical'?'Nguy cấp':status==='low'?'Sắp hết':'Đủ hàng';
+const stockIcon=(name,extra='')=>'<svg class="stock-ui-icon'+(extra?' '+extra:'')+'" aria-hidden="true" focusable="false"><use href="#stock-icon-'+name+'"></use></svg>';
+const statusIcon=status=>status==='critical'?'triangle-alert':status==='low'?'package-open':'package';
 async function request(url,options={}){
  let r;try{r=await fetch(url,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}})}
  catch{const e=Error('Không kết nối được máy chủ. Kiểm tra kết nối trước khi thao tác lại.');e.ambiguous=true;throw e}
@@ -30,22 +32,22 @@ function renderAlert(item,i){
  const status=stockStatus(item),qty=toNumber(item.quantity),level=toNumber(item.reorder_level);
  const progress=level>0?Math.max(0,Math.min(100,Math.round(qty/level*100))):0;
  return '<button type="button" class="stock-alert-item" data-move="'+escapeHTML(item.id)+'" title="Cập nhật số lượng '+escapeHTML(item.name)+'">'+
- '<span class="stock-alert-symbol '+status+'" aria-hidden="true"><span class="stock-alert-index">'+String(i+1).padStart(2,'0')+'</span>▣</span>'+
+ '<span class="stock-alert-symbol '+status+'" aria-hidden="true"><span class="stock-alert-index">'+String(i+1).padStart(2,'0')+'</span>'+stockIcon(statusIcon(status))+'</span>'+
  '<span class="stock-alert-details"><span class="stock-alert-title"><b>'+escapeHTML(item.name)+'</b><span class="stock-status '+status+'">'+stockLabel(status)+'</span></span>'+
  '<span class="stock-alert-sub">Ngưỡng nhập thêm: '+showQty(level)+' '+escapeHTML(item.unit)+'</span>'+
  '<span class="stock-progress-row"><span class="stock-progress-track"><span class="stock-progress-fill '+status+'" style="display:block;width:'+progress+'%"></span></span>'+
  '<span class="stock-progress-label">'+showQty(qty)+'/'+showQty(level)+'</span></span></span>'+
- '<span class="stock-alert-quantity '+status+'"><strong>'+showQty(qty)+'</strong><small>'+escapeHTML(item.unit)+'</small></span><span class="stock-alert-chevron" aria-hidden="true">›</span></button>';
+ '<span class="stock-alert-quantity '+status+'"><strong>'+showQty(qty)+'</strong><small>'+escapeHTML(item.unit)+'</small></span><span class="stock-alert-chevron" aria-hidden="true">'+stockIcon('chevron-right')+'</span></button>';
 }
 function renderItem(item){
  const status=stockStatus(item);
  return '<article class="stock-item">'+
- '<span class="stock-item-visual '+status+'" aria-hidden="true">▣</span>'+
+ '<span class="stock-item-visual '+status+'" aria-hidden="true">'+stockIcon(statusIcon(status))+'</span>'+
  '<div class="stock-item-center"><div class="stock-item-name">'+escapeHTML(item.name)+'</div>'+
  '<div class="stock-item-meta"><span class="stock-status '+status+'">'+stockLabel(status)+'</span><span>Ngưỡng: '+showQty(item.reorder_level)+' '+escapeHTML(item.unit)+'</span></div></div>'+
  '<div class="stock-item-amount"><strong>'+showQty(item.quantity)+'</strong><small>'+escapeHTML(item.unit)+' còn</small></div>'+
- '<div class="stock-item-actions"><button type="button" class="stock-mini-action primary" data-move="'+escapeHTML(item.id)+'">Nhập / xuất</button>'+
- '<button type="button" class="stock-mini-action" data-reorder="'+escapeHTML(item.id)+'">Ngưỡng</button></div></article>';
+ '<div class="stock-item-actions"><button type="button" class="stock-mini-action primary" data-move="'+escapeHTML(item.id)+'">'+stockIcon('arrow-down-up')+' Nhập / xuất</button>'+
+ '<button type="button" class="stock-mini-action" data-reorder="'+escapeHTML(item.id)+'">'+stockIcon('sliders-horizontal')+' Ngưỡng</button></div></article>';
 }
 function renderMovements(){
  const kinds={purchase:'Nhập hàng',opening:'Tồn đầu kỳ',adjustment_in:'Điều chỉnh tăng',adjustment_out:'Điều chỉnh giảm',consume:'Xuất theo đơn QR',restore:'Hoàn trả hàng'};
@@ -54,7 +56,7 @@ function renderMovements(){
   const delta=toNumber(m.delta),positive=delta>0;
   const date=new Date(m.created_at);
   const time=Number.isFinite(date.getTime())?date.toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'}):'—';
-  return '<article class="stock-history-row"><div class="stock-history-left"><strong>'+escapeHTML(m.item_name)+'</strong><p>'+escapeHTML(kinds[m.kind]||'Cập nhật kho')+' · '+escapeHTML(time)+(m.note?' · '+escapeHTML(m.note):'')+'</p></div><strong class="stock-history-delta '+(positive?'':'out')+'">'+(positive?'+':'−')+showQty(Math.abs(delta))+' '+escapeHTML(m.unit)+'</strong></article>';
+  return '<article class="stock-history-row"><span class="stock-history-icon '+(positive?'in':'out')+'" aria-hidden="true">'+stockIcon(positive?'arrow-down-left':'arrow-up-right')+'</span><div class="stock-history-left"><strong>'+escapeHTML(m.item_name)+'</strong><p>'+escapeHTML(kinds[m.kind]||'Cập nhật kho')+' · '+escapeHTML(time)+(m.note?' · '+escapeHTML(m.note):'')+'</p></div><strong class="stock-history-delta '+(positive?'':'out')+'">'+(positive?'+':'−')+showQty(Math.abs(delta))+' '+escapeHTML(m.unit)+'</strong></article>';
  }).join('')||'<p class="stock-empty">Chưa có hoạt động nhập / xuất nào được lưu.</p>';
 }
 function render(){
@@ -65,7 +67,7 @@ function render(){
  $('#alertBadge').textContent=showQty(low.length)+' MỤC';
  const priority={critical:0,low:1,healthy:2};
  low.sort((a,b)=>priority[stockStatus(a)]-priority[stockStatus(b)]||toNumber(a.quantity)/Math.max(toNumber(a.reorder_level),1)-toNumber(b.quantity)/Math.max(toNumber(b.reorder_level),1));
- $('#stockAlertList').innerHTML=low.length?low.map(renderAlert).join(''):'<p class="stock-empty">✓ Hiện không có nguyên liệu dưới ngưỡng cảnh báo. Tiếp tục theo dõi tồn kho thường xuyên.</p>';
+ $('#stockAlertList').innerHTML=low.length?low.map(renderAlert).join(''):'<p class="stock-empty stock-empty-success">'+stockIcon('circle-check')+'<span>Hiện không có nguyên liệu dưới ngưỡng cảnh báo.<br>Tiếp tục theo dõi tồn kho thường xuyên.</span></p>';
  const query=$('#stockSearch').value.trim().toLocaleLowerCase('vi-VN');
  const filtered=items.filter(item=>(stockFilter==='all'||(stockFilter==='low'?toNumber(item.quantity)<=toNumber(item.reorder_level):toNumber(item.quantity)>toNumber(item.reorder_level)))&&(!query||item.name.toLocaleLowerCase('vi-VN').includes(query)));
  $('#stockResultCount').textContent=showQty(filtered.length)+' nguyên liệu · tổng '+showQty(items.length);
