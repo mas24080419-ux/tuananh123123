@@ -10,11 +10,13 @@
 <link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
 <link rel="stylesheet" href="/architecture.css?v=20261028-arch1">
 <link rel="stylesheet" href="/architecture-live.css?v=20261028-arch-live1">
-<link rel="stylesheet" href="/architecture-deep.css?v=20261028-live-trace-v4">
+<link rel="stylesheet" href="/architecture-deep.css?v=20261028-path-v5">
+<link rel="stylesheet" href="/architecture-path.css?v=20261028-path-v5">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
 <script defer src="/architecture.js?v=20261028-arch1"></script>
 <script defer src="/architecture-live.js?v=20261028-arch-live1"></script>
-<script defer src="/architecture-deep.js?v=20261028-live-trace-v4"></script>
+<script defer src="/architecture-deep.js?v=20261028-path-v5"></script>
+<script defer src="/architecture-path.js?v=20261028-path-v5"></script>
 </head>
 <body class="tt6-architecture-page">
 <div class="shell">
@@ -74,7 +76,18 @@
         <div class="deep-trace-items" id="deepTraceList" role="group" aria-label="Các yêu cầu thực gần đây"></div>
         <div class="deep-trace-detail" id="deepTraceSteps"><span>Chọn một request để xem các bước backend và thời gian đo thực tế.</span></div>
       </div>
-      <div class="deep-filters" id="deepFilters" role="group" aria-label="Lọc theo module xử lý"></div>
+      <div class="deep-runtime-banner" aria-live="off">
+  <div class="deep-runtime-led"><span id="pathRuntimeDot" class="path-runtime-dot"></span><div>
+    <strong id="pathRuntimeTitle">Sẵn sàng theo dõi luồng backend</strong>
+    <span id="pathRuntimeDescription">Các nút và đường nối chỉ sáng khi nhận được mốc trace thực; không chạy vòng lặp khi rảnh.</span>
+  </div></div>
+  <div class="deep-runtime-right">
+    <span id="pathRuntimeProgress" class="path-runtime-progress">0 / 0 mốc</span>
+    <span id="pathRuntimeQueue" class="path-runtime-queue">0 đang chờ</span>
+    <button type="button" id="pathReplay" class="path-runtime-replay" title="Phát lại các mốc đã ghi của yêu cầu đang chọn">Xem lại trace</button>
+  </div>
+</div>
+<div class="deep-filters" id="deepFilters" role="group" aria-label="Lọc theo module xử lý"></div>
       <div class="deep-content">
         <div class="deep-map-area">
           <div id="deepViewport" class="deep-viewport" tabindex="0" aria-label="Bản đồ backend chi tiết, cuộn ngang để xem toàn sơ đồ">
@@ -90,7 +103,7 @@
               </div>
             </div>
           </div>
-          <div class="deep-map-caption"><span id="deepLivePath">Chưa có sự kiện mới kể từ khi mở trang</span><span><strong>●</strong> Chọn module để xem logic xử lý và từng mốc trace</span><span>Không có hiệu ứng giả lập</span><span>Sự kiện DB chỉ xuất hiện sau khi được ghi thành công</span></div>
+          <div class="deep-map-caption"><span class="deep-real-data-legend">ĐƯỜNG CHẠY: <b>mốc backend thật</b> · hiển thị chậm để quan sát, không phải thời gian xử lý thực</span><span id="deepLivePath">Chưa có sự kiện mới kể từ khi mở trang</span><span><strong>●</strong> Chọn module để xem logic xử lý và từng mốc trace</span><span>Không có hiệu ứng giả lập</span><span>Sự kiện DB chỉ xuất hiện sau khi được ghi thành công</span></div>
         </div>
         <aside id="deepInspector" class="deep-inspector" aria-live="polite" aria-label="Chi tiết module backend">
           <p>Chọn một khối để xem quy trình xử lý thật trong backend.</p>
@@ -108,6 +121,9 @@
         <div id="deepEventItems" class="deep-event-list" aria-live="off"><p class="deep-empty">Đang đọc dữ liệu hệ thống…</p></div>
       </div>
     </section>
+    <details class="arch-legacy-details">
+      <summary><span>Chi tiết QR Order và bản đồ kiến trúc logic (tham khảo)</span><small>Mở khi cần xem riêng một đơn hoặc sơ đồ tĩnh</small></summary>
+      <div class="arch-legacy-body">
     <section class="live-orders-panel" aria-labelledby="liveOrdersTitle">
       <div class="live-orders-header"><div class="live-orders-heading"><span class="live-orders-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg></span><div><p>QR ORDER / EVENT STREAM</p><h2 id="liveOrdersTitle">Luồng đơn hàng trực tiếp</h2><small>Sự kiện thật đã lưu trong PostgreSQL · không mô phỏng</small></div></div>
       <div class="live-orders-controls"><span id="liveConnection" class="live-connection" role="status"><span class="live-connection-dot"></span>Đang kết nối…</span><button type="button" id="liveFollowNewest" aria-pressed="true">Theo dõi đơn mới nhất</button></div></div>
@@ -148,7 +164,9 @@
         </aside>
       </div>
     </section>
-    <footer class="arch-disclaimer"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/></svg><p><strong>Giới hạn giám sát:</strong> Chỉ số tổng hợp là ảnh chụp PostgreSQL. Luồng hệ thống nhận các sự kiện đã COMMIT từ nhiều bảng nghiệp vụ, cùng telemetry HTTP tạm trong RAM; đây chưa phải distributed tracing cấp câu lệnh SQL. Bảng đơn QR vẫn có luồng SSE riêng. Mốc xác thực, xử lý kho và tạo đơn chỉ được công bố cùng nhau sau khi giao dịch thành công. Các yêu cầu thất bại trước khi tạo đơn không có dấu vết trong danh sách này.</p></footer>
+      </div>
+    </details>
+    <footer class="arch-disclaimer"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/></svg><p><strong>Giới hạn giám sát:</strong> Chỉ số tổng hợp là ảnh chụp PostgreSQL. Luồng hệ thống nhận các sự kiện đã COMMIT từ nhiều bảng nghiệp vụ, cùng telemetry HTTP tạm trong RAM; đây chưa phải distributed tracing cấp câu lệnh SQL. Bảng đơn QR vẫn có luồng SSE riêng. Luồng chạy trên bản đồ chính chỉ phát lại mốc quan sát được từ request thực và phân biệt COMMIT thành công, ROLLBACK, cùng kết quả HTTP. Mỗi chuyển động trên bản đồ là cách trình diễn chậm mốc đã ghi nhận, không phải thời lượng xử lý backend; không giả định có distributed tracing SQL.</p></footer>
   </div>
   <section id="archAccess" class="arch-access" hidden><h2>Truy cập dành cho chủ cửa hàng</h2><p>Vui lòng đăng nhập tài khoản chủ cửa hàng để xem kiến trúc vận hành và số liệu tổng hợp.</p><a href="/admin">Đến trang đăng nhập</a></section>
 </main>
