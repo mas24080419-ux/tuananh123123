@@ -89,6 +89,10 @@ async function loadStock(){
 }
 function closeDialog(){
  if(saving)return;
+ if(pendingMovement&&activeModal()?.id==='movementDialog'){
+  feedback('#movementFeedback','Giao dịch vừa gửi chưa được xác nhận. Hãy thử gửi lại cùng mã giao dịch để tránh nhập / xuất trùng.');
+  return;
+ }
  const d=activeModal();if(d)d.close();
  selectedId=null;
 }
@@ -126,7 +130,7 @@ document.addEventListener('click',event=>{
  const move=event.target.closest('[data-move]');if(move){beginMovement(move.dataset.move);return}
  const threshold=event.target.closest('[data-reorder]');if(threshold){beginThreshold(threshold.dataset.reorder)}
 });
-for(const d of document.querySelectorAll('dialog'))d.addEventListener('cancel',event=>{if(saving)event.preventDefault();else selectedId=null});
+for(const d of document.querySelectorAll('dialog'))d.addEventListener('cancel',event=>{if(saving||(d.id==='movementDialog'&&pendingMovement)){event.preventDefault();if(pendingMovement)feedback('#movementFeedback','Giao dịch chưa xác nhận. Vui lòng thử lại cùng mã trước khi đóng.');}else selectedId=null});
 $('#addStockItem').addEventListener('click',()=>{if(!synced)return showError('Chưa đồng bộ kho. Hãy bấm Làm mới.');$('#itemForm').reset();$('#itemFeedback').textContent='';dialog('#itemDialog')});
 $('#refreshStock').addEventListener('click',loadStock);
 $('#stockSearch').addEventListener('input',render);
@@ -145,11 +149,13 @@ $('#itemForm').addEventListener('submit',async event=>{
  const form=event.currentTarget;
  const body=Object.fromEntries(new FormData(form));body.reorderLevel=Number(body.reorderLevel);
  setSaving(form,true);feedback('#itemFeedback','Đang lưu nguyên liệu…');
+ let createdId=null;
  try{
   const result=await request('/api/admin/inventory/items',{method:'POST',body:JSON.stringify(body)});
-  $('#itemDialog').close();await loadStock();if(result.item?.id&&synced)beginMovement(result.item.id);
+  createdId=result.item?.id||null;$('#itemDialog').close();await loadStock();
  }catch(e){feedback('#itemFeedback',e.message)}
  finally{setSaving(form,false)}
+ if(createdId&&synced)beginMovement(createdId);
 });
 $('#reorderForm').addEventListener('submit',async event=>{
  event.preventDefault();if(saving||!synced||!selectedId)return;
