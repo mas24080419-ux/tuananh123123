@@ -10,9 +10,11 @@
 <link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
 <link rel="stylesheet" href="/architecture.css?v=20261028-arch1">
 <link rel="stylesheet" href="/architecture-live.css?v=20261028-arch-live1">
+<link rel="stylesheet" href="/architecture-deep.css?v=20261028-backend-v2">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
 <script defer src="/architecture.js?v=20261028-arch1"></script>
 <script defer src="/architecture-live.js?v=20261028-arch-live1"></script>
+<script defer src="/architecture-deep.js?v=20261028-backend-v2"></script>
 </head>
 <body class="tt6-architecture-page">
 <div class="shell">
@@ -43,6 +45,52 @@
       <div class="arch-kpi"><span>THU–CHI / 24H</span><strong id="statFinance">—</strong><small>Phiếu ghi sổ</small></div>
       <div class="arch-kpi"><span>TỦ ĐANG THUÊ</span><strong id="statLockers">—</strong><small>Chưa trả tủ</small></div>
       <div class="arch-kpi"><span>CHƯA THANH TOÁN</span><strong id="statUnpaid">—</strong><small>Đơn đang ghi nợ</small></div>
+    </section>
+    <section class="deep-workbench" aria-labelledby="deepTitle">
+      <div class="deep-header">
+        <div><p class="deep-eyebrow">PROD / BACKEND INTERNALS</p><h2 id="deepTitle">Bản đồ xử lý toàn hệ thống · Chi tiết bên trong Backend</h2>
+          <p>Kiến trúc thực tế: một Node.js service, nhiều module logic, PostgreSQL dùng chung. Đường nối biểu thị quan hệ mã nguồn; sự kiện ở dưới lấy từ DB thật.</p></div>
+        <div class="deep-head-actions"><span id="deepStreamStatus" class="deep-status" role="status">Đang kết nối luồng hệ thống…</span>
+          <div class="deep-zooms" role="group" aria-label="Thu phóng sơ đồ Backend">
+            <button type="button" id="deepZoomOut" aria-label="Thu nhỏ" title="Thu nhỏ">−</button><span id="deepScale">100%</span>
+            <button type="button" id="deepZoomIn" aria-label="Phóng to" title="Phóng to">+</button>
+            <button type="button" id="deepFit" aria-label="Vừa khung" title="Vừa khung">⤢</button>
+          </div>
+        </div>
+      </div>
+      <div class="deep-filters" id="deepFilters" role="group" aria-label="Lọc theo module xử lý"></div>
+      <div class="deep-content">
+        <div class="deep-map-area">
+          <div id="deepViewport" class="deep-viewport" tabindex="0" aria-label="Bản đồ backend chi tiết, cuộn ngang để xem toàn sơ đồ">
+            <div id="deepSizer" class="deep-stage-sizer">
+              <div id="deepStage" class="deep-stage">
+                <div class="deep-lane" style="left:12px;width:220px;--lanecolor:#53c8ed"><span><i></i>CLIENT / FRONTEND</span></div>
+                <div class="deep-lane" style="left:245px;width:260px;--lanecolor:#5fe0ad"><span><i></i>API / GATEWAY</span></div>
+                <div class="deep-lane" style="left:522px;width:270px;--lanecolor:#f6c74f"><span><i></i>BACKEND / BUSINESS LOGIC</span></div>
+                <div class="deep-lane" style="left:820px;width:521px;--lanecolor:#a998ff"><span><i></i>TRANSACTION / DATABASE</span></div>
+                <div class="deep-lane" style="left:1350px;width:256px;--lanecolor:#ffa361"><span><i></i>OBSERVABILITY</span></div>
+                <svg id="deepWires" class="deep-wires" viewBox="0 0 1630 790" aria-hidden="true"></svg>
+                <div id="deepNodes" class="deep-nodes"></div>
+              </div>
+            </div>
+          </div>
+          <div class="deep-map-caption"><span><strong>●</strong> Chọn module để xem logic xử lý, bước thực thi, API và SQL</span><span>Không có hiệu ứng giả lập</span><span>Sự kiện DB chỉ xuất hiện sau khi được ghi thành công</span></div>
+        </div>
+        <aside id="deepInspector" class="deep-inspector" aria-live="polite" aria-label="Chi tiết module backend">
+          <p>Chọn một khối để xem quy trình xử lý thật trong backend.</p>
+        </aside>
+      </div>
+      <div class="deep-events">
+        <div class="deep-events-top">
+          <div><h3>Nhật ký xử lý hệ thống · LIVE</h3><p>Không giới hạn ở đơn QR: kho, thu–chi, phao & tủ, bếp, quản trị và HTTP. Không hiển thị dữ liệu cá nhân.</p></div>
+          <div class="deep-events-tabs" role="group" aria-label="Nguồn dữ liệu sự kiện">
+            <button type="button" data-deep-event-view="events" class="is-active">DB COMMITTED</button>
+            <button type="button" data-deep-event-view="requests">HTTP REQUESTS</button>
+          </div>
+        </div>
+        <div class="deep-events-info"><strong id="deepEventCount">— sự kiện</strong><span id="deepLastSync">Đang kiểm tra dữ liệu…</span></div>
+        <div id="deepEventItems" class="deep-event-list" aria-live="off"><p class="deep-empty">Đang đọc dữ liệu hệ thống…</p></div>
+      </div>
     </section>
     <section class="live-orders-panel" aria-labelledby="liveOrdersTitle">
       <div class="live-orders-header"><div class="live-orders-heading"><span class="live-orders-mark" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M3 12h4l3-7 4 14 3-7h4"/></svg></span><div><p>QR ORDER / EVENT STREAM</p><h2 id="liveOrdersTitle">Luồng đơn hàng trực tiếp</h2><small>Sự kiện thật đã lưu trong PostgreSQL · không mô phỏng</small></div></div>
@@ -84,7 +132,7 @@
         </aside>
       </div>
     </section>
-    <footer class="arch-disclaimer"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/></svg><p><strong>Giới hạn giám sát:</strong> Chỉ số tổng hợp là ảnh chụp PostgreSQL. Bảng đơn trực tiếp nhận sự kiện SSE dựa trên audit đã commit; đây chưa phải tracing đầy đủ từng HTTP request. Mốc xác thực, xử lý kho và tạo đơn chỉ được công bố cùng nhau sau khi giao dịch thành công. Các yêu cầu thất bại trước khi tạo đơn không có dấu vết trong danh sách này.</p></footer>
+    <footer class="arch-disclaimer"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 11v6M12 7h.01"/></svg><p><strong>Giới hạn giám sát:</strong> Chỉ số tổng hợp là ảnh chụp PostgreSQL. Luồng hệ thống nhận các sự kiện đã COMMIT từ nhiều bảng nghiệp vụ, cùng telemetry HTTP tạm trong RAM; đây chưa phải distributed tracing cấp câu lệnh SQL. Bảng đơn QR vẫn có luồng SSE riêng. Mốc xác thực, xử lý kho và tạo đơn chỉ được công bố cùng nhau sau khi giao dịch thành công. Các yêu cầu thất bại trước khi tạo đơn không có dấu vết trong danh sách này.</p></footer>
   </div>
   <section id="archAccess" class="arch-access" hidden><h2>Truy cập dành cho chủ cửa hàng</h2><p>Vui lòng đăng nhập tài khoản chủ cửa hàng để xem kiến trúc vận hành và số liệu tổng hợp.</p><a href="/admin">Đến trang đăng nhập</a></section>
 </main>
