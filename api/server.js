@@ -34,6 +34,7 @@ const areaReceipts=require('./area-receipts')({pool,id});
 const lockerService=require('./lockers')({pool,id});
 const {areas:serviceAreas,canAccess:canAccessArea,canUseDining}=require('./area-access');
 const ownerAccounts=require('./owner-auth')({pool});
+const architectureMonitor=require('./architecture-monitor');
 const token=i=>crypto.createHmac('sha256',SESSION_SECRET).update('qr-table-'+i).digest('hex').slice(0,48);
 const authHash=s=>crypto.createHash('sha256').update(s).digest();
 const safeEq=(a,b)=>{const x=authHash(a),y=authHash(b);return crypto.timingSafeEqual(x,y)};
@@ -305,6 +306,11 @@ if(req.method==='POST'&&p==='/api/users/login'){
  return send(res,200,{ok:true,role:user.role,displayName:user.displayName,workArea:user.workArea},{'Set-Cookie':staffCookie(user)});
 }
 if(req.method==='POST'&&p==='/api/logout'){return send(res,200,{ok:true},{'Set-Cookie':'sh_session=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0'})}
+if(req.method==='GET'&&p==='/api/admin/architecture'){
+ if(!await requireAdmin(req,res))return;
+ if(!throttle(req,'architecture-read',50))return err(res,429,'Làm mới giám sát quá nhanh.');
+ return send(res,200,{model:architectureMonitor.model,monitor:await architectureMonitor.snapshot(pool)});
+}
 if(req.method==='GET'&&p==='/api/me'){const a=await identity(req);return send(res,200,{staff:!!a,role:a?.role||null,username:a?.username||null,email:a?.email||null,needsOwnerSetup:Boolean(a?.role==='admin'&&a?.legacy),displayName:a?.displayName||null,workArea:a?.workArea||null})}
 if(req.method==='GET'&&p.startsWith('/api/menu/')){const t=await getTable(p.slice('/api/menu/'.length));if(!t)return err(res,404,'QR không hợp lệ.');return send(res,200,{table:{name:t.name,zone:t.zone},items:await getMenu(),mode})}
 if(req.method==='GET'&&p==='/api/payment/recipient'){
@@ -487,6 +493,9 @@ if(req.method==='GET'&&p==='/api/kds'){if(!await requireAuth(req,res))return;
  return send(res,200,{orders:visible})}
 if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!await requireAuth(req,res))return;const a=await identity(req);if(!canUseDining(a)||!canCook(a.role))return err(res,403,'Vai trò này không được cập nhật chế biến.');const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status,a.role)})}
 if(req.method==='GET'&&/^\/qr\/[0-9a-f]{48}\.svg$/.test(p)){if(!await requireAuth(req,res))return;if(!canUseDining(await identity(req))||!canSeeTables((await identity(req)).role))return err(res,403,'Không có quyền lấy QR bàn.');const t=p.slice(4,-4);if(!(await getTable(t)))return err(res,404,'Không tìm thấy bàn.');const origin=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;const svg=await QRCode.toString(origin+'/t/'+t,{type:'svg',margin:2,width:320,errorCorrectionLevel:'M'});res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'no-store'});res.end(svg);return}
+if(req.method==='GET'&&p==='/admin/architecture'&&(await identity(req))?.role!=='admin'){
+ res.writeHead(302,{'Location':'/admin','Cache-Control':'no-store'});res.end();return;
+}
 if(await serveStatic(req,res,p))return;
 err(res,404,'Không có tài nguyên.');}
 async function main(){
