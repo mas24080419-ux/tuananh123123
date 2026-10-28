@@ -10,11 +10,11 @@
 <link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
 <link rel="stylesheet" href="/architecture.css?v=20261028-arch1">
 <link rel="stylesheet" href="/architecture-live.css?v=20261028-arch-live1">
-<link rel="stylesheet" href="/architecture-deep.css?v=20261028-backend-v2">
+<link rel="stylesheet" href="/architecture-deep.css?v=20261028-live-trace-v3">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
 <script defer src="/architecture.js?v=20261028-arch1"></script>
 <script defer src="/architecture-live.js?v=20261028-arch-live1"></script>
-<script defer src="/architecture-deep.js?v=20261028-backend-v2"></script>
+<script defer src="/architecture-deep.js?v=20261028-live-trace-v3"></script>
 </head>
 <body class="tt6-architecture-page">
 <div class="shell">
@@ -58,6 +58,20 @@
           </div>
         </div>
       </div>
+      <div class="deep-kpi-band" aria-label="Bộ đếm dữ liệu PostgreSQL thực theo thời gian">
+        <div class="deep-metric"><span>ĐƠN / 24 GIỜ</span><strong id="deepMetricOrders">—</strong><small>Đơn đã lưu trên PostgreSQL</small></div>
+        <div class="deep-metric"><span>MÓN CHỜ BẾP</span><strong id="deepMetricWaiting">—</strong><small>Trạng thái new</small></div>
+        <div class="deep-metric"><span>ĐANG CHẾ BIẾN</span><strong id="deepMetricPreparing">—</strong><small>Trạng thái preparing</small></div>
+        <div class="deep-metric"><span>MÓN SẴN SÀNG</span><strong id="deepMetricReady">—</strong><small>Trạng thái ready</small></div>
+        <div class="deep-metric"><span>ĐANG XỬ LÝ API</span><strong id="deepMetricActive">—</strong><small>Request ghi dữ liệu trong RAM</small></div>
+        <div class="deep-metric"><span>BIẾN ĐỘNG KHO / 24H</span><strong id="deepMetricStock">—</strong><small>inventory_movements</small></div>
+      </div>
+      <div class="deep-trace-dock" aria-label="Theo dõi yêu cầu thực qua từng bước backend">
+        <div class="deep-trace-head"><div><strong>REQUEST TRACE / REAL EXECUTION</strong><span>Nhận request → xử lý nghiệp vụ → SQL → COMMIT hoặc lỗi → HTTP response</span></div>
+          <span id="deepTraceCount">Chưa có yêu cầu ghi dữ liệu</span></div>
+        <div class="deep-trace-items" id="deepTraceList" role="group" aria-label="Các yêu cầu thực gần đây"></div>
+        <div class="deep-trace-detail" id="deepTraceSteps"><span>Chọn một request để xem các bước backend và thời gian đo thực tế.</span></div>
+      </div>
       <div class="deep-filters" id="deepFilters" role="group" aria-label="Lọc theo module xử lý"></div>
       <div class="deep-content">
         <div class="deep-map-area">
@@ -74,7 +88,7 @@
               </div>
             </div>
           </div>
-          <div class="deep-map-caption"><span id="deepLivePath">Chưa có sự kiện mới kể từ khi mở trang</span><span><strong>●</strong> Chọn module để xem logic xử lý, bước thực thi, API và SQL</span><span>Không có hiệu ứng giả lập</span><span>Sự kiện DB chỉ xuất hiện sau khi được ghi thành công</span></div>
+          <div class="deep-map-caption"><span id="deepLivePath">Chưa có sự kiện mới kể từ khi mở trang</span><span><strong>●</strong> Chọn module để xem logic xử lý và từng mốc trace</span><span>Không có hiệu ứng giả lập</span><span>Sự kiện DB chỉ xuất hiện sau khi được ghi thành công</span></div>
         </div>
         <aside id="deepInspector" class="deep-inspector" aria-live="polite" aria-label="Chi tiết module backend">
           <p>Chọn một khối để xem quy trình xử lý thật trong backend.</p>
