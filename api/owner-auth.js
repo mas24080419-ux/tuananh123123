@@ -16,6 +16,12 @@ module.exports=function ownerAuth({pool}){
   if(!pool)return false;
   return (await pool.query('SELECT EXISTS(SELECT 1 FROM owner_accounts) AS configured')).rows[0].configured;
  }
+ async function emailExists(email){
+  if(!pool)return false;
+  const normalized=String(email||'').trim().toLowerCase();
+  const result=await pool.query('SELECT EXISTS(SELECT 1 FROM owner_accounts WHERE email=$1) AS configured',[normalized]);
+  return result.rows[0].configured;
+ }
  async function login(email,password){
   if(!pool)throw fail('Đăng nhập email yêu cầu PostgreSQL.',503);
   const normalized=String(email||'').trim().toLowerCase();
@@ -65,5 +71,5 @@ module.exports=function ownerAuth({pool}){
    return {id:updated.rows[0].id,version:updated.rows[0].auth_version};
   }catch(error){await client.query('ROLLBACK');throw error}finally{client.release()}
  }
- return {exists,login,current,changePassword,activate};
+ return {exists,emailExists,login,current,changePassword,activate};
 };

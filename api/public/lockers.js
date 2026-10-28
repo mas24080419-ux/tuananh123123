@@ -56,4 +56,4 @@ $('#legacyFeeForm').addEventListener('submit',async e=>{
  catch(error){$('#legacyFeeFeedback').textContent=error.message;}finally{saving=false;$('#legacyFeeButton').disabled=false;$('#closeDialog').disabled=false;}
 });
 
-$('#workLogout').addEventListener('click',async()=>{try{await api('/api/logout','POST',{})}finally{location.assign('/staff')}});
+$('#workLogout').addEventListener('click',async()=>{try{await api('/api/logout','POST',{})}finally{location.assign('/login')}});

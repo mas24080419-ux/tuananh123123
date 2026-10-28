@@ -65,7 +65,7 @@
  async function loadOrders(silent=false){
   if(!state.ready||state.loading||document.hidden)return;state.loading=true;
   try{state.orders=(await api('/api/staff/orders')).orders;drawOrders();if(!silent)message('Đã cập nhật đơn hàng.')}
-  catch(e){message(e.message,true);if(e.status===401||e.status===403)location.replace('/staff')}
+  catch(e){message(e.message,true);if(e.status===401||e.status===403)location.replace('/login')}
   finally{state.loading=false}
  }
  $('menu').addEventListener('click',e=>{
@@ -109,7 +109,7 @@
  $('filter').addEventListener('input',drawOrders);
  $('status').addEventListener('change',drawOrders);
  $('reload').addEventListener('click',()=>loadOrders());
- $('logout').addEventListener('click',async()=>{try{await api('/api/logout',{method:'POST',body:'{}'})}finally{location.replace('/staff')}});
+ $('logout').addEventListener('click',async()=>{try{await api('/api/logout',{method:'POST',body:'{}'})}finally{location.replace('/login')}});
  (async()=>{
   try{
    const me=await api('/api/me');

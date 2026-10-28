@@ -31,6 +31,7 @@ const analytics=require('./finance-analytics')({pool});
 const paymentRecipient=require('./payment-recipient')({pool});
 const core=require('./core')({pool,id,randomToken:()=>crypto.randomBytes(24).toString('hex')});
 const staffAccounts=require('./staff-auth')({pool,id});
+const homeFor=require('./role-home');
 const areaReceipts=require('./area-receipts')({pool,id});
 const lockerService=require('./lockers')({pool,id});
 const {areas:serviceAreas,canAccess:canAccessArea,canUseDining}=require('./area-access');
@@ -289,7 +290,29 @@ const serveStatic=require('./static-files')(path.join(__dirname,'public'));
 async function route(req,res){for(const [k,v]of Object.entries(securityHeaders))res.setHeader(k,v);const u=new URL(req.url,'http://localhost');const p=u.pathname;
 if(!sameOrigin(req,res))return;
 if(req.method==='GET'&&p==='/api/health'){let db='pilot';if(pool){try{await pool.query('SELECT 1');db='ready'}catch{db='unavailable'}}return send(res,db==='unavailable'?503:200,{ok:db!=='unavailable',mode,database:db,pilot:mode==='pilot',notice:mode==='pilot'?'BẢN THỬ NGHIỆM: đơn hàng lưu RAM và bị xóa khi server khởi động lại. Không dùng vận hành thật.':'Dữ liệu được lưu trên PostgreSQL.'})}
-if(req.method==='POST'&&p==='/api/login')return err(res,410,'Hãy dùng tên đăng nhập và mật khẩu riêng do chủ cửa hàng cấp.');
+if(req.method==='POST'&&p==='/api/auth/login'){
+ if(!throttle(req,'unified-login',8))return err(res,429,'Đăng nhập quá nhiều lần. Vui lòng thử lại sau.');
+ if(!pool)return err(res,503,'Đăng nhập yêu cầu PostgreSQL.');
+ const body=await input(req);
+ const identifier=String(body.email||'').trim().toLowerCase();
+ const password=body.password;
+ if(typeof password!=='string'||!identifier||identifier.length>254)return err(res,401,'Email hoặc mật khẩu không chính xác.');
+ // Owner lookup takes priority. A staff record with the same email can never shadow the owner.
+ if(await ownerAccounts.emailExists(identifier)){
+  const owner=await ownerAccounts.login(identifier,password);
+  return send(res,200,{ok:true,role:'admin',home:homeFor(owner)},{'Set-Cookie':ownerCookie(owner)});
+ }
+ // Preserve first-owner bootstrap while requiring the designated owner email.
+ if(identifier==='mas24080419@hsb.edu.vn'&&!await ownerAccounts.exists()){
+  if(!ADMIN_PASSWORD)return err(res,503,'Tài khoản quản trị chưa được cấu hình.');
+  if(!safeEq(password,ADMIN_PASSWORD))return err(res,401,'Email hoặc mật khẩu không chính xác.');
+  const owner=await ownerAccounts.activate(identifier,password);
+  return send(res,200,{ok:true,role:'admin',home:homeFor(owner)},{'Set-Cookie':ownerCookie(owner)});
+ }
+ const employee=await staffAccounts.login(identifier,password);
+ return send(res,200,{ok:true,role:employee.role,home:homeFor(employee)},{'Set-Cookie':staffCookie(employee)});
+}
+if(req.method==='POST'&&p==='/api/login')return err(res,410,'Vui lòng sử dụng /login để đăng nhập bằng email.');
 if(req.method==='POST'&&p==='/api/admin/login'){
  if(!throttle(req,'admin-login',6))return err(res,429,'Đăng nhập quá nhiều lần. Hãy thử lại sau.');
  const b=await input(req);
@@ -366,7 +389,7 @@ if(req.method==='GET'&&p==='/api/admin/architecture/system/live'){
  if(!throttle(req,'architecture-system-stream',12))return err(res,429,'Mở quá nhiều kết nối.');
  return systemFlow.attach(req,res,async()=>{req._verified=false;return (await identity(req))?.role==='admin'});
 }
-if(req.method==='GET'&&p==='/api/me'){const a=await identity(req);return send(res,200,{staff:!!a,role:a?.role||null,username:a?.username||null,email:a?.email||null,needsOwnerSetup:Boolean(a?.role==='admin'&&a?.legacy),displayName:a?.displayName||null,workArea:a?.workArea||null})}
+if(req.method==='GET'&&p==='/api/me'){const a=await identity(req);return send(res,200,{staff:!!a,role:a?.role||null,username:a?.username||null,email:a?.email||null,home:homeFor(a),needsOwnerSetup:Boolean(a?.role==='admin'&&a?.legacy),displayName:a?.displayName||null,workArea:a?.workArea||null})}
 if(req.method==='GET'&&p.startsWith('/api/menu/')){const t=await getTable(p.slice('/api/menu/'.length));if(!t)return err(res,404,'QR không hợp lệ.');return send(res,200,{table:{name:t.name,zone:t.zone},items:await getMenu(),mode})}
 if(req.method==='GET'&&p==='/api/payment/recipient'){
  const table=await getTable(u.searchParams.get('token')||'');

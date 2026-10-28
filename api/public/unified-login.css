@@ -1,0 +1,16 @@
+/* Single responsive employee/owner sign-in entry. No animation. */
+:root{font-family:'Plus Jakarta Sans',Inter,system-ui,sans-serif}
+html,body{min-height:100%;margin:0}
+body.tt6-unified-login{display:flex;align-items:center;justify-content:center;background:#f4f7fb;color:#172434}
+.login-main{width:min(100%,550px);padding:24px 18px;box-sizing:border-box}
+.tt6-unified-login .mqn-auth{width:100%;max-width:100%}
+.tt6-unified-login .mqn-brand{justify-content:center}
+.tt6-unified-login .mqn-stage{width:100%}
+.tt6-unified-login .mqn-card{width:100%;max-width:none;box-sizing:border-box}
+.tt6-unified-login .mqn-main{width:100%;box-sizing:border-box}
+.tt6-unified-login h1{font-size:clamp(23px,5vw,30px);margin:0 0 12px}
+.tt6-unified-login .mqn-field input{font-size:16px}
+.tt6-unified-login #loginError:empty{display:none}
+.tt6-unified-login button{cursor:pointer}
+.tt6-unified-login button:disabled{cursor:wait;opacity:.7}
+@media(max-width:520px){.login-main{padding:18px 12px}.tt6-unified-login .mqn-brand{margin-top:4px}}

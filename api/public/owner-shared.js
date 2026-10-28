@@ -7,7 +7,7 @@ const zoneDate=new Intl.DateTimeFormat('sv-SE',{timeZone:'Asia/Ho_Chi_Minh',year
 const esc=v=>String(v??'').replace(/[&<>"']/g,x=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[x]));
 
 function notice(message,kind='ok'){const n=$('#notice');n.textContent=message;n.className='notice '+kind+(message?'':' hidden')}
-function screen(auth){document.body.classList.toggle('tt6-owner-login',!auth);$('#login').classList.toggle('hidden',auth);$('#dashboard').classList.toggle('hidden',!auth)}
+function screen(auth){if(!auth){location.replace('/login');return}document.body.classList.remove('tt6-owner-login');$('#dashboard').classList.remove('hidden')}
 async function request(url,options={}){
  let response;
  try{response=await fetch(url,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}})}
@@ -19,13 +19,6 @@ async function request(url,options={}){
 }
 function defaultDates(){text('#from',zoneDate.slice(0,7)+'-01');text('#to',zoneDate);$('#from').value=zoneDate.slice(0,7)+'-01';$('#to').value=zoneDate}
 function setupOwnerShared(reload,onLogout){
-$('#loginForm').addEventListener('submit',async e=>{
- e.preventDefault();const button=$('#loginButton');button.disabled=true;text('#loginError','');
- try{
-  await request('/api/admin/login',{method:'POST',body:JSON.stringify({email:$('#adminEmail').value.trim(),password:$('#password').value})});
-  $('#password').value='';screen(true);await reload();
- }catch(e){text('#loginError',e.message)}finally{button.disabled=false}
-});
 document.querySelectorAll('[data-visibility]').forEach(button=>button.addEventListener('click',()=>{
  const field=document.getElementById(button.dataset.visibility);
  const reveal=field.type==='password';field.type=reveal?'text':'password';
@@ -54,7 +47,7 @@ $('#passwordForm').addEventListener('submit',async ev=>{
   output.textContent='Đổi mật khẩu thành công. Những phiên đăng nhập cũ đã bị thu hồi.';
  }catch(e){output.textContent=e.message}finally{btn.disabled=false}
 });
-$('#logout').addEventListener('click',async()=>{try{await request('/api/logout',{method:'POST',body:'{}'})}catch{}screen(false);onLogout()});
+$('#logout').addEventListener('click',async()=>{try{await request('/api/logout',{method:'POST',body:'{}'})}catch{}location.replace('/login');onLogout()});
 $('#filterForm').addEventListener('submit',e=>{e.preventDefault();reload()});
 $('#today').addEventListener('click',()=>{$('#from').value=zoneDate;$('#to').value=zoneDate;reload()});
 $('#thisMonth').addEventListener('click',()=>{defaultDates();reload()});

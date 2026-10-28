@@ -14,38 +14,10 @@
 <link rel="stylesheet" href="/finance-charts.css?v=tt6-finance-v1">
 <script src="/finance-charts.js?v=tt6-finance-v1"></script>
 </head>
-<body class="tt6-owner-login">
+<body>
 <div class="shell">
 <aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside>
 <div>
-<section id="login" class="tt6-mqn-login" aria-labelledby="authTitle">
-<div class="mqn-layout">
-  <section class="mqn-auth" aria-labelledby="authTitle">
-    <div class="mqn-brand tt6-centered-brand"><img class="tt6-mqn-brand-logo" src="/tam-trang-6-logo.svg" width="54" height="54" alt=""><span><b>Tắm Tráng 6</b><small>BEACH POS · QUẢN TRỊ</small></span></div>
-    <div class="mqn-topline"><span>CỔNG QUẢN TRỊ TẮM TRÁNG 6</span><span class="mqn-security">BẢO MẬT TÀI KHOẢN</span></div>
-    <div class="mqn-stage">
-      <div class="mqn-card">
-        <div class="mqn-face front">
-          <div class="mqn-main">
-            <div class="mqn-icon" aria-hidden="true">✦</div>
-            <h2 id="authTitle">Chào mừng trở lại</h2>
-            <p class="mqn-description">Đăng nhập bằng tài khoản chủ cửa hàng để tiếp tục quản lý Tắm Tráng 6.</p>
-            <form id="loginForm" autocomplete="on">
-              <label class="mqn-field" for="adminEmail"><span>Địa chỉ email</span><span class="mqn-input"><input id="adminEmail" name="email" type="email" autocomplete="username" inputmode="email" spellcheck="false" placeholder="Nhập địa chỉ email" required maxlength="254"></span></label>
-              <label class="mqn-field" for="password"><span>Mật khẩu</span><span class="mqn-input"><input id="password" name="password" type="password" autocomplete="current-password" required placeholder="Nhập mật khẩu"><button type="button" class="mqn-show-pass" data-visibility="password" aria-label="Hiện mật khẩu">Hiện</button></span></label>
-              <p id="loginError" class="mqn-error" role="alert" aria-live="polite"></p>
-              <button class="mqn-submit" type="submit" id="loginButton">Đăng nhập</button>
-            </form>
-            <p class="mqn-note">Chỉ tài khoản đã được cấp quyền quản trị mới có thể truy cập trang này.</p>
-          </div>
-          <div class="mqn-footer"><p><strong>Truy cập được kiểm soát</strong><br>Phiên đăng nhập được xác minh trên máy chủ.</p><span class="mqn-secure-mark" aria-hidden="true">✓</span></div>
-        </div>
-      </div>
-    </div>
-    <p class="mqn-smallprint">Không chia sẻ mật khẩu hay mã OTP. Để đổi mật khẩu, hãy mở mục Bảo mật sau khi đăng nhập.</p>
-  </section>
-</div>
-</section>
 <main id="dashboard" class="hidden">
 <div class="topbar"><div><span class="sh-eyebrow">TRUNG TÂM ĐIỀU HÀNH / OWNER CONSOLE</span><h1>Đơn hàng</h1><p class="sh-page-caption">Tra cứu đơn hàng, xác nhận tiền đã nhận và xuất danh sách đơn.</p></div>
 <div style="display:flex;gap:8px;align-items:center"><span class="tag">● Chủ cửa hàng</span><button type="button" class="alt" id="changePassBtn">Đổi mật khẩu</button><button type="button" class="alt" id="logout">Đăng xuất</button></div></div>
