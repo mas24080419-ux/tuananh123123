@@ -113,14 +113,33 @@
  const pretty=n=>n!==undefined&&n!==null&&Number.isFinite(Number(n))?new Intl.NumberFormat('vi-VN').format(Number(n)):'—';
  const traceAll=()=>[...(last?.active||[]),...(last?.traces||[])];
  const currentTrace=()=>traceAll().find(t=>t.id===focusedTrace);
+ function renderQrPresence(){
+  const state=last?.qrPresence;
+  const count=state?.activeSessions;
+  const tables=state?.activeTables;
+  $('deepQrViewers').textContent=count==null?'—':pretty(count);
+  $('deepQrTables').textContent=tables==null?'—':pretty(tables);
+  const summary=$('deepQrSummary'),list=$('deepQrTableBreakdown');
+  if(!state){
+   summary.textContent='Đang kết nối dữ liệu QR';
+   list.innerHTML='<span class="deep-qr-no-viewers">Chưa kết nối bộ đếm QR.</span>';
+   return;
+  }
+  summary.textContent=pretty(count)+' phiên đang mở · '+pretty(tables)+' bàn';
+  const rows=state.tables||[];
+  list.innerHTML=rows.length?rows.map(t=>
+   '<div class="deep-qr-table-chip"><span>'+escape(t.tableName)+'</span><strong>'+pretty(t.activeSessions)+'</strong><small>đang xem</small></div>'
+  ).join(''):'<span class="deep-qr-no-viewers">Hiện chưa có thiết bị đang mở thực đơn QR.</span>';
+ }
  function renderMetrics(){
   const m=last?.metrics||{};
   for(const [key,id] of Object.entries(metricIds))$(id).textContent=last?.metrics?pretty(m[key]):'—';
   $('deepMetricActive').textContent=hasSnapshot?pretty(last?.inFlight??0):'—';
+  renderQrPresence();
   const a=last?.active||[];
   const at=node=>a.filter(t=>t.steps?.at(-1)?.node===node).length;
   const values={
-   guest:[m.orders24h,'đơn QR / 24h'],
+   guest:[last?.qrPresence?.activeSessions??null,'đang xem QR'],
    staff:[a.filter(t=>['kds','rental'].includes(t.module)).length,'đang chạy'],
    owner:[a.filter(t=>['admin','finance','inventory'].includes(t.module)).length,'đang chạy'],
    http:[last?.inFlight||0,'đang chạy'],auth:[at('auth'),'đang xác thực'],validate:[at('validate'),'đang kiểm tra'],
