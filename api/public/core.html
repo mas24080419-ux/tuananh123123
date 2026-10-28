@@ -9,7 +9,7 @@
 <main><span class="eyebrow">TẮM TRÁNG 6 / BACKOFFICE V10</span><h1>Món, bàn và vận hành</h1><p class="muted">Chọn công việc cần làm. Danh sách hiển thị trước; biểu mẫu chỉ xuất hiện khi bạn bấm Thêm hoặc Sửa.</p>
 <div id="notice" class="notice" role="status">Đang xác minh quyền và tải dữ liệu từ Neon...</div>
 <div class="tabs" role="tablist">
-<button class="active" data-tab="menu">Thực đơn</button><button data-tab="tables">Bàn & QR</button><button data-tab="suppliers">Nhà cung cấp</button><button data-tab="customers">Khách hàng</button><button data-tab="reservations">Đặt bàn</button><button data-tab="shifts">Ca thu ngân</button><button data-tab="audit">Nhật ký</button></div>
+<button class="active" data-tab="menu">Thực đơn</button><button data-tab="tables">Bàn & QR</button><button data-tab="suppliers">Nhà cung cấp</button><button data-tab="customers">Khách hàng</button><button data-tab="shifts">Ca thu ngân</button><button data-tab="audit">Nhật ký</button></div>
 <section class="section active" id="menu"><div class="split">
 <div class="panel"><h2 class="tt6-menu-desktop-title">Tạo hoặc sửa món</h2><div class="tt6-menu-sheet-heading"><span class="tt6-menu-sheet-handle" aria-hidden="true"></span><h2 id="menuSheetTitle">Thêm món</h2><button id="menuSheetClose" class="tt6-menu-close" type="button" aria-label="Đóng bảng chỉnh sửa món"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><form id="menuForm" class="fields">
 <input type="hidden" name="id"><label>Tên món<input name="name" required maxlength="100"></label>
@@ -44,16 +44,6 @@
 <label>Ghi chú<textarea name="note" maxlength="250" rows="2"></textarea></label>
 <button type="submit">Lưu khách hàng</button><button type="reset" class="secondary">Hủy chỉnh sửa</button></form><p class="muted">Thông tin khách hàng chỉ hiển thị cho quản trị viên, không cung cấp qua API QR công khai.</p></div>
 <div class="panel"><h2>Danh sách khách hàng</h2><div class="scroll"><table><thead><tr><th>Tên</th><th>Số điện thoại</th><th>Email</th><th>Thao tác</th></tr></thead><tbody id="customerRows"></tbody></table></div></div></div></section>
-<section class="section" id="reservations"><div class="split">
-<div class="panel"><h2>Tạo đặt bàn</h2><form id="reservationForm" class="fields">
-<label>Bàn<select id="reservationTable" name="tableId" required></select></label>
-<div class="pair"><label>Tên người đặt<input name="customerName" required maxlength="100"></label><label>Điện thoại<input name="customerPhone" maxlength="25"></label></div>
-<div class="pair"><label>Thời điểm<input type="datetime-local" name="reservedAt" required></label><label>Số khách<input type="number" name="guests" min="1" max="30" value="2" required></label></div>
-<label>Thời lượng (phút)<select name="durationMinutes"><option value="60">60</option><option value="90">90</option><option value="120" selected>120</option><option value="180">180</option><option value="240">240</option></select></label>
-<label>Ghi chú<textarea name="note" maxlength="250" rows="2"></textarea></label>
-<button type="submit">Xác nhận đặt bàn</button></form>
-<p class="muted">Backend kiểm tra sức chứa và chồng lấn thời gian, khóa bàn trong giao dịch khi tạo lịch.</p></div>
-<div class="panel"><h2>Đặt bàn sắp tới và gần đây</h2><div class="scroll"><table><thead><tr><th>Thời điểm</th><th>Bàn</th><th>Khách</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="reservationRows"></tbody></table></div></div></div></section>
 <section class="section" id="shifts"><div class="split">
 <div class="panel"><h2>Mở / đóng ca thu ngân</h2><div id="shiftStatus" class="notice">Đang tải ca...</div>
 <form id="openShiftForm" class="fields"><label>Tiền đầu ca kiểm đếm (VND)<input name="openingCash" type="number" min="0" step="1" value="0" required></label><button type="submit">Mở ca</button></form>
