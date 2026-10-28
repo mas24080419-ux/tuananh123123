@@ -416,3 +416,16 @@ body.guest-orange{background:#FAF7F5;color:#29211d;font-family:Inter,system-ui,-
 body:not(.guest-orange) .brand:has(.sh-brand-logo){display:flex;align-items:center;gap:10px;flex-wrap:nowrap;font-size:clamp(17px,2.5vw,24px)}
 body:not(.guest-orange) .sh-brand-logo{width:40px;height:40px;min-width:40px;object-fit:cover;border-radius:11px;background:#fff}
 @media(max-width:390px){.guest-orange .qr-brand-logo{width:36px!important;height:36px!important;min-width:36px;flex-basis:36px!important}.guest-orange .qr-brandtext{font-size:14px!important}body:not(.guest-orange) .sh-brand-logo{width:34px;height:34px;min-width:34px}}
+
+
+/* Real inventory availability on the guest QR menu */
+.guest-orange .qr-menu-card .qr-stock-indicator{position:relative;z-index:3;align-self:flex-start;pointer-events:none;max-width:100%}
+.guest-orange .qr-stock-pill{display:inline-flex;align-items:center;max-width:100%;font-size:10px;line-height:1.4;font-weight:750;padding:4px 9px;border-radius:999px;white-space:normal}
+.guest-orange .qr-stock-pill.is-ready{background:#e9f7ed;color:#217748}
+.guest-orange .qr-stock-pill.is-low{background:#fff4da;color:#915d16}
+.guest-orange .qr-stock-pill.is-out{background:#fceaea;color:#b33339}
+.guest-orange .qr-menu-card.is-sold-out{opacity:.72;background:#f8f5f2;border-color:#e5dcd6}
+.guest-orange .qr-menu-card.is-sold-out .qr-card-hit{cursor:not-allowed}
+.guest-orange .qr-menu-card .qr-sold-out-action{padding:7px 9px;border-radius:9px;color:#ad333d;background:#fce6e7;font-size:11px;font-weight:750;white-space:nowrap}
+.guest-orange .qr-menu-card .qr-add:disabled,.guest-orange .qr-stepper button:disabled{opacity:.42;cursor:not-allowed}
+@media(max-width:480px){.guest-orange .qr-menu-grid>.qr-menu-card{flex-wrap:wrap}.guest-orange .qr-menu-grid>.qr-menu-card .qr-stock-indicator{flex-basis:100%;margin-top:-3px}}
