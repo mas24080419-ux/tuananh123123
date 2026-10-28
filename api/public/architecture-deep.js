@@ -120,7 +120,7 @@
   const a=last?.active||[];
   const at=node=>a.filter(t=>t.steps?.at(-1)?.node===node).length;
   const values={
-   guest:[a.filter(t=>t.module==='orders').length,'order đang gửi'],
+   guest:[m.orders24h,'đơn QR / 24h'],
    staff:[a.filter(t=>['kds','rental'].includes(t.module)).length,'đang chạy'],
    owner:[a.filter(t=>['admin','finance','inventory'].includes(t.module)).length,'đang chạy'],
    http:[last?.inFlight||0,'đang chạy'],auth:[at('auth'),'đang xác thực'],validate:[at('validate'),'đang kiểm tra'],
@@ -137,6 +137,13 @@
   document.querySelectorAll('#deepNodes [data-active-node]').forEach(b=>{const n=a.filter(t=>t.steps?.at(-1)?.node===b.dataset.activeNode).length;b.hidden=n===0;b.textContent=n+' LIVE';});
  }
  function updateTraceHighlights(){
+  // During auto-follow, the packet overlay owns progressive node/path highlights.
+  // Do not illuminate the entire finished route before the viewer sees each stage.
+  if(followLive){
+   document.querySelectorAll('#deepNodes [data-id]').forEach(b=>{b.classList.remove('trace-visited','trace-current')});
+   document.querySelectorAll('#deepWires [data-src]').forEach(e=>{e.classList.remove('trace-visited','trace-current')});
+   return;
+  }
   const t=currentTrace(),trail=t?.steps?.map(step=>step.node)||[];
   const seen=new Set(trail),cur=t?.state==='running'?trail.at(-1):null;
   document.querySelectorAll('#deepNodes [data-id]').forEach(b=>{
@@ -187,9 +194,9 @@
   last.traces=last.traces.slice(0,40);last.inFlight=last.active.length;
   if(followLive){
    focusedTrace=t.id;filter=t.module;
-   selected=t.steps?.at(-1)?.node||t.module;
-   if(!services[selected])selected=t.module;
-   select(selected);
+   // The live path renderer lights up each actual stage in order. Keep the
+   // inspector on the business module instead of jumping to the last stage.
+   select(t.module);
   }
   renderMetrics();renderTraces();
   document.dispatchEvent(new CustomEvent('saleshub:trace',{detail:data}));
