@@ -238,10 +238,20 @@ function totalStats() {
   for (const [id, qty] of cart) { const p = byId.get(id); if (p) { count += qty; subtotal += p.price * qty; } }
   return {count, subtotal};
 }
+function availableQty(item){if(!item||item.available_quantity==null)return Infinity;return Math.max(0,Math.floor(Number(item.available_quantity)||0))}
+function stockBadge(item){
+ const n=availableQty(item);
+ if(n===0)return '<span class="qr-stock-pill is-out">'+(item.inventory_configured?'Hết hàng':'Chưa cập nhật kho')+'</span>';
+ if(n<=10)return '<span class="qr-stock-pill is-low">Sắp hết · còn '+n+' phần</span>';
+ return '<span class="qr-stock-pill is-ready">Còn hàng</span>';
+}
+function hasUnavailableCart(){return [...cart].some(([id,qty])=>{const p=products.find(x=>x.id===id);return !p||qty>availableQty(p)})}
 function changeQuantity(id, delta) {
   if (sending || pendingPayload || confirmed) return;
   const qty = cart.get(id) || 0;
+  const item=products.find(p=>p.id===id);if(!item)return;
   const next = Math.max(0, Math.min(20, qty + delta));
+  if(delta>0&&next>availableQty(item)){showError('Món '+item.name+' không còn đủ số lượng. Vui lòng giảm số lượng hoặc chọn món khác.');return}
   if (next) cart.set(id, next); else {cart.delete(id);itemNotes.delete(id);}
   showError(''); render();
 }
@@ -250,18 +260,20 @@ function itemNoteField(p,placement) {
  return `<label class="qr-dish-note"><span>Ghi chú cho món <small>(không bắt buộc)</small></span><textarea data-item-note="${p.id}" data-placement="${placement}" maxlength="160" rows="2" placeholder="Ví dụ: không hành, ít cay, không đá…">${saved}</textarea></label>`;
 }
 function quantityUI(p, qty) {
-  if (!qty) return `<button class="qr-add" data-item="${p.id}" data-delta="1" type="button" aria-label="Thêm ${escapeHTML(p.name)}">+</button>`;
+  if (!qty) return availableQty(p)===0?'<span class="qr-sold-out-action">Hết hàng</span>':`<button class="qr-add" data-item="${p.id}" data-delta="1" type="button" aria-label="Thêm ${escapeHTML(p.name)}">+</button>`;
   return `<div class="qr-stepper"><button type="button" data-item="${p.id}" data-delta="-1" aria-label="${qty === 1 ? 'Xóa' : 'Giảm'} ${escapeHTML(p.name)}">${qty === 1 ? '×' : '−'}</button><span>${qty}</span><button type="button" data-item="${p.id}" data-delta="1" aria-label="Thêm ${escapeHTML(p.name)}">+</button></div>`;
 }
 function wireSteppers() {
   document.querySelectorAll('[data-item][data-delta]').forEach(button => {
-    button.disabled = sending || Boolean(pendingPayload) || confirmed;
+    const item=products.find(p=>p.id===button.dataset.item);
+    button.disabled = sending || Boolean(pendingPayload) || confirmed || (Number(button.dataset.delta)>0&&(!item||(cart.get(item.id)||0)>=availableQty(item)));
     button.addEventListener('click', () => changeQuantity(button.dataset.item, Number(button.dataset.delta)));
   });
   // The entire menu tile is a real, keyboard-accessible button. The +/- controls
   // are separate siblings, so clicking them never increments twice.
   document.querySelectorAll('#menuList [data-select-item]').forEach(button => {
-    button.disabled = sending || Boolean(pendingPayload) || confirmed;
+    const item=products.find(p=>p.id===button.dataset.selectItem);
+    button.disabled = sending || Boolean(pendingPayload) || confirmed || !item || (cart.get(item.id)||0)>=availableQty(item);
     button.addEventListener('click', () => changeQuantity(button.dataset.selectItem, 1));
   });
   document.querySelectorAll('[data-item-note]').forEach(field=>{
@@ -284,10 +296,10 @@ function render() {
   for (const p of products) (groups[p.category] ??= []).push(p);
   $('#menuList').innerHTML = Object.entries(groups).map(([category, list]) => `
     <h3 class="qr-category">${escapeHTML(category)}</h3>
-    <div class="qr-menu-grid">${list.map(p => `<article class="qr-menu-card${cart.get(p.id) ? ' is-selected' : ''}">
-      <button type="button" class="qr-card-hit" data-select-item="${p.id}" aria-label="Chọn ${escapeHTML(p.name)}, thêm một phần vào giỏ hàng" aria-controls="cartList"></button>
+    <div class="qr-menu-grid">${list.map(p => `<article class="qr-menu-card${cart.get(p.id) ? ' is-selected' : ''}${availableQty(p)===0?' is-sold-out':''}">
+      <button type="button" class="qr-card-hit" data-select-item="${p.id}" aria-label="Chọn ${escapeHTML(p.name)}, thêm một phần vào giỏ hàng" aria-controls="cartList" ${availableQty(p)===0?'disabled':''}></button>
       <div class="qr-menu-head"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div><h3>${escapeHTML(p.name)}</h3><small>${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small></div></div>
-      <div class="qr-menu-bottom"><span class="qr-money">${money(p.price)}</span>${quantityUI(p, cart.get(p.id)||0)}</div>
+      <div class="qr-menu-bottom"><span class="qr-money">${money(p.price)}</span>${quantityUI(p, cart.get(p.id)||0)}</div><div class="qr-stock-indicator">${stockBadge(p)}</div>
       ${cart.get(p.id)?itemNoteField(p,'menu'):''}
     </article>`).join('')}</div>`).join('') || '<p class="qr-empty">Chưa có món trong thực đơn.</p>';
   $('#cartList').innerHTML = [...cart.entries()].map(([id, qty]) => {
@@ -299,7 +311,7 @@ function render() {
   $('#subtotal').textContent = money(subtotal);
   $('#total').textContent = money(subtotal);
   $('#viewCartLabel').textContent = `Xem giỏ hàng · ${count} món`;
-  submit.disabled = sending || !count || !table || confirmed;
+  submit.disabled = sending || !count || !table || confirmed || hasUnavailableCart();
   note.disabled = sending || Boolean(pendingPayload) || confirmed;
   syncPaymentMethod();
   if (!sending && !confirmed) setOrderButton('idle');
@@ -328,7 +340,7 @@ function setOrderButton(state) {
   $('#orderLive').textContent = state === 'loading' ? 'Đang gửi yêu cầu gọi món' :
     state === 'check' || state === 'success' ? 'Gọi món thành công. Đơn đã được máy chủ ghi nhận.' : '';
   submit.setAttribute('aria-label', state === 'check' || state === 'success' ? 'Gọi món thành công' : 'Xác nhận gọi món');
-  submit.disabled = state !== 'idle' || sending || !totalStats().count || !table || confirmed;
+  submit.disabled = state !== 'idle' || sending || !totalStats().count || !table || confirmed || hasUnavailableCart();
 }
 let successTimers = [];
 function finishSuccessAnimation() {
@@ -356,6 +368,7 @@ function playOrderSuccessAnimation(orderId) {
 }
 async function submitOrder() {
   if (sending || confirmed || !table || !totalStats().count) return;
+  if(hasUnavailableCart()){showError('Một số món trong giỏ đã hết hàng hoặc vượt tồn kho. Hãy giảm số lượng trước khi đặt.');return}
   if(!pendingPayload&&selectedPaymentMethod==='bank_transfer'&&!bankRecipient){showError('Chưa có tài khoản ngân hàng nhận tiền. Bạn hãy chọn Tiền mặt hoặc liên hệ nhân viên.');return}
   const animationStart = Date.now();
   if (!pendingPayload) pendingPayload = {
@@ -384,12 +397,29 @@ async function submitOrder() {
   } catch (error) {
     // 4xx rejects an invalid payload. A network/5xx error is ambiguous: never create a new idempotency key on retry.
     if (!error.ambiguous) { pendingPayload = null; savePending(); }
+    if(error.status===409)void refreshMenuAvailability(true);
     showError(error.message || 'Chưa thể gửi đơn.', Boolean(pendingPayload));
   } finally {
     sending = false;
     render();
     if (!confirmed) { hidden('#orderSuccessOverlay', true); setOrderButton('idle'); }
   }
+}
+let menuRefreshBusy=false;
+async function refreshMenuAvailability(force=false){
+ if(!tableToken||!table||menuRefreshBusy||sending||pendingPayload||confirmed)return;
+ menuRefreshBusy=true;
+ try{
+  const data=await api('/api/menu/'+tableToken);
+  if(!Array.isArray(data.items))return;
+  const updated=data.items.filter(p=>p.active!==false);
+  const changed=force||updated.length!==products.length||updated.some((p,i)=>{
+   const old=products[i];return !old||p.id!==old.id||p.available_quantity!==old.available_quantity||p.inventory_configured!==old.inventory_configured;
+  });
+  products=updated;
+  if(changed&&document.activeElement?.tagName!=='TEXTAREA')render();
+ }catch(_){/* The server always checks stock again at order commit. */}
+ finally{menuRefreshBusy=false}
 }
 async function init() {
   if (!tableToken) { $('#notice').textContent = 'QR không hợp lệ. Vui lòng quét lại mã QR được dán tại bàn.'; render(); return; }
@@ -431,5 +461,6 @@ $('#refreshOrders').addEventListener('click',()=>{void refreshSavedOrders(true);
 $('#viewNewOrder').addEventListener('click',finishSuccessAnimation);
 submit.addEventListener('click', submitOrder);
 setInterval(() => { if (!document.hidden && currentView === 'orders') void refreshSavedOrders(false); }, 12000);
-document.addEventListener('visibilitychange', () => { if (!document.hidden && currentView === 'orders') void refreshSavedOrders(false); });
+setInterval(() => { if (!document.hidden && (currentView==='menu'||currentView==='cart')) void refreshMenuAvailability(); }, 15000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && currentView === 'orders') void refreshSavedOrders(false);if(!document.hidden&&(currentView==='menu'||currentView==='cart'))void refreshMenuAvailability(true); });
 showView('menu');init();
