@@ -38,3 +38,11 @@
 @media(max-width:940px){.deep-runtime-banner{align-items:flex-start;flex-direction:column}.deep-runtime-right{width:100%;justify-content:flex-start;flex-wrap:wrap}}
 @media(max-width:650px){.deep-runtime-banner{padding:12px 10px}.deep-runtime-right{gap:8px}.path-runtime-replay{margin-left:auto}.arch-legacy-details>summary{flex-wrap:wrap;font-size:11px;padding:12px}.arch-legacy-details>summary small{width:100%;padding-left:37px}}
 @media(prefers-reduced-motion:reduce){.deep-wires .runtime-packet{display:none}}
+
+/* Parallel monitor: distinct real request traces coexist without selecting a module. */
+.deep-wires #deepParallelLinks{pointer-events:none}
+.deep-wires .parallel-route{fill:none;stroke-linecap:round;vector-effect:non-scaling-stroke;stroke-width:2.2;opacity:.63}
+.deep-wires .parallel-route.latest{stroke-width:4;opacity:.96}
+.deep-stage .deep-node.concurrent-active:not(.is-muted){border-color:#8bcde8;box-shadow:0 0 0 2px #77cffb35,0 7px 15px #0005}
+.deep-stage .deep-node.concurrent-active::after{content:attr(data-concurrent);position:absolute;left:7px;bottom:6px;font-size:8px;line-height:1.1;font-weight:850;color:#cceffe;background:#234861;border-radius:5px;padding:3px 5px}
+.deep-stage .deep-edge.concurrent-active:not(.is-muted){opacity:.95;stroke:#a0dbff;stroke-width:2.9}

@@ -11,13 +11,14 @@
 <link rel="stylesheet" href="/architecture.css?v=20261028-staffcart-v3">
 <link rel="stylesheet" href="/architecture-live.css?v=20261028-arch-live1">
 <link rel="stylesheet" href="/architecture-deep.css?v=20261028-staffcart-v3">
-<link rel="stylesheet" href="/architecture-path.css?v=20261028-path-v5">
+<link rel="stylesheet" href="/architecture-path.css?v=20261028-all-parallel-v1">
 <link rel="stylesheet" href="/architecture-qr.css?v=20261028-qr-v1">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
 <script defer src="/architecture.js?v=20261028-staffcart-v3"></script>
 <script defer src="/architecture-live.js?v=20261028-staff-orders-map-v2"></script>
-<script defer src="/architecture-deep.js?v=20261028-staffcart-v3"></script>
-<script defer src="/architecture-path.js?v=20261028-staff-orders-map-v2"></script>
+<script defer src="/architecture-deep.js?v=20261028-all-parallel-v1"></script>
+<script defer src="/architecture-path.js?v=20261028-all-parallel-v1"></script>
+<script defer src="/architecture-parallel.js?v=20261028-all-parallel-v1"></script>
 <script defer src="/architecture-qr.js?v=20261028-qr-v1"></script>
 </head>
 <body class="tt6-architecture-page">
@@ -122,11 +123,11 @@
       <div class="deep-runtime-banner" aria-live="off">
   <div class="deep-runtime-led"><span id="pathRuntimeDot" class="path-runtime-dot"></span><div>
     <strong id="pathRuntimeTitle">Sẵn sàng theo dõi luồng backend</strong>
-    <span id="pathRuntimeDescription">Các nút và đường nối chỉ sáng khi nhận được mốc trace thực; không chạy vòng lặp khi rảnh.</span>
+    <span id="pathRuntimeDescription">Chế độ Tất cả hiển thị các luồng thực đồng thời; bấm bộ lọc để xem riêng. Không mô phỏng khi rảnh.</span>
   </div></div>
   <div class="deep-runtime-right">
-    <span id="pathRuntimeProgress" class="path-runtime-progress">0 / 0 mốc</span>
-    <span id="pathRuntimeQueue" class="path-runtime-queue">0 đang chờ</span>
+    <span id="pathRuntimeProgress" class="path-runtime-progress">0 luồng</span>
+    <span id="pathRuntimeQueue" class="path-runtime-queue">Tất cả · theo dõi đồng thời</span>
     <button type="button" id="pathReplay" class="path-runtime-replay" title="Phát lại các mốc đã ghi của yêu cầu đang chọn">Xem lại trace</button>
   </div>
 </div>
