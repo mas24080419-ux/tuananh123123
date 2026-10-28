@@ -74,3 +74,46 @@ test('100 simultaneous viewers on one QR result in one table database lookup, no
  assert.equal(p.snapshot().activeSessions,100);
  assert.equal(p.snapshot().activeTables,1);
 });
+
+
+test('Real guest cart selection states are separated from submitted orders and correctly counted per table',async()=>{
+ const p=create();
+ await p.heartbeat({sessionId:a,token:t1,stage:'selecting',cartItems:3},lookup);
+ await p.heartbeat({sessionId:b,token:t1,stage:'viewing',cartItems:0},lookup);
+ let state=p.snapshot();
+ assert.deepEqual([state.activeSessions,state.viewingSessions,state.selectingSessions,state.cartItems,state.submittingSessions,state.orderedSessions],[2,1,1,3,0,0]);
+ assert.equal(state.tables[0].selectingSessions,1);
+ assert.equal(state.tables[0].cartItems,3);
+ await p.heartbeat({sessionId:a,token:t1,stage:'submitting',cartItems:3},lookup);
+ state=p.snapshot();
+ assert.equal(state.selectingSessions,0);
+ assert.equal(state.submittingSessions,1);
+ assert.equal(state.cartItems,3);
+ await p.heartbeat({sessionId:a,token:t1,stage:'ordered',cartItems:0},lookup);
+ state=p.snapshot();
+ assert.deepEqual([state.selectingSessions,state.submittingSessions,state.orderedSessions,state.cartItems],[0,0,1,0]);
+ assert.doesNotMatch(JSON.stringify(state),/11111111|22222222|aaaaaaaa|bbbbbbbb/);
+});
+test('Invalid phase is treated as viewing; impossible cart count is excluded',async()=>{
+ const p=create();
+ await p.heartbeat({sessionId:a,token:t1,stage:'admin',cartItems:9999999},lookup);
+ assert.equal(p.snapshot().viewingSessions,1);
+ assert.equal(p.snapshot().selectingSessions,0);
+ assert.equal(p.snapshot().cartItems,0);
+});
+test('The architecture includes a cart node, not just a detached QR timeline',()=>{
+ const graph=fs.readFileSync(path.join(__dirname,'../public/architecture-deep.js'),'utf8');
+ const menu=fs.readFileSync(path.join(__dirname,'../public/guest.js'),'utf8');
+ assert.match(graph,/id:'cart',label:'Đang chọn món'/);
+ assert.match(graph,/\['guest','cart','orders'\]/);
+ assert.match(graph,/\['cart','http','orders'\]/);
+ assert.match(graph,/is-cart-live/);
+ assert.match(graph,/selectingSessions/);
+ assert.match(arch,/id="deepQrSelecting"/);
+ assert.match(arch,/id="deepQrCartItems"/);
+ assert.match(arch,/id="deepQrSubmitting"/);
+ assert.match(menu,/window\.saleshubQrActivity/);
+ assert.match(menu,/document\.dispatchEvent\(new Event\('saleshub:qr-activity'\)\)/);
+ assert.match(client,/document\.addEventListener\('saleshub:qr-activity',queueUpdate\)/);
+ assert.match(client,/stage:status\.stage/);
+});
