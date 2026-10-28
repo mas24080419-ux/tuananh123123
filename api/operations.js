@@ -135,7 +135,15 @@ module.exports=function operations({pool,id}){
    if(Number(r.rows[0].quantity)+0.000001<amount)throw bad('Không đủ nguyên liệu '+r.rows[0].name+' để nhận đơn.',409);
    await c.query("UPDATE inventory_items SET quantity=quantity-$2 WHERE id=$1",[ingredientId,amount]);
   }
-  for(const line of recipe.rows)await c.query("INSERT INTO inventory_movements(id,inventory_item_id,delta,kind,unit_cost,note,order_line_id) SELECT $1,$2,-($3::numeric(14,3)),'consume',avg_unit_cost,'Trừ theo QR Order',$4 FROM inventory_items WHERE id=$2",[id(),line.inventory_item_id,line.amount,line.line_id]);
+  // Write all per-dish stock movements in one round trip after each ingredient is locked/updated.
+  // The enclosing order transaction still rolls back every change on failure.
+  if(recipe.rows.length){
+   const ids=recipe.rows.map(()=>id());
+   const ingredients=recipe.rows.map(line=>line.inventory_item_id);
+   const amounts=recipe.rows.map(line=>line.amount);
+   const orderLines=recipe.rows.map(line=>line.line_id);
+   await c.query("INSERT INTO inventory_movements(id,inventory_item_id,delta,kind,unit_cost,note,order_line_id) SELECT m.id,m.inventory_item_id,-(m.amount::numeric(14,3)),'consume',i.avg_unit_cost,'Trừ theo đơn hàng',m.line_id FROM UNNEST($1::uuid[],$2::uuid[],$3::numeric[],$4::uuid[]) AS m(id,inventory_item_id,amount,line_id) JOIN inventory_items i ON i.id=m.inventory_item_id",[ids,ingredients,amounts,orderLines]);
+  }
  }
  async function restore(c,lineId,previousStatus){
   if(previousStatus!=='new')return;

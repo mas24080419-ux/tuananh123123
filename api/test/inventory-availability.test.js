@@ -52,6 +52,8 @@ test('QR inventory movement uses a typed PostgreSQL numeric negation, not -unkno
  await ops.consume(db.c,'order-typed');
  assert.deepEqual(db.stats(),{remaining:3,updated:1,movements:1});
  const source=fs.readFileSync(path.join(__dirname,'..','operations.js'),'utf8');
- assert(source.includes("SELECT $1,$2,-($3::numeric(14,3)),'consume'"));
+ assert(source.includes("-(m.amount::numeric(14,3)),'consume'"));
+ assert(source.includes('FROM UNNEST($1::uuid[],$2::uuid[],$3::numeric[],$4::uuid[])'));
+ assert(!source.includes('for(const line of recipe.rows)await c.query('));
  assert(!source.includes("SELECT $1,$2,-$3,'consume'"));
 });
