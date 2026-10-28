@@ -23,18 +23,17 @@ test('backoffice no longer fetches or renders bookings when the page loads',()=>
  assert(controller.includes("api('catalog')"));
  assert(controller.includes("api('tables')"));
  assert(controller.includes("api('customers?limit=150')"));
- assert(controller.includes("api('shift')"));
  assert(controller.includes("api('audit?limit=100')"));
 });
-test('menu, QR, customers, shifts and audit screens remain accessible',()=>{
- for(const tab of ['menu','tables','customers','shifts','audit']){
+test('menu, QR, customers and audit screens remain accessible',()=>{
+ for(const tab of ['menu','tables','customers','audit']){
   assert(html.includes('data-tab="'+tab+'"'),'missing tab '+tab);
   assert(html.includes('id="'+tab+'"'),'missing section '+tab);
  }
- for(const id of ['menuForm','menuRows','tableForm','tableRows','customerForm','openShiftForm','closeShiftForm','auditRows']){
+ for(const id of ['menuForm','menuRows','tableForm','tableRows','customerForm','auditRows']){
   assert(html.includes('id="'+id+'"'),'missing form / view '+id);
  }
- for(const anchor of ["'/admin/core#customers'","'/admin/core#shifts'","'/admin/core#audit'"]){
+ for(const anchor of ["'/admin/core#customers'","'/admin/core#audit'"]){
   assert(navigation.includes(anchor),'missing sidebar link '+anchor);
  }
  assert(controller.includes("window.TT6MenuMobile.render(data.catalog)"));
@@ -50,4 +49,19 @@ test('supplier management is removed from desktop/mobile nav and backoffice UI',
  }
  assert(controller.includes("api('catalog')"),'Catalog must continue to load');
  assert(controller.includes("api('customers?limit=150')"),'Customers must continue to load');
+});
+
+test('cashier shifts are absent from desktop/mobile and do not run background shift calls',()=>{
+ for(const token of ['data-tab="shifts"','id="shifts"','shiftStatus','openShiftForm','closeShiftForm','Ca thu ngân']){
+  assert(!html.includes(token),'Shift UI still visible: '+token);
+ }
+ for(const token of ['/admin/core#shifts','Ca thu ngân',"'#shifts'"]){
+  assert(!navigation.includes(token),'Shift remains in sidebar: '+token);
+ }
+ for(const token of ["api('shift')",'data.shift','shiftStatus','openShiftForm','closeShiftForm',"'customers','shifts','audit'"]){
+  assert(!controller.includes(token),'Shift controller remains: '+token);
+ }
+ for(const token of ["api('catalog')","api('tables')","api('customers?limit=150')","api('audit?limit=100')"]){
+  assert(controller.includes(token),'Unrelated backoffice API missing: '+token);
+ }
 });

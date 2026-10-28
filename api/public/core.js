@@ -17,11 +17,11 @@ const empty=(cols,msg)=>'<tr><td colspan="'+cols+'" class="empty">'+esc(msg)+'</
 async function refresh(){
  if(busy)return;busy=true;
  try{
-  const [catalog,tables,customers,shift,audit]=await Promise.all([
+  const [catalog,tables,customers,audit]=await Promise.all([
    api('catalog'),api('tables'),api('customers?limit=150'),
-   api('shift'),api('audit?limit=100')
+   api('audit?limit=100')
   ]);
-  data={catalog:catalog.items,tables:tables.tables,customers:customers.customers,shift:shift.shift,audit:audit.events};
+  data={catalog:catalog.items,tables:tables.tables,customers:customers.customers,audit:audit.events};
   render();note('Đã đồng bộ dữ liệu quản trị từ PostgreSQL.');
  }catch(e){note(e.message,true)}finally{busy=false}
 }
@@ -32,11 +32,6 @@ function render(){
  const setRows=(id,rows,cols)=>{$(id).innerHTML=rows||empty(cols,'Chưa có dữ liệu.')};
  setRows('#customerRows',data.customers.map(x=>'<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.phone)+'</td><td>'+esc(x.email)+'</td><td><button data-edit="customer" data-id="'+esc(x.id)+'" class="secondary">Sửa</button></td></tr>').join(''),4);
  setRows('#auditRows',data.audit.map(a=>'<tr><td>'+esc(stamp(a.created_at))+'</td><td>'+esc(a.actor)+'</td><td>'+esc(a.entity)+'</td><td>'+esc(a.action)+'</td><td>'+esc(a.entity_id||'')+'</td></tr>').join(''),5);
- const shift=data.shift;
- $('#shiftStatus').textContent=!shift?'Chưa có ca nào.':shift.status==='open'?'Ca đang mở từ '+stamp(shift.opened_at)+' · Tiền đầu ca '+vnd(shift.opening_cash):
-  'Ca gần nhất đã chốt. Tiền thực đếm '+vnd(shift.counted_cash)+' · Chênh lệch '+vnd(shift.variance);
- $('#openShiftForm').classList.toggle('hidden',Boolean(shift&&shift.status==='open'));
- $('#closeShiftForm').classList.toggle('hidden',!shift||shift.status!=='open');
  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{
   const kind=b.dataset.edit,item=(kind==='menu'?data.catalog:data.customers).find(x=>x.id===b.dataset.id);
   const form=$('#'+(kind==='menu'?'menuForm':'customerForm'));
@@ -71,8 +66,6 @@ async function saveForm(form,path,method,convert=x=>x){
 $('#menuForm').onsubmit=e=>{e.preventDefault();const b=formData(e.target);const path=b.id?'catalog/'+b.id:'catalog';saveForm(e.target,path,b.id?'PATCH':'POST',x=>({...x,price:Number(x.price)}))};
 $('#tableForm').onsubmit=e=>{e.preventDefault();saveForm(e.target,'tables','POST',x=>({...x,capacity:Number(x.capacity)}))};
 $('#customerForm').onsubmit=e=>{e.preventDefault();const b=formData(e.target);saveForm(e.target,b.id?'customers/'+b.id:'customers',b.id?'PATCH':'POST')};
-$('#openShiftForm').onsubmit=e=>{e.preventDefault();saveForm(e.target,'shift','POST',x=>({action:'open',openingCash:Number(x.openingCash)}))};
-$('#closeShiftForm').onsubmit=e=>{e.preventDefault();if(!window.confirm('Bạn đã đếm tiền mặt thực tế và muốn chốt ca?'))return;saveForm(e.target,'shift','POST',x=>({action:'close',countedCash:Number(x.countedCash),note:x.note,confirm:true}))};
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{
  document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el===b));
  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===b.dataset.tab));
@@ -134,7 +127,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
  const label=document.createElement('summary');label.textContent='Khác';
  const menu=document.createElement('div');
  extra.append(label,menu);
- const secondary=['customers','shifts','audit'];
+ const secondary=['customers','audit'];
  for(const code of secondary){
   const el=tabs.querySelector('[data-tab="'+code+'"]');
   if(!el)throw Error('Thiếu tab '+code);

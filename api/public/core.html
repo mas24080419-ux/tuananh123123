@@ -9,7 +9,7 @@
 <main><span class="eyebrow">TẮM TRÁNG 6 / BACKOFFICE V10</span><h1>Món, bàn và vận hành</h1><p class="muted">Chọn công việc cần làm. Danh sách hiển thị trước; biểu mẫu chỉ xuất hiện khi bạn bấm Thêm hoặc Sửa.</p>
 <div id="notice" class="notice" role="status">Đang xác minh quyền và tải dữ liệu từ Neon...</div>
 <div class="tabs" role="tablist">
-<button class="active" data-tab="menu">Thực đơn</button><button data-tab="tables">Bàn & QR</button><button data-tab="customers">Khách hàng</button><button data-tab="shifts">Ca thu ngân</button><button data-tab="audit">Nhật ký</button></div>
+<button class="active" data-tab="menu">Thực đơn</button><button data-tab="tables">Bàn & QR</button><button data-tab="customers">Khách hàng</button><button data-tab="audit">Nhật ký</button></div>
 <section class="section active" id="menu"><div class="split">
 <div class="panel"><h2 class="tt6-menu-desktop-title">Tạo hoặc sửa món</h2><div class="tt6-menu-sheet-heading"><span class="tt6-menu-sheet-handle" aria-hidden="true"></span><h2 id="menuSheetTitle">Thêm món</h2><button id="menuSheetClose" class="tt6-menu-close" type="button" aria-label="Đóng bảng chỉnh sửa món"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><form id="menuForm" class="fields">
 <input type="hidden" name="id"><label>Tên món<input name="name" required maxlength="100"></label>
@@ -37,12 +37,6 @@
 <label>Ghi chú<textarea name="note" maxlength="250" rows="2"></textarea></label>
 <button type="submit">Lưu khách hàng</button><button type="reset" class="secondary">Hủy chỉnh sửa</button></form><p class="muted">Thông tin khách hàng chỉ hiển thị cho quản trị viên, không cung cấp qua API QR công khai.</p></div>
 <div class="panel"><h2>Danh sách khách hàng</h2><div class="scroll"><table><thead><tr><th>Tên</th><th>Số điện thoại</th><th>Email</th><th>Thao tác</th></tr></thead><tbody id="customerRows"></tbody></table></div></div></div></section>
-<section class="section" id="shifts"><div class="split">
-<div class="panel"><h2>Mở / đóng ca thu ngân</h2><div id="shiftStatus" class="notice">Đang tải ca...</div>
-<form id="openShiftForm" class="fields"><label>Tiền đầu ca kiểm đếm (VND)<input name="openingCash" type="number" min="0" step="1" value="0" required></label><button type="submit">Mở ca</button></form>
-<form id="closeShiftForm" class="fields" style="margin-top:15px"><label>Tiền mặt đếm thực tế cuối ca (VND)<input name="countedCash" type="number" min="0" step="1" required></label><label>Ghi chú chênh lệch<textarea name="note" maxlength="250" rows="2"></textarea></label><button type="submit">Chốt ca và lưu chênh lệch</button></form></div>
-<div class="panel"><h2>Quy tắc đối soát ca</h2><p class="muted">Tiền dự kiến = Tiền đầu ca + doanh thu tiền mặt đã xác nhận trong ca + thu tiền mặt khác − chi tiền mặt khác.</p>
-<p class="muted">Chỉ một ca được mở tại mỗi thời điểm. Đây là chốt sổ tiền mặt nội bộ, không thay thế báo cáo kế toán và đối chiếu giao dịch ngân hàng.</p></div></div></section>
 <section class="section" id="audit"><div class="panel"><h2>Nhật ký thay đổi Backoffice</h2>
 <div class="scroll"><table><thead><tr><th>Thời điểm</th><th>Vai trò</th><th>Đối tượng</th><th>Hành động</th><th>ID</th></tr></thead><tbody id="auditRows"></tbody></table></div></div></section>
 </main></div>
