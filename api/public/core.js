@@ -4,6 +4,7 @@ const vnd=x=>new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maxi
 const stamp=x=>new Date(x).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'});
 const base='/api/admin/core/';
 let data={},busy=false;
+const menuPending=new Set();
 function note(text,error=false){const el=$('#notice');el.textContent=text;el.className='notice'+(error?' error':'')}
 async function api(path,options={}){
  const res=await fetch(base+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
@@ -27,6 +28,7 @@ async function refresh(){
 }
 function render(){
  $('#menuRows').innerHTML=data.catalog.map(x=>'<tr><td><b>'+esc(x.name)+'</b><div class="muted">'+esc(x.sku||'')+'</div></td><td>'+esc(x.category)+'<div class="muted">'+(x.station==='bar'?'Bar':'Bếp')+'</div></td><td>'+vnd(x.price)+'</td><td><span class="pill '+(!x.active?'warn':'')+'">'+(x.active?'Đang bán':'Tạm ẩn')+'</span></td><td><button class="secondary" data-edit="menu" data-id="'+esc(x.id)+'">Sửa</button><button class="secondary" data-toggle="'+esc(x.id)+'">'+(x.active?'Ngừng bán':'Mở bán')+'</button></td></tr>').join('')||empty(5,'Chưa có món nào.');
+ if(window.TT6MenuMobile)window.TT6MenuMobile.render(data.catalog);
  $('#tableRows').innerHTML=data.tables.map(t=>'<tr><td><b>'+esc(t.name)+'</b></td><td>'+esc(t.zone)+'</td><td>'+t.capacity+'</td><td><select data-table-status="'+esc(t.id)+'"><option value="available" '+(t.service_status==='available'?'selected':'')+'>Trống</option><option value="occupied" '+(t.service_status==='occupied'?'selected':'')+'>Có khách</option><option value="reserved" '+(t.service_status==='reserved'?'selected':'')+'>Đã đặt</option><option value="cleaning" '+(t.service_status==='cleaning'?'selected':'')+'>Đang dọn</option></select></td><td><a href="/t/'+esc(t.token)+'" target="_blank" rel="noopener">Mở QR</a><div class="muted">'+(t.active?'QR hoạt động':'QR đang khóa')+'</div></td><td><button data-table-active="'+esc(t.id)+'" class="secondary">'+(t.active?'Khóa QR':'Mở QR')+'</button><button data-table-rotate="'+esc(t.id)+'" class="secondary">Đổi QR</button></td></tr>').join('')||empty(6,'Chưa có bàn.');
  const setRows=(id,rows,cols)=>{$(id).innerHTML=rows||empty(cols,'Chưa có dữ liệu.')};
  setRows('#supplierRows',data.suppliers.map(s=>'<tr><td><b>'+esc(s.name)+'</b></td><td>'+esc(s.phone)+'<div class="muted">'+esc(s.email)+'</div></td><td>'+esc(s.address)+'</td><td><button data-edit="supplier" data-id="'+esc(s.id)+'" class="secondary">Sửa</button></td></tr>').join(''),4);
@@ -42,10 +44,25 @@ function render(){
  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{
   const kind=b.dataset.edit,item=(kind==='menu'?data.catalog:kind==='supplier'?data.suppliers:data.customers).find(x=>x.id===b.dataset.id);
   const form=$('#'+(kind==='menu'?'menuForm':kind==='supplier'?'supplierForm':'customerForm'));
+  if(!item)return;
   for(const [name,v]of Object.entries(item)){const control=form.elements.namedItem(name);if(control)control.value=v??''}
-  form.scrollIntoView({behavior:'smooth',block:'center'});
+  if(kind==='menu')document.getElementById('menuSheetTitle').textContent='Chỉnh sửa món';
+  if(!(kind==='menu'&&window.matchMedia('(max-width:760px)').matches))form.scrollIntoView({behavior:'smooth',block:'center'});
  });
- document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=()=>mutation(async()=>put('catalog/'+b.dataset.toggle+'/availability',{active:!data.catalog.find(x=>x.id===b.dataset.toggle)?.active},'PATCH')));
+ document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=async()=>{
+  const itemId=b.dataset.toggle;
+  if(menuPending.has(itemId))return;
+  const item=data.catalog.find(x=>x.id===itemId);
+  if(!item)return;
+  menuPending.add(itemId);
+  document.querySelectorAll('[data-toggle]').forEach(el=>{if(el.dataset.toggle===itemId)el.disabled=true});
+  try{await put('catalog/'+itemId+'/availability',{active:!item.active},'PATCH');await refresh()}
+  catch(e){note(e.message,true)}
+  finally{
+   menuPending.delete(itemId);
+   document.querySelectorAll('[data-toggle]').forEach(el=>{if(el.dataset.toggle===itemId)el.disabled=false});
+  }
+ });
  document.querySelectorAll('[data-table-active]').forEach(b=>b.onclick=()=>mutation(async()=>put('tables/'+b.dataset.tableActive,{active:!data.tables.find(t=>t.id===b.dataset.tableActive)?.active},'PATCH')));
  document.querySelectorAll('[data-table-status]').forEach(s=>s.onchange=()=>mutation(async()=>put('tables/'+s.dataset.tableStatus,{serviceStatus:s.value},'PATCH')));
  document.querySelectorAll('[data-table-rotate]').forEach(b=>b.onclick=async()=>{if(!window.confirm('Đổi mã QR sẽ vô hiệu hóa tem đang dán. Xác nhận đổi QR cho bàn này?'))return;await mutation(async()=>put('tables/'+b.dataset.tableRotate+'/rotate-qr',{confirm:true}))});
@@ -92,7 +109,19 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
    formPanel.classList.toggle('is-open',open);
    button.textContent=open?'Đóng biểu mẫu':'+ '+actionText;
    button.setAttribute('aria-expanded',String(open));
-   if(open)formPanel.scrollIntoView({behavior:'smooth',block:'nearest'});
+   const mobileMenu=sectionId==='menu'&&window.matchMedia('(max-width:760px)').matches;
+   if(mobileMenu){
+    document.body.classList.toggle('tt6-menu-sheet-open',open);
+    if(open){
+     formPanel.setAttribute('role','dialog');formPanel.setAttribute('aria-modal','true');
+     formPanel.setAttribute('aria-label','Thêm hoặc sửa món');
+     document.getElementById('menuSheetTitle').textContent=formPanel.querySelector('[name="id"]')?.value?'Chỉnh sửa món':'Thêm món';
+     setTimeout(()=>formPanel.querySelector('[name="name"]')?.focus({preventScroll:true}),0);
+    }else{
+     formPanel.removeAttribute('role');formPanel.removeAttribute('aria-modal');formPanel.removeAttribute('aria-label');
+    }
+   }
+   if(open&&!mobileMenu)formPanel.scrollIntoView({behavior:'smooth',block:'nearest'});
   };
   button.addEventListener('click',()=>toggle(!formPanel.classList.contains('is-open')));
   row.append(title,button);listPanel.prepend(row);
@@ -123,6 +152,16 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
   extra.open=false;
   if(secondary.includes(btn.dataset.tab)){label.textContent='Khác · '+btn.textContent.trim();}
   else label.textContent='Khác';
+ }));
+ document.getElementById('menuSheetClose')?.addEventListener('click',()=>registry.get('menu')?.(false));
+ document.getElementById('menuSheetBackdrop')?.addEventListener('click',()=>registry.get('menu')?.(false));
+ document.addEventListener('keydown',event=>{
+  if(event.key==='Escape'&&document.body.classList.contains('tt6-menu-sheet-open')){
+   event.preventDefault();registry.get('menu')?.(false);
+  }
+ });
+ document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{
+  if(btn.dataset.tab!=='menu'&&document.body.classList.contains('tt6-menu-sheet-open'))registry.get('menu')?.(false);
  }));
  const start=location.hash.slice(1);
  if(start&&document.querySelector('[data-tab="'+start+'"]'))document.querySelector('[data-tab="'+start+'"]').click();
