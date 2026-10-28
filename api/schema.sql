@@ -254,3 +254,35 @@ CREATE TABLE IF NOT EXISTS float_receipt_details (
  unit_price integer NOT NULL,
  CHECK((float_type IN ('child_vest','child_float') AND unit_price=20000) OR (float_type='black_adult' AND unit_price=30000))
 );
+
+-- MB Bank and VietinBank trial: no real bank identifiers are pre-filled.
+CREATE TABLE IF NOT EXISTS merchant_bank_accounts(
+ bank_bin varchar(6) PRIMARY KEY CHECK(bank_bin IN ('970422','970415')),
+ account_number varchar(25) NOT NULL CHECK(account_number ~ '^[0-9]{6,25}$'),
+ account_name varchar(100) NOT NULL CHECK(length(trim(account_name)) BETWEEN 2 AND 100),
+ enabled boolean NOT NULL DEFAULT true,
+ updated_at timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO merchant_bank_accounts(bank_bin,account_number,account_name,enabled)
+ SELECT bank_bin,account_number,account_name,enabled FROM merchant_payment_settings
+ WHERE singleton=true AND bank_bin IN ('970422','970415')
+ ON CONFLICT(bank_bin) DO NOTHING;
+ALTER TABLE dining_orders ADD COLUMN IF NOT EXISTS transfer_bank_bin varchar(6);
+ALTER TABLE dining_orders ADD COLUMN IF NOT EXISTS transfer_account_number varchar(25);
+ALTER TABLE dining_orders ADD COLUMN IF NOT EXISTS transfer_account_name varchar(100);
+ALTER TABLE dining_orders ADD COLUMN IF NOT EXISTS payment_reference varchar(23);
+CREATE UNIQUE INDEX IF NOT EXISTS ix_dining_payment_reference ON dining_orders(payment_reference) WHERE payment_reference IS NOT NULL;
+CREATE TABLE IF NOT EXISTS bank_webhook_transactions(
+ id bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+ source text NOT NULL DEFAULT 'sepay' CHECK(source='sepay'),
+ external_id varchar(40) NOT NULL,
+ bank_bin varchar(6),
+ account_number varchar(25),
+ amount bigint NOT NULL CHECK(amount>0),
+ payment_reference varchar(23),
+ order_id uuid REFERENCES dining_orders(id),
+ status text NOT NULL CHECK(status IN ('needs_review','verified_test','auto_paid','already_paid')),
+ received_at timestamptz NOT NULL DEFAULT now(),
+ UNIQUE(source,external_id)
+);
+CREATE INDEX IF NOT EXISTS ix_bank_webhook_order ON bank_webhook_transactions(order_id) WHERE order_id IS NOT NULL;

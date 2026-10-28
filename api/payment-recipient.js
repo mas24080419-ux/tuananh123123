@@ -21,6 +21,29 @@ module.exports=function paymentRecipient({pool}){
   const query=new URLSearchParams({amount:String(amount),addInfo:info,accountName:name});
   return 'https://img.vietqr.io/image/'+bank+'-'+account+'-compact2.png?'+query.toString();
  }
+ async function list(){
+  if(!pool)return [];
+  const rows=(await pool.query('SELECT bank_bin,account_number,account_name,enabled,updated_at FROM merchant_bank_accounts ORDER BY bank_bin')).rows;
+  if(rows.length)return rows.map(x=>({bankBin:x.bank_bin,accountNumber:x.account_number,accountName:x.account_name,enabled:x.enabled,updatedAt:x.updated_at}));
+  const legacy=await get();
+  return legacy?.enabled?[{bankBin:legacy.bank_bin,accountNumber:legacy.account_number,accountName:legacy.account_name,enabled:true,legacy:true}]:[];
+ }
+ async function publicRecipients(){return (await list()).filter(x=>x.enabled).map(x=>({bankBin:x.bankBin,accountNumber:x.accountNumber,accountName:x.accountName}));}
+ async function resolve(bin){
+  const accounts=await publicRecipients();
+  if(bin){const a=accounts.find(x=>x.bankBin===String(bin));if(!a)throw invalid('Ngân hàng chưa được cửa hàng kích hoạt.',409);return a}
+  return accounts[0]||null;
+ }
+ async function setAccount(body){
+  if(!pool)throw invalid('Cần PostgreSQL.',503);
+  const bin=String(body.bankBin||''),account=String(body.accountNumber||''),name=String(body.accountName||'').trim();
+  if(!['970422','970415'].includes(bin))throw invalid('Chỉ hỗ trợ MB Bank và VietinBank.');
+  if(!/^\d{6,25}$/.test(account))throw invalid('Số tài khoản không hợp lệ.');
+  if(name.length<2||name.length>100||/[\r\n<>]/.test(name))throw invalid('Tên chủ tài khoản không hợp lệ.');
+  if(typeof body.enabled!=='boolean')throw invalid('Trạng thái không hợp lệ.');
+  const r=(await pool.query('INSERT INTO merchant_bank_accounts(bank_bin,account_number,account_name,enabled) VALUES($1,$2,$3,$4) ON CONFLICT(bank_bin) DO UPDATE SET account_number=excluded.account_number,account_name=excluded.account_name,enabled=excluded.enabled,updated_at=now() RETURNING bank_bin,account_number,account_name,enabled,updated_at',[bin,account,name,body.enabled])).rows[0];
+  return {bankBin:r.bank_bin,accountNumber:r.account_number,accountName:r.account_name,enabled:r.enabled,updatedAt:r.updated_at};
+ }
  async function set(body){
   if(!pool)throw invalid('Cần cơ sở dữ liệu PostgreSQL để cấu hình thanh toán.',503);
   const bankBin=String(body.bankBin||'').trim();
@@ -70,5 +93,5 @@ module.exports=function paymentRecipient({pool}){
   }
  }
 
- return {get,publicRecipient,qrUrl,set,banks};
+ return {get,publicRecipient,qrUrl,set,banks,list,publicRecipients,resolve,setAccount};
 };
