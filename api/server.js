@@ -438,27 +438,27 @@ const thresholdAction=p.match(/^\/api\/admin\/inventory\/items\/([0-9a-f-]{36})\
 if(req.method==='PATCH'&&thresholdAction){
  if(!await requireAdmin(req,res))return;
  if(!throttle(req,'reorder',40))return err(res,429,'Thao tác quá nhanh.');
- return send(res,200,{item:await ops.updateReorderLevel(thresholdAction[1],await input(req))});
+ const data=await input(req);systemFlow.mark(req,'tx','Đang ghi thay đổi ngưỡng tồn');const item=await ops.updateReorderLevel(thresholdAction[1],data);systemFlow.mark(req,'pg','Thay đổi ngưỡng đã COMMIT');return send(res,200,{item});
 }
 if(req.method==='POST'&&p==='/api/admin/inventory/items'){
  if(!await requireAdmin(req,res))return;
  if(!throttle(req,'inventory',40))return err(res,429,'Thao tác quá nhanh.');
- return send(res,201,{item:await ops.createItem(await input(req))});
+ const data=await input(req);systemFlow.mark(req,'tx','Đang ghi nguyên liệu');const item=await ops.createItem(data);systemFlow.mark(req,'pg','Nguyên liệu đã lưu vào PostgreSQL');return send(res,201,{item});
 }
 if(req.method==='PUT'&&p==='/api/admin/inventory/recipes'){
  if(!await requireAdmin(req,res))return;
  if(!throttle(req,'recipe',40))return err(res,429,'Thao tác quá nhanh.');
- return send(res,200,{recipe:await ops.setRecipe(await input(req))});
+ const data=await input(req);systemFlow.mark(req,'tx','Đang lưu công thức');const recipe=await ops.setRecipe(data);systemFlow.mark(req,'pg','Công thức đã COMMIT');return send(res,200,{recipe});
 }
 if(req.method==='POST'&&p==='/api/admin/inventory/movements'){
  if(!await requireAdmin(req,res))return;
  if(!throttle(req,'movement',40))return err(res,429,'Thao tác quá nhanh.');
- return send(res,201,{movement:await ops.move(await input(req))});
+ const data=await input(req);systemFlow.mark(req,'tx','Đang cập nhật tồn và phiếu nhập/xuất');const movement=await ops.move(data);systemFlow.mark(req,'pg','Biến động kho đã COMMIT');return send(res,201,{movement});
 }
 if(req.method==='POST'&&p==='/api/admin/finance/entries'){
  if(!await requireAdmin(req,res))return;
  if(!throttle(req,'finance',40))return err(res,429,'Thao tác quá nhanh.');
- return send(res,201,{entry:await ops.entry(await input(req))});
+ const data=await input(req);systemFlow.mark(req,'tx','Đang ghi sổ thu–chi');const entry=await ops.entry(data);systemFlow.mark(req,'pg','Phiếu thu–chi đã COMMIT');return send(res,201,{entry});
 }
 if(req.method==='GET'&&p==='/api/admin/analytics'){
  if(!await requireAdmin(req,res))return;
@@ -475,7 +475,7 @@ if(req.method==='POST'&&/^\/api\/admin\/orders\/[0-9a-f-]{36}\/confirm-payment$/
  if(!throttle(req,'admin-payment',40))return err(res,429,'Thao tác quá nhanh.');
  const data=await input(req);
  if(data.confirm!==true)return err(res,400,'Cần xác nhận đã thực sự nhận đủ tiền.');
- return send(res,200,{payment:await confirmPayment(p.split('/')[4],data.paymentMethod)});
+ systemFlow.mark(req,'tx','Đang xác nhận thanh toán');const payment=await confirmPayment(p.split('/')[4],data.paymentMethod);systemFlow.mark(req,'pg','Xác nhận tiền đã COMMIT');return send(res,200,{payment});
 }
 if(p==='/api/lockers'&&req.method==='GET'){
  if(!await requireAuth(req,res))return;
@@ -487,7 +487,7 @@ if(lockerAction&&req.method==='POST'){
  const actor=await identity(req);
  if(!canAccessArea(actor,'equipment'))return err(res,403,'Không có quyền quản lý tủ đồ.');
  if(!throttle(req,'locker-action',40))return err(res,429,'Thao tác quá nhanh.');
- const result=await lockerService[lockerAction[2]](actor,lockerAction[1],await input(req));
+ const data=await input(req);systemFlow.mark(req,'tx','Đang xử lý giao dịch thuê/trả tủ');const result=await lockerService[lockerAction[2]](actor,lockerAction[1],data);systemFlow.mark(req,'pg','Giao dịch tủ đã COMMIT');
  return send(res,200,result);
 }
 if(p==='/api/area/receipts'){
@@ -497,7 +497,7 @@ if(p==='/api/area/receipts'){
  if(req.method==='GET')return send(res,200,await areaReceipts.list(actor,area));
  if(req.method==='POST'){
   if(!throttle(req,'area-receipt',30))return err(res,429,'Thao tác quá nhanh.');
-  return send(res,201,await areaReceipts.create(actor,area,await input(req)));
+  const data=await input(req);systemFlow.mark(req,'tx','Đang tạo phiếu thu dịch vụ');const receipt=await areaReceipts.create(actor,area,data);systemFlow.mark(req,'pg','Phiếu thu dịch vụ đã COMMIT');return send(res,201,receipt);
  }
  return err(res,405,'Phương thức không được hỗ trợ.');
 }
