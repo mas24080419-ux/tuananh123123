@@ -52,7 +52,7 @@ function setup(){
  side.className='tt6-sidebar tt6-ready';
  side.id='tt6-sidebar';
  side.setAttribute('aria-label','Thanh điều hướng quản trị Tắm Tráng 6');
- const advancedOpen=PATH==='/admin/core'&&!!window.location.hash&&['#customers','#audit'].includes(window.location.hash);
+ const advancedOpen=PATH==='/admin/core'&&window.location.hash==='#audit';
  side.innerHTML=
  '<div class="tt6-side-header">'+
  '<a href="/admin" class="tt6-side-brand" aria-label="Tắm Tráng 6 - Tổng quan"><img src="/tam-trang-6-logo.svg" alt="" width="44" height="44"><span class="tt6-side-brand-name"><strong>Tắm Tráng 6</strong><small>BEACH POS · QUẢN TRỊ</small></span></a>'+
@@ -72,9 +72,9 @@ function setup(){
  link('/staff','Màn hình bếp / Bar','chef')+
  '<span class="tt6-side-section-label">QUẢN LÝ CỬA HÀNG</span>'+
  link('/admin/users','Nhân viên & quyền','users')+
+ link('/admin/customers','Khách hàng','person')+
  link('/admin/payment','QR chuyển khoản','qr')+
  group('Nghiệp vụ khác','settings',
-   link('/admin/core#customers','Khách hàng','person',{sub:true})+
    link('/admin#security','Bảo mật & đổi mật khẩu','settings',{sub:true})+
    link('/admin/core#audit','Nhật ký thay đổi','chart',{sub:true}),
    advancedOpen)+

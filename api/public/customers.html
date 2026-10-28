@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="vi"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#f7f8fa"><title>Tắm Tráng 6 · Khách hàng</title>
+<link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/core.css"><link rel="stylesheet" href="/admin-minimal.css">
+<link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
+<link rel="stylesheet" href="/customers.css?v=customer-split-v1">
+<script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
+<script defer src="/customers.js?v=customer-split-v1"></script>
+</head><body class="tt6-customers-page">
+<div class="shell">
+<aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Điều hướng Tắm Tráng 6">
+<nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/customers">Khách hàng</a><a href="/admin/core">Thực đơn và bàn</a></nav>
+</aside>
+<main>
+<span class="eyebrow">TẮM TRÁNG 6 / QUẢN LÝ KHÁCH HÀNG</span>
+<div class="tt6-customer-heading"><div><h1>Khách hàng</h1><p class="muted">Quản lý hồ sơ và thông tin liên hệ. Tách biệt với Thực đơn và Bàn & QR.</p></div>
+<button type="button" id="customerAdd" class="customer-main-add">+ Thêm khách hàng</button></div>
+<div id="customerNotice" class="notice" role="status" aria-live="polite">Đang xác minh quyền và tải dữ liệu khách hàng…</div>
+<section class="panel customer-panel" aria-label="Danh sách khách hàng">
+<div class="customer-toolbar"><div><h2>Danh sách khách hàng</h2><p class="muted" id="customerCount">Đang tải…</p></div>
+<label class="customer-search"><span class="sr-only">Tìm khách hàng</span><input id="customerSearch" type="search" placeholder="Tìm tên, số điện thoại, email…" autocomplete="off" aria-label="Tìm tên, số điện thoại hoặc email khách hàng"></label></div>
+<div class="scroll customer-table-wrap"><table class="customer-table"><thead><tr><th>Tên khách</th><th>Số điện thoại</th><th>Email</th><th>Thao tác</th></tr></thead>
+<tbody id="customerRows"><tr><td colspan="4" class="empty">Đang tải dữ liệu…</td></tr></tbody></table></div>
+<p class="customer-info">Thông tin chỉ hiển thị cho chủ cửa hàng. Không cung cấp dữ liệu khách hàng qua API QR công khai.</p>
+</section>
+<section id="customerEditor" class="panel customer-editor" hidden aria-labelledby="customerEditorTitle">
+<div class="customer-editor-head"><div><span class="eyebrow">HỒ SƠ KHÁCH HÀNG</span><h2 id="customerEditorTitle">Thêm khách hàng</h2></div>
+<button id="customerClose" type="button" class="secondary" aria-label="Đóng biểu mẫu khách hàng">Đóng</button></div>
+<form id="customerForm" class="fields">
+<input type="hidden" name="id">
+<label>Tên khách hàng<input name="name" required maxlength="100" autocomplete="name" placeholder="Họ và tên"></label>
+<div class="pair"><label>Số điện thoại<input name="phone" type="tel" maxlength="25" autocomplete="tel" placeholder="Số điện thoại"></label>
+<label>Email<input name="email" type="email" maxlength="120" autocomplete="email" placeholder="Email (nếu có)"></label></div>
+<label>Ghi chú<textarea name="note" maxlength="250" rows="3" placeholder="Ghi chú chăm sóc khách hàng"></textarea></label>
+<div class="customer-editor-actions"><button type="button" id="customerCancel" class="secondary">Hủy</button><button type="submit" id="customerSave">Lưu khách hàng</button></div>
+</form></section>
+</main></div></body></html>

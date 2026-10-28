@@ -1,4 +1,4 @@
-<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Tắm Tráng 6 · Quản trị vận hành V10</title>
+<!doctype html><html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Tắm Tráng 6 · Thực đơn và bàn QR</title>
 <link rel="stylesheet" href="/core.css"><link rel="stylesheet" href="/admin-minimal.css"><link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"><link rel="stylesheet" href="/pos-sidebar.css?v=20261026-iphone-fix">
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -6,10 +6,10 @@
 <link rel="stylesheet" href="/menu-mobile.css?v=20261028-native-menu-v1">
 </head><body>
 <div class="shell"><aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside>
-<main><span class="eyebrow">TẮM TRÁNG 6 / BACKOFFICE V10</span><h1>Món, bàn và vận hành</h1><p class="muted">Chọn công việc cần làm. Danh sách hiển thị trước; biểu mẫu chỉ xuất hiện khi bạn bấm Thêm hoặc Sửa.</p>
+<main><span class="eyebrow">TẮM TRÁNG 6 / QUẢN LÝ THỰC ĐƠN</span><h1>Thực đơn và bàn & QR</h1><p class="muted">Quản lý món, giá bán và mã QR của từng bàn. Hồ sơ khách hàng đã được chuyển sang một trang riêng.</p>
 <div id="notice" class="notice" role="status">Đang xác minh quyền và tải dữ liệu từ Neon...</div>
 <div class="tabs" role="tablist">
-<button class="active" data-tab="menu">Thực đơn</button><button data-tab="tables">Bàn & QR</button><button data-tab="customers">Khách hàng</button><button data-tab="audit">Nhật ký</button></div>
+<button class="active" data-tab="menu">Thực đơn</button><button data-tab="tables">Bàn & QR</button><button data-tab="audit">Nhật ký</button></div>
 <section class="section active" id="menu"><div class="split">
 <div class="panel"><h2 class="tt6-menu-desktop-title">Tạo hoặc sửa món</h2><div class="tt6-menu-sheet-heading"><span class="tt6-menu-sheet-handle" aria-hidden="true"></span><h2 id="menuSheetTitle">Thêm món</h2><button id="menuSheetClose" class="tt6-menu-close" type="button" aria-label="Đóng bảng chỉnh sửa món"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg></button></div><form id="menuForm" class="fields">
 <input type="hidden" name="id"><label>Tên món<input name="name" required maxlength="100"></label>
@@ -30,15 +30,8 @@
 <div class="panel"><h2>Thêm bàn mới</h2><form id="tableForm" class="fields"><label>Tên bàn<input name="name" required maxlength="50" placeholder="Bàn 07"></label><div class="pair"><label>Khu vực<input name="zone" maxlength="50" value="Tầng 1"></label><label>Sức chứa<input type="number" name="capacity" min="1" max="30" value="4" required></label></div><button type="submit">Tạo bàn + QR bảo mật</button></form>
 <p class="muted">Mã QR mới sử dụng token ngẫu nhiên. Đổi QR sẽ vô hiệu hóa mã cũ; chỉ làm khi đã thay tem QR tại bàn.</p></div>
 <div class="panel"><h2>Trạng thái bàn / QR</h2><div class="scroll"><table><thead><tr><th>Bàn</th><th>Khu vực</th><th>Sức chứa</th><th>Tình trạng</th><th>QR</th><th>Thao tác</th></tr></thead><tbody id="tableRows"></tbody></table></div></div></div></section>
-<section class="section" id="customers"><div class="split">
-<div class="panel"><h2>Hồ sơ khách hàng</h2><form id="customerForm" class="fields"><input name="id" type="hidden">
-<label>Tên khách<input name="name" required maxlength="100"></label>
-<div class="pair"><label>Số điện thoại<input name="phone" maxlength="25"></label><label>Email<input name="email" type="email" maxlength="120"></label></div>
-<label>Ghi chú<textarea name="note" maxlength="250" rows="2"></textarea></label>
-<button type="submit">Lưu khách hàng</button><button type="reset" class="secondary">Hủy chỉnh sửa</button></form><p class="muted">Thông tin khách hàng chỉ hiển thị cho quản trị viên, không cung cấp qua API QR công khai.</p></div>
-<div class="panel"><h2>Danh sách khách hàng</h2><div class="scroll"><table><thead><tr><th>Tên</th><th>Số điện thoại</th><th>Email</th><th>Thao tác</th></tr></thead><tbody id="customerRows"></tbody></table></div></div></div></section>
 <section class="section" id="audit"><div class="panel"><h2>Nhật ký thay đổi Backoffice</h2>
 <div class="scroll"><table><thead><tr><th>Thời điểm</th><th>Vai trò</th><th>Đối tượng</th><th>Hành động</th><th>ID</th></tr></thead><tbody id="auditRows"></tbody></table></div></div></section>
 </main></div>
 <script src="/menu-mobile.js?v=20261028-native-menu-v1"></script>
-<script src="/core.js?v=20261028-native-menu-v1"></script></body></html>
+<script src="/core.js?v=20261028-customer-split-v1"></script></body></html>

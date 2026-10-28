@@ -8,7 +8,7 @@ const {gzipSync, brotliCompressSync, constants} = require('node:zlib');
 const pages = new Map([
   ['/staff/lockers', 'lockers.html'], ['/staff/orders', 'staff-orders.html'], ['/', 'login.html'], ['/login', 'login.html'], ['/staff', 'staff.html'], ['/admin', 'admin.html'],
   ['/admin/operations', 'operations.html'], ['/admin/inventory', 'inventory.html'], ['/admin/core', 'core.html'],
-  ['/admin/orders', 'orders.html'], ['/admin/architecture', 'architecture.html'], ['/admin/users', 'users.html'], ['/admin/payment', 'payment.html']
+  ['/admin/orders', 'orders.html'], ['/admin/architecture', 'architecture.html'], ['/admin/users', 'users.html'], ['/admin/customers', 'customers.html'], ['/admin/payment', 'payment.html']
 ]);
 const mime = {'.html':'text/html; charset=utf-8', '.css':'text/css; charset=utf-8',
   '.js':'text/javascript; charset=utf-8', '.svg':'image/svg+xml; charset=utf-8'};

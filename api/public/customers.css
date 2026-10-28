@@ -1,0 +1,46 @@
+/* Dedicated customer management page: no menu/QR tabs. Mobile first. */
+.tt6-customers-page{font-family:'Plus Jakarta Sans',system-ui,sans-serif}
+.tt6-customers-page main{min-width:0}
+.tt6-customer-heading{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-bottom:16px}
+.tt6-customer-heading h1{margin:5px 0 7px!important}
+.tt6-customer-heading p{margin:0}
+.tt6-customers-page .customer-main-add{min-height:46px!important;border-radius:12px!important;white-space:nowrap;background:#d85c34!important}
+.tt6-customers-page .customer-panel{margin:16px 0!important}
+.tt6-customers-page .customer-toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.tt6-customers-page .customer-toolbar h2{margin:0 0 5px}
+.tt6-customers-page .customer-search{flex:0 1 360px;min-width:190px;margin:0}
+.tt6-customers-page .customer-search input{min-height:45px;font-size:14px!important}
+.tt6-customers-page .customer-table{width:100%;min-width:560px;border-collapse:collapse}
+.tt6-customers-page .customer-table th{font-size:10px;letter-spacing:.35px}
+.tt6-customers-page .customer-table td{font-size:12px;overflow-wrap:anywhere}
+.tt6-customers-page .customer-table .customer-edit{min-height:40px}
+.tt6-customers-page .customer-info{margin:14px 0 0;color:#657d8d;font-size:11px;line-height:1.6}
+.tt6-customers-page .customer-editor{border:1px solid #b8dcd2!important;max-width:850px;scroll-margin-top:85px}
+.tt6-customers-page .customer-editor[hidden]{display:none!important}
+.tt6-customers-page .customer-editor-head{display:flex;justify-content:space-between;align-items:start;gap:16px;margin-bottom:18px}
+.tt6-customers-page .customer-editor-head h2{font-size:19px!important;margin:6px 0}
+.tt6-customers-page .customer-editor-actions{display:flex;justify-content:flex-end;gap:9px}
+.tt6-customers-page .customer-editor-actions button{min-height:46px!important}
+.tt6-customers-page .customer-editor input,.tt6-customers-page .customer-editor textarea{min-height:44px;font-size:16px!important}
+.tt6-customers-page .customer-editor textarea{padding-top:11px}
+.tt6-customers-page button:focus-visible,.tt6-customers-page input:focus-visible{outline:3px solid #62bca8!important;outline-offset:2px}
+.tt6-customers-page .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+@media(max-width:760px){
+ .tt6-customer-heading{flex-direction:column;align-items:stretch;gap:14px}
+ .tt6-customers-page .customer-main-add{width:100%;min-height:50px!important;font-size:14px!important}
+ .tt6-customers-page .customer-search{flex:1 1 100%;width:100%;min-width:0}
+ .tt6-customers-page .customer-table-wrap{overflow:visible!important;border:0}
+ .tt6-customers-page .customer-table{display:block;min-width:0;width:100%}
+ .tt6-customers-page .customer-table thead{display:none}
+ .tt6-customers-page .customer-table tbody{display:grid;gap:10px}
+ .tt6-customers-page .customer-table tr{display:grid;grid-template-columns:1fr;gap:8px;border:1px solid #e1e9ed;border-radius:12px;padding:13px;min-width:0;background:white}
+ .tt6-customers-page .customer-table td{display:flex;align-items:baseline;gap:9px;padding:0!important;border:0!important;font-size:12px;min-width:0;overflow-wrap:anywhere}
+ .tt6-customers-page .customer-table td::before{content:attr(data-label);display:block;flex:0 0 86px;color:#7f92a1;font-size:10px;font-weight:750}
+ .tt6-customers-page .customer-table td:last-child{padding-top:6px!important}
+ .tt6-customers-page .customer-table .customer-edit{width:100%;min-height:45px!important}
+ .tt6-customers-page .customer-table tr:has(td[colspan]){display:block}
+ .tt6-customers-page .customer-table td[colspan]::before{content:none}
+ .tt6-customers-page .customer-editor{padding:15px!important}
+ .tt6-customers-page .customer-editor-actions{display:grid;grid-template-columns:1fr 1.3fr}
+ .tt6-customers-page .customer-editor-actions button{width:100%}
+}

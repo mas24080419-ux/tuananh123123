@@ -29,7 +29,7 @@ function request(url, headers = {}) {
   });
 }
 test('all admin pages and every referenced local stylesheet/script are served', async () => {
-  const routes = ['/', '/staff/lockers', '/admin', '/admin/orders', '/admin/operations', '/admin/inventory', '/admin/architecture', '/admin/core', '/admin/users', '/admin/payment', '/t/test-table'];
+  const routes = ['/', '/staff/lockers', '/admin', '/admin/orders', '/admin/operations', '/admin/inventory', '/admin/architecture', '/admin/core', '/admin/users', '/admin/customers', '/admin/payment', '/t/test-table'];
   for (const route of routes) {
     const response = await request(route);
     assert.equal(response.status, 200, route);

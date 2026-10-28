@@ -3,6 +3,7 @@ const $=x=>document.querySelector(x),esc=x=>String(x??'').replace(/[&<>"']/g,a=>
 const vnd=x=>new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0}).format(Number(x)||0);
 const stamp=x=>new Date(x).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'});
 const base='/api/admin/core/';
+if(location.hash==='#customers')location.replace('/admin/customers'); // Keep old bookmarks working.
 let data={},busy=false;
 const menuPending=new Set();
 function note(text,error=false){const el=$('#notice');el.textContent=text;el.className='notice'+(error?' error':'')}
@@ -17,11 +18,10 @@ const empty=(cols,msg)=>'<tr><td colspan="'+cols+'" class="empty">'+esc(msg)+'</
 async function refresh(){
  if(busy)return;busy=true;
  try{
-  const [catalog,tables,customers,audit]=await Promise.all([
-   api('catalog'),api('tables'),api('customers?limit=150'),
-   api('audit?limit=100')
+  const [catalog,tables,audit]=await Promise.all([
+   api('catalog'),api('tables'),api('audit?limit=100')
   ]);
-  data={catalog:catalog.items,tables:tables.tables,customers:customers.customers,audit:audit.events};
+  data={catalog:catalog.items,tables:tables.tables,audit:audit.events};
   render();note('Đã đồng bộ dữ liệu quản trị từ PostgreSQL.');
  }catch(e){note(e.message,true)}finally{busy=false}
 }
@@ -30,15 +30,14 @@ function render(){
  if(window.TT6MenuMobile)window.TT6MenuMobile.render(data.catalog);
  $('#tableRows').innerHTML=data.tables.map(t=>'<tr><td><b>'+esc(t.name)+'</b></td><td>'+esc(t.zone)+'</td><td>'+t.capacity+'</td><td><select data-table-status="'+esc(t.id)+'"><option value="available" '+(t.service_status==='available'?'selected':'')+'>Trống</option><option value="occupied" '+(t.service_status==='occupied'?'selected':'')+'>Có khách</option><option value="reserved" '+(t.service_status==='reserved'?'selected':'')+'>Đã đặt</option><option value="cleaning" '+(t.service_status==='cleaning'?'selected':'')+'>Đang dọn</option></select></td><td><a href="/t/'+esc(t.token)+'" target="_blank" rel="noopener">Mở QR</a><div class="muted">'+(t.active?'QR hoạt động':'QR đang khóa')+'</div></td><td><button data-table-active="'+esc(t.id)+'" class="secondary">'+(t.active?'Khóa QR':'Mở QR')+'</button><button data-table-rotate="'+esc(t.id)+'" class="secondary">Đổi QR</button></td></tr>').join('')||empty(6,'Chưa có bàn.');
  const setRows=(id,rows,cols)=>{$(id).innerHTML=rows||empty(cols,'Chưa có dữ liệu.')};
- setRows('#customerRows',data.customers.map(x=>'<tr><td><b>'+esc(x.name)+'</b></td><td>'+esc(x.phone)+'</td><td>'+esc(x.email)+'</td><td><button data-edit="customer" data-id="'+esc(x.id)+'" class="secondary">Sửa</button></td></tr>').join(''),4);
  setRows('#auditRows',data.audit.map(a=>'<tr><td>'+esc(stamp(a.created_at))+'</td><td>'+esc(a.actor)+'</td><td>'+esc(a.entity)+'</td><td>'+esc(a.action)+'</td><td>'+esc(a.entity_id||'')+'</td></tr>').join(''),5);
  document.querySelectorAll('[data-edit]').forEach(b=>b.onclick=()=>{
-  const kind=b.dataset.edit,item=(kind==='menu'?data.catalog:data.customers).find(x=>x.id===b.dataset.id);
-  const form=$('#'+(kind==='menu'?'menuForm':'customerForm'));
+  const item=data.catalog.find(x=>x.id===b.dataset.id);
+  const form=$('#menuForm');
   if(!item)return;
   for(const [name,v]of Object.entries(item)){const control=form.elements.namedItem(name);if(control)control.value=v??''}
-  if(kind==='menu')document.getElementById('menuSheetTitle').textContent='Chỉnh sửa món';
-  if(!(kind==='menu'&&window.matchMedia('(max-width:760px)').matches))form.scrollIntoView({behavior:'smooth',block:'center'});
+  document.getElementById('menuSheetTitle').textContent='Chỉnh sửa món';
+  if(!window.matchMedia('(max-width:760px)').matches)form.scrollIntoView({behavior:'smooth',block:'center'});
  });
  document.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=async()=>{
   const itemId=b.dataset.toggle;
@@ -65,7 +64,6 @@ async function saveForm(form,path,method,convert=x=>x){
 }
 $('#menuForm').onsubmit=e=>{e.preventDefault();const b=formData(e.target);const path=b.id?'catalog/'+b.id:'catalog';saveForm(e.target,path,b.id?'PATCH':'POST',x=>({...x,price:Number(x.price)}))};
 $('#tableForm').onsubmit=e=>{e.preventDefault();saveForm(e.target,'tables','POST',x=>({...x,capacity:Number(x.capacity)}))};
-$('#customerForm').onsubmit=e=>{e.preventDefault();const b=formData(e.target);saveForm(e.target,b.id?'customers/'+b.id:'customers',b.id?'PATCH':'POST')};
 document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>{
  document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el===b));
  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===b.dataset.tab));
@@ -74,10 +72,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
 
 /* V11 progressive disclosure: preserve all original forms and connected APIs. */
 (function minimalCore(){
- const actions=[
-  ['menu','Thêm món'],['tables','Thêm bàn'],
-  ['customers','Thêm khách hàng']
- ];
+ const actions=[['menu','Thêm món'],['tables','Thêm bàn']];
  const registry=new Map();
  for(const [sectionId,actionText] of actions){
   const section=document.getElementById(sectionId);
@@ -89,7 +84,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
   formPanel.classList.add('ui-form-card');
   listPanel.classList.add('ui-focused-list');
   const row=document.createElement('div');row.className='ui-action-row';
-  const title=document.createElement('strong');title.textContent=sectionId==='tables'?'Danh sách bàn':sectionId==='menu'?'Thực đơn đang quản lý':'Khách hàng';title.className='sh-headingline';
+  const title=document.createElement('strong');title.textContent=sectionId==='tables'?'Danh sách bàn':'Thực đơn đang quản lý';title.className='sh-headingline';
   const button=document.createElement('button');button.type='button';button.className='ui-form-toggle';button.textContent='+ '+actionText;
   const toggle=open=>{
    formPanel.classList.toggle('is-open',open);
@@ -121,24 +116,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
   const sectionId=edit.closest('.section')?.id;
   if(registry.has(sectionId))registry.get(sectionId)(true);
  },true);
- // Keep the three most frequent actions visible; group lower-frequency functions.
- const tabs=document.querySelector('.tabs');
- const extra=document.createElement('details');extra.className='ui-core-extra';
- const label=document.createElement('summary');label.textContent='Khác';
- const menu=document.createElement('div');
- extra.append(label,menu);
- const secondary=['customers','audit'];
- for(const code of secondary){
-  const el=tabs.querySelector('[data-tab="'+code+'"]');
-  if(!el)throw Error('Thiếu tab '+code);
-  menu.append(el);
- }
- tabs.append(extra);
- document.querySelectorAll('[data-tab]').forEach(btn=>btn.addEventListener('click',()=>{
-  extra.open=false;
-  if(secondary.includes(btn.dataset.tab)){label.textContent='Khác · '+btn.textContent.trim();}
-  else label.textContent='Khác';
- }));
+ // All operational tabs are visible here. Customer management has its own route.
  document.getElementById('menuSheetClose')?.addEventListener('click',()=>registry.get('menu')?.(false));
  document.getElementById('menuSheetBackdrop')?.addEventListener('click',()=>registry.get('menu')?.(false));
  document.addEventListener('keydown',event=>{
