@@ -135,7 +135,7 @@ module.exports=function operations({pool,id}){
    if(Number(r.rows[0].quantity)+0.000001<amount)throw bad('Không đủ nguyên liệu '+r.rows[0].name+' để nhận đơn.',409);
    await c.query("UPDATE inventory_items SET quantity=quantity-$2 WHERE id=$1",[ingredientId,amount]);
   }
-  for(const line of recipe.rows)await c.query("INSERT INTO inventory_movements(id,inventory_item_id,delta,kind,unit_cost,note,order_line_id) SELECT $1,$2,-$3,'consume',avg_unit_cost,'Trừ theo QR Order',$4 FROM inventory_items WHERE id=$2",[id(),line.inventory_item_id,line.amount,line.line_id]);
+  for(const line of recipe.rows)await c.query("INSERT INTO inventory_movements(id,inventory_item_id,delta,kind,unit_cost,note,order_line_id) SELECT $1,$2,-($3::numeric(14,3)),'consume',avg_unit_cost,'Trừ theo QR Order',$4 FROM inventory_items WHERE id=$2",[id(),line.inventory_item_id,line.amount,line.line_id]);
  }
  async function restore(c,lineId,previousStatus){
   if(previousStatus!=='new')return;
