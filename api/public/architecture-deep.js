@@ -106,6 +106,91 @@
  }
  const clock=s=>{let d=new Date(s);return Number.isFinite(+d)?d.toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',hour:'2-digit',minute:'2-digit',second:'2-digit'}):'—'};
  const domain={orders:'QR Order',kds:'Bếp / Bar',inventory:'Kho',finance:'Thu–chi',rental:'Phao / Tủ',admin:'Quản trị'};
+ const metricIds={orders24h:'deepMetricOrders',itemsWaiting:'deepMetricWaiting',itemsPreparing:'deepMetricPreparing',
+  itemsReady:'deepMetricReady',stockMovements24h:'deepMetricStock'};
+ const pretty=n=>n!==undefined&&n!==null&&Number.isFinite(Number(n))?new Intl.NumberFormat('vi-VN').format(Number(n)):'—';
+ const traceAll=()=>[...(last?.active||[]),...(last?.traces||[])];
+ const currentTrace=()=>traceAll().find(t=>t.id===focusedTrace);
+ function renderMetrics(){
+  const m=last?.metrics||{};
+  for(const [key,id] of Object.entries(metricIds))$(id).textContent=last?.metrics?pretty(m[key]):'—';
+  $('deepMetricActive').textContent=hasSnapshot?pretty(last?.inFlight??0):'—';
+  const a=last?.active||[];
+  const at=node=>a.filter(t=>t.steps?.at(-1)?.node===node).length;
+  const values={
+   guest:[a.filter(t=>t.module==='orders').length,'order đang gửi'],
+   staff:[a.filter(t=>['kds','rental'].includes(t.module)).length,'đang chạy'],
+   owner:[a.filter(t=>['admin','finance','inventory'].includes(t.module)).length,'đang chạy'],
+   http:[last?.inFlight||0,'đang chạy'],auth:[at('auth'),'đang xác thực'],validate:[at('validate'),'đang kiểm tra'],
+   orders:[m.orders24h,'đơn / 24h'],kds:[m.itemsWaiting,'món chờ'],inventory:[m.stockMovements24h,'biến động / 24h'],
+   finance:[m.financeEntries24h,'phiếu / 24h'],rental:[m.occupiedLockers,'tủ đang thuê'],
+   admin:[a.filter(t=>t.module==='admin').length,'đang chạy'],tx:[at('tx'),'đang giao dịch'],
+   pg:[at('pg'),'đang xử lý'],audit:[m.auditEvents24h,'audit / 24h'],
+   stream:[last?.connectedOwners||0,'kết nối'],app:[last?.connectedOwners||0,'người xem']
+  };
+  document.querySelectorAll('#deepNodes [data-live-node]').forEach(b=>{
+   const pair=values[b.dataset.liveNode];
+   b.textContent=hasSnapshot&&pair?pretty(pair[0])+' · '+pair[1]:'— · chưa có số liệu';
+  });
+ }
+ function updateTraceHighlights(){
+  const t=currentTrace(),trail=t?.steps?.map(step=>step.node)||[];
+  const seen=new Set(trail),cur=t?.state==='running'?trail.at(-1):null;
+  document.querySelectorAll('#deepNodes [data-id]').forEach(b=>{
+   b.classList.toggle('trace-visited',seen.has(b.dataset.id));
+   b.classList.toggle('trace-current',cur===b.dataset.id);
+  });
+  document.querySelectorAll('#deepWires [data-src]').forEach(e=>{
+   const visited=seen.has(e.dataset.src)&&seen.has(e.dataset.dst);
+   e.classList.toggle('trace-visited',visited);
+   e.classList.toggle('trace-current',visited&&e.dataset.dst===cur);
+  });
+  if(t?.steps?.length){
+   const step=t.steps.at(-1);
+   $('deepLivePath').textContent=(t.state==='running'?'ĐANG XỬ LÝ: ':'ĐÃ KẾT THÚC: ')+(domain[t.module]||t.module)+' · '+step.label+' · +'+pretty(step.elapsedMs)+' ms';
+  }
+ }
+ function renderTraces(){
+  const list=traceAll();
+  $('deepTraceCount').textContent=(last?.inFlight||0)+' đang xử lý · '+(last?.traces?.length||0)+' đã kết thúc (RAM)';
+  if(!list.length){
+   $('deepTraceList').innerHTML='<p class="deep-empty">Chưa có request ghi dữ liệu kể từ lúc server khởi động.</p>';
+   $('deepTraceSteps').innerHTML='<span>Hệ thống đang theo dõi request thật; không chạy mô phỏng khi không có dữ liệu.</span>';
+   updateTraceHighlights();return;
+  }
+  if(!list.some(t=>t.id===focusedTrace))focusedTrace=list[0].id;
+  $('deepTraceList').innerHTML=list.slice(0,14).map(t=>{
+   const state=t.state==='running'?'Đang xử lý':t.state==='success'?'Hoàn tất':'Thất bại';
+   const elapsed=t.durationMs??t.steps?.at(-1)?.elapsedMs??0;
+   return '<button type="button" data-trace-id="'+escape(t.id)+'" class="deep-trace-item '+(focusedTrace===t.id?'is-focused':'')+'">'+
+    '<span class="deep-trace-indicator '+escape(t.state)+'"></span><span class="deep-trace-name"><strong>'+escape(domain[t.module]||t.module)+'</strong><small>'+escape(t.method+' '+t.route)+'</small></span>'+
+    '<span class="deep-trace-duration"><b>'+escape(state)+'</b><small>'+pretty(elapsed)+' ms</small></span></button>';
+  }).join('');
+  const t=currentTrace();if(!t)return;
+  const state=t.state==='running'?'CHƯA XÁC NHẬN COMMIT':t.state==='success'?'REQUEST ĐÃ HOÀN THÀNH':'REQUEST LỖI / CÓ THỂ ĐÃ ROLLBACK';
+  $('deepTraceSteps').innerHTML='<span class="deep-trace-traceid">TRACE '+escape(t.id.slice(0,8).toUpperCase())+' · '+escape(state)+'</span>'+
+   '<div class="deep-trace-chain">'+(t.steps||[]).map((step,i)=>'<div class="deep-trace-step '+(i===t.steps.length-1?'last':'')+'"><b>'+escape(step.node.toUpperCase())+'</b><span>'+escape(step.label)+'</span><time>+'+pretty(step.elapsedMs)+' ms</time></div>').join('')+'</div>'+
+   (t.count!=null?'<div class="deep-trace-count">Số lượng món được gửi: <strong>'+pretty(t.count)+'</strong></div>':'');
+  updateTraceHighlights();
+ }
+ function traceUpdate(data){
+  if(!data?.trace?.id)return;
+  if(!last)last={events:[],requests:[],metrics:null,active:[],traces:[],inFlight:0,connectedOwners:0};
+  hasSnapshot=true;
+  const t=data.trace;
+  last.active=(last.active||[]).filter(x=>x.id!==t.id);
+  last.traces=(last.traces||[]).filter(x=>x.id!==t.id);
+  if(t.state==='running')last.active.unshift(t);else last.traces.unshift(t);
+  last.traces=last.traces.slice(0,40);last.inFlight=last.active.length;
+  if(followLive){
+   focusedTrace=t.id;filter=t.module;
+   selected=t.steps?.at(-1)?.node||t.module;
+   if(!services[selected])selected=t.module;
+   select(selected);
+  }
+  renderMetrics();renderTraces();
+ }
+
  function updateFollow(){
   $('deepFollow').setAttribute('aria-pressed',String(followLive));
   $('deepFollow').textContent=followLive?'Theo dõi tự động: BẬT':'Theo dõi tự động: TẮT';
