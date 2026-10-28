@@ -50,14 +50,21 @@ test('Failed request never shows a successful COMMIT and leaves in-flight state'
  assert.ok(!snap.traces[0].steps.some(x=>x.node==='pg'));
  assert.equal(snap.inFlight,0);
 });
-test('Read-only requests record HTTP timing without claiming a transaction',async()=>{
+test('Read-only kitchen requests expose observed SELECT steps without claiming COMMIT',async()=>{
  const {flow}=setup();
  const req={method:'GET',url:'/api/kds'};
  const res=new EventEmitter();res.statusCode=200;
- flow.trackRequest(req,res);res.emit('finish');
+ flow.trackRequest(req,res);
+ flow.mark(req,'auth','Xác thực nhân viên');
+ flow.mark(req,'kds','Đang tải bếp');
+ flow.mark(req,'pg','SELECT hàng chờ hoàn thành',4);
+ res.emit('finish');
  const snap=await flow.recent();
  assert.equal(snap.active.length,0);
- assert.equal(snap.traces.length,0);
+ assert.equal(snap.traces.length,1);
+ assert.equal(snap.traces[0].readOnly,true);
+ assert.deepEqual(snap.traces[0].steps.map(x=>x.node),['http','auth','kds','pg','http']);
+ assert(!snap.traces[0].steps.some(x=>/COMMIT/i.test(x.label)));
  assert.equal(snap.requests[0].route,'/api/kds');
 });
 test('New telemetry code does not expose secret names, raw URLs or request bodies',async()=>{
