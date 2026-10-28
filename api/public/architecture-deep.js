@@ -163,6 +163,10 @@
    b.textContent=hasSnapshot&&pair?pretty(pair[0])+' · '+pair[1]:'— · chưa có số liệu';
   });
   document.querySelectorAll('#deepNodes [data-active-node]').forEach(b=>{const n=a.filter(t=>t.steps?.at(-1)?.node===b.dataset.activeNode).length;b.hidden=n===0;b.textContent=n+' LIVE';});
+  // The cart is a browser-side step, not an HTTP trace; light it only when
+  // real live QR sessions report selecting items.
+  const cartNode=document.querySelector('#deepNodes [data-id="cart"]');
+  if(cartNode)cartNode.classList.toggle('is-cart-live',Number(last?.qrPresence?.selectingSessions||0)>0);
  }
  function updateTraceHighlights(){
   // During auto-follow, the packet overlay owns progressive node/path highlights.
