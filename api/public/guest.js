@@ -8,6 +8,13 @@ const tableToken = location.pathname.match(/^\/t\/([0-9a-f]{48})$/)?.[1] || null
 const cart = new Map();
 const itemNotes = new Map(); // one note per dish, persisted on the order line
 let products = [], table = null, mode = 'pilot', sending = false, confirmed = false;
+// Read-only, anonymous, client-side telemetry for the owner architecture view.
+// This is a browser activity indicator, not a server-confirmed sales record.
+window.saleshubQrActivity = () => ({
+ stage: sending ? 'submitting' : confirmed ? 'ordered' :
+  [...cart.values()].some(qty=>qty>0) ? 'selecting' : 'viewing',
+ cartItems: Math.min(60, [...cart.values()].reduce((sum,qty)=>sum+qty,0))
+});
 let pendingPayload = null; // keep snapshot and requestId on ambiguous errors
 let currentView = 'menu';
 const note = $('#note');
@@ -291,6 +298,7 @@ function wireSteppers() {
   });
 }
 function render() {
+  document.dispatchEvent(new Event('saleshub:qr-activity'));
   const {count, subtotal} = totalStats();
   const groups = {};
   for (const p of products) (groups[p.category] ??= []).push(p);
