@@ -63,3 +63,14 @@ test('Presence only reports opened menu tabs and exposes snapshots only to owner
  assert.match(arch,/id="deepQrTableBreakdown"/);
  assert.match(monitor,/last\?\.qrPresence\?\.activeSessions/);
 });
+
+test('100 simultaneous viewers on one QR result in one table database lookup, not 100',async()=>{
+ let calls=0;
+ const lookupOne=async token=>{calls++;await Promise.resolve();return lookup(token)};
+ const p=create({maxSessions:200});
+ const sessions=Array.from({length:100},(_,i)=>'11111111-1111-4111-8111-'+String(i).padStart(12,'0'));
+ await Promise.all(sessions.map(sessionId=>p.heartbeat({sessionId,token:t1},lookupOne)));
+ assert.equal(calls,1);
+ assert.equal(p.snapshot().activeSessions,100);
+ assert.equal(p.snapshot().activeTables,1);
+});
