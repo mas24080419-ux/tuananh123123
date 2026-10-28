@@ -432,7 +432,7 @@ if(req.method==='GET'&&p==='/api/admin/operations'){
 }
 if(req.method==='GET'&&p==='/api/admin/inventory'){
  if(!await requireAdmin(req,res))return;
- return send(res,200,await ops.inventoryDashboard());
+ systemFlow.mark(req,'inventory','Đang đọc bảng tồn kho và biến động');const inventory=await ops.inventoryDashboard();systemFlow.mark(req,'pg','SELECT tồn kho hoàn thành');return send(res,200,inventory);
 }
 const thresholdAction=p.match(/^\/api\/admin\/inventory\/items\/([0-9a-f-]{36})\/reorder$/i);
 if(req.method==='PATCH'&&thresholdAction){
@@ -463,12 +463,12 @@ if(req.method==='POST'&&p==='/api/admin/finance/entries'){
 if(req.method==='GET'&&p==='/api/admin/analytics'){
  if(!await requireAdmin(req,res))return;
  const range=adminDateRange(u.searchParams);
- return send(res,200,await analytics.overview(range.from,range.to));
+ systemFlow.mark(req,'finance','Đang tính tổng hợp thu–chi');const report=await analytics.overview(range.from,range.to);systemFlow.mark(req,'pg','Đọc dữ liệu báo cáo hoàn thành');return send(res,200,report);
 }
 if(req.method==='GET'&&p==='/api/admin/summary'){
  if(!await requireAdmin(req,res))return;
  const range=adminDateRange(u.searchParams);
- return send(res,200,{...await adminReport(range.from,range.to),range});
+ systemFlow.mark(req,'finance','Đang tổng hợp báo cáo');const summary=await adminReport(range.from,range.to);systemFlow.mark(req,'pg','Đọc dữ liệu tổng hợp hoàn thành');return send(res,200,{...summary,range});
 }
 if(req.method==='POST'&&/^\/api\/admin\/orders\/[0-9a-f-]{36}\/confirm-payment$/.test(p)){
  if(!await requireAdmin(req,res))return;
@@ -479,7 +479,7 @@ if(req.method==='POST'&&/^\/api\/admin\/orders\/[0-9a-f-]{36}\/confirm-payment$/
 }
 if(p==='/api/lockers'&&req.method==='GET'){
  if(!await requireAuth(req,res))return;
- return send(res,200,await lockerService.list(await identity(req)));
+ systemFlow.mark(req,'rental','Đang tải tủ đang thuê và tủ trống');const lockers=await lockerService.list(await identity(req));systemFlow.mark(req,'pg','Đọc trạng thái tủ hoàn thành');return send(res,200,lockers);
 }
 const lockerAction=p.match(/^\/api\/lockers\/([AB](?:[1-9]|[12][0-9]|30))\/(rent|release|collect)$/);
 if(lockerAction&&req.method==='POST'){
@@ -507,12 +507,12 @@ if(req.method==='GET'&&p==='/api/history'){if(!await requireAdmin(req,res))retur
 if(req.method==='GET'&&p==='/api/kds'){if(!await requireAuth(req,res))return;
  const actor=await identity(req);
  if(!canUseDining(actor))return err(res,403,'Không có quyền xem đơn Bếp/Bar.');
- const visible=(await getOrders()).map(o=>({...o,
+ systemFlow.mark(req,'kds','Đang truy vấn hàng đợi Bếp / Bar');const fetchedOrders=await getOrders();systemFlow.mark(req,'pg','SELECT danh sách đơn và món hoàn thành');const visible=fetchedOrders.map(o=>({...o,
   payment_method:canSeeTables(actor.role)?o.payment_method:null,
   payment_status:canSeeTables(actor.role)?o.payment_status:null,
   items:o.items.filter(line=>actor.role==='kitchen'?line.station==='kitchen':actor.role==='bar'?line.station==='bar':true)
   .map(({unit_price,...line})=>line)})).filter(o=>o.items.length);
- return send(res,200,{orders:visible})}
+ systemFlow.mark(req,'kds','Đã lọc danh sách theo trạm chế biến',visible.reduce((n,o)=>n+o.items.length,0));return send(res,200,{orders:visible})}
 if(req.method==='PATCH'&&/^\/api\/items\/[0-9a-f-]{36}$/.test(p)){if(!await requireAuth(req,res))return;const a=await identity(req);if(!canUseDining(a)||!canCook(a.role))return err(res,403,'Vai trò này không được cập nhật chế biến.');const b=await input(req);return send(res,200,{item:await updateLine(p.split('/').at(-1),b.status,a.role,req)})}
 if(req.method==='GET'&&/^\/qr\/[0-9a-f]{48}\.svg$/.test(p)){if(!await requireAuth(req,res))return;if(!canUseDining(await identity(req))||!canSeeTables((await identity(req)).role))return err(res,403,'Không có quyền lấy QR bàn.');const t=p.slice(4,-4);if(!(await getTable(t)))return err(res,404,'Không tìm thấy bàn.');const origin=`${req.headers['x-forwarded-proto']||'https'}://${req.headers.host}`;const svg=await QRCode.toString(origin+'/t/'+t,{type:'svg',margin:2,width:320,errorCorrectionLevel:'M'});res.writeHead(200,{'Content-Type':'image/svg+xml; charset=utf-8','Cache-Control':'no-store'});res.end(svg);return}
 if(req.method==='GET'&&p==='/admin/architecture'&&(await identity(req))?.role!=='admin'){
