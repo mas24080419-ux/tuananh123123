@@ -29,6 +29,11 @@ const ops=require('./operations')({pool,id});
 const createAsyncTtlCache=require('./async-ttl-cache');
 const analytics=require('./finance-analytics')({pool});
 const paymentRecipient=require('./payment-recipient')({pool});
+const sepayWebhook=require('./bank-webhook').createWebhook({
+ pool,secret:process.env.SEPAY_WEBHOOK_SECRET||'',
+ autoConfirm:process.env.SEPAY_AUTO_CONFIRM==='true',
+ onPaid:()=>{invalidateOrderReads();void orderLive.pulse(true)}
+});
 const core=require('./core')({pool,id,randomToken:()=>crypto.randomBytes(24).toString('hex')});
 const staffAccounts=require('./staff-auth')({pool,id});
 const homeFor=require('./role-home');
@@ -144,9 +149,9 @@ async function placeOrder(body,flowReq,orderActor=null){if(!body||typeof body.to
 if(!/^[0-9a-f-]{36}$/.test(body.requestId||''))throw Object.assign(Error('Mã gửi lại không hợp lệ.'),{status:400});const t=await getTable(body.token);if(!t)throw Object.assign(Error('Không tìm thấy bàn hoặc QR đã khóa.'),{status:404});
 const paymentMethod=body.paymentMethod;
 if(!['cash','bank_transfer'].includes(paymentMethod))throw Object.assign(Error('Vui lòng chọn Tiền mặt hoặc Chuyển khoản.'),{status:400});
-const note=String(body.note||'').slice(0,160);const m=await getMenu(),lookup=new Map(m.map(x=>[x.id,x]));const items=body.items.map(it=>{const p=lookup.get(it.id);if(!p||!Number.isSafeInteger(it.qty)||it.qty<1||it.qty>20)throw Object.assign(Error('Món hoặc số lượng không hợp lệ.'),{status:400});if(p.available_quantity!==undefined&&p.available_quantity!==null&&Number(p.available_quantity)<it.qty)throw Object.assign(Error('Món '+p.name+' hiện chỉ còn '+p.available_quantity+' phần. Vui lòng cập nhật giỏ hàng.'),{status:409});return {...p,qty:it.qty,note:String(it.note||'').slice(0,160)}});if(items.reduce((s,x)=>s+x.qty,0)>60)throw Object.assign(Error('Quá số lượng một lần gửi.'),{status:400});systemFlow.mark(flowReq,'validate','Token bàn, món và số lượng hợp lệ',items.reduce((s,x)=>s+x.qty,0));
+const chosenBank=paymentMethod==='bank_transfer'?await paymentRecipient.resolve(body.bankBin):null;const note=String(body.note||'').slice(0,160);const m=await getMenu(),lookup=new Map(m.map(x=>[x.id,x]));const items=body.items.map(it=>{const p=lookup.get(it.id);if(!p||!Number.isSafeInteger(it.qty)||it.qty<1||it.qty>20)throw Object.assign(Error('Món hoặc số lượng không hợp lệ.'),{status:400});if(p.available_quantity!==undefined&&p.available_quantity!==null&&Number(p.available_quantity)<it.qty)throw Object.assign(Error('Món '+p.name+' hiện chỉ còn '+p.available_quantity+' phần. Vui lòng cập nhật giỏ hàng.'),{status:409});return {...p,qty:it.qty,note:String(it.note||'').slice(0,160)}});if(items.reduce((s,x)=>s+x.qty,0)>60)throw Object.assign(Error('Quá số lượng một lần gửi.'),{status:400});systemFlow.mark(flowReq,'validate','Token bàn, món và số lượng hợp lệ',items.reduce((s,x)=>s+x.qty,0));
 if(!pool){const exists=orders.find(x=>x.table_id===t.id&&x.request_id===body.requestId);if(exists)return {id:exists.id,duplicate:true};const o={id:id(),table_id:t.id,request_id:body.requestId,note,payment_method:paymentMethod,payment_status:'unpaid',created_at:new Date().toISOString()};orders.push(o);for(const it of items)lines.push({id:id(),order_id:o.id,menu_item_id:it.id,name:it.name,quantity:it.qty,unit_price:it.price,station:it.station,note:it.note,status:'new',created_at:o.created_at});return {id:o.id,duplicate:false}}
-const c=await pool.connect();try{await c.query('BEGIN');systemFlow.mark(flowReq,'tx','Transaction đã BEGIN');const orderId=id();const o=await c.query('INSERT INTO dining_orders(id,table_id,request_id,note,payment_method) VALUES($1,$2,$3,$4,$5) ON CONFLICT(table_id,request_id) DO NOTHING RETURNING id',[orderId,t.id,body.requestId,note,paymentMethod]);if(!o.rowCount){const prev=await c.query('SELECT id FROM dining_orders WHERE table_id=$1 AND request_id=$2',[t.id,body.requestId]);await c.query('COMMIT');systemFlow.mark(flowReq,'pg','RequestId đã tồn tại — không tạo đơn mới');return {id:prev.rows[0].id,duplicate:true}}await c.query("INSERT INTO dining_order_lines(id,order_id,menu_item_id,name,quantity,unit_price,station,note) SELECT r.id,$1,r.menu_item_id,r.name,r.quantity,r.unit_price,r.station,r.note FROM UNNEST($2::uuid[],$3::uuid[],$4::text[],$5::integer[],$6::integer[],$7::text[],$8::text[]) AS r(id,menu_item_id,name,quantity,unit_price,station,note)",[orderId,items.map(()=>id()),items.map(it=>it.id),items.map(it=>it.name),items.map(it=>it.qty),items.map(it=>it.price),items.map(it=>it.station),items.map(it=>it.note)]);systemFlow.mark(flowReq,'orders','Đã ghi đơn và món (chưa COMMIT)');await c.query("INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,'system','order_validated',$2::jsonb)",[orderId,JSON.stringify({checked:'table_menu_quantity_requestId'})]);systemFlow.mark(flowReq,'inventory','Đang kiểm tra và trừ tồn nguyên liệu');await ops.consume(c,orderId);systemFlow.mark(flowReq,'inventory','Đã cập nhật tồn trong transaction');await c.query("INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,'system','inventory_checked',$2::jsonb)",[orderId,JSON.stringify({result:'inventory_rules_processed'})]);await c.query("UPDATE dining_tables SET service_status='occupied' WHERE id=$1 AND service_status='available'",[t.id]);await c.query('INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,$2,$3,$4::jsonb)',[orderId,orderActor?'staff':'guest','order_created',JSON.stringify({table:t.name,item_count:items.length,payment_method:paymentMethod,staffUserId:orderActor?.userId||null,role:orderActor?.role||null})]);systemFlow.mark(flowReq,'tx','Đang chờ COMMIT');await c.query('COMMIT');systemFlow.mark(flowReq,'pg','PostgreSQL COMMIT thành công');systemFlow.mark(flowReq,'audit','Audit đã được ghi bền vững');invalidateOrderReads();void orderLive.pulse(true);console.log('ORDER_COMMITTED',orderId,t.name,items.length);return {id:orderId,duplicate:false}}catch(e){await c.query('ROLLBACK');systemFlow.mark(flowReq,'tx','ROLLBACK: đơn chưa được lưu');throw e}finally{c.release()}}
+const c=await pool.connect();try{await c.query('BEGIN');systemFlow.mark(flowReq,'tx','Transaction đã BEGIN');const orderId=id(),paymentRef=chosenBank?'TT6'+orderId.replace(/-/g,'').slice(0,14).toUpperCase():null;const o=await c.query('INSERT INTO dining_orders(id,table_id,request_id,note,payment_method,transfer_bank_bin,transfer_account_number,transfer_account_name,payment_reference) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9) ON CONFLICT(table_id,request_id) DO NOTHING RETURNING id',[orderId,t.id,body.requestId,note,paymentMethod,chosenBank?.bankBin||null,chosenBank?.accountNumber||null,chosenBank?.accountName||null,paymentRef]);if(!o.rowCount){const prev=await c.query('SELECT id FROM dining_orders WHERE table_id=$1 AND request_id=$2',[t.id,body.requestId]);await c.query('COMMIT');systemFlow.mark(flowReq,'pg','RequestId đã tồn tại — không tạo đơn mới');return {id:prev.rows[0].id,duplicate:true}}await c.query("INSERT INTO dining_order_lines(id,order_id,menu_item_id,name,quantity,unit_price,station,note) SELECT r.id,$1,r.menu_item_id,r.name,r.quantity,r.unit_price,r.station,r.note FROM UNNEST($2::uuid[],$3::uuid[],$4::text[],$5::integer[],$6::integer[],$7::text[],$8::text[]) AS r(id,menu_item_id,name,quantity,unit_price,station,note)",[orderId,items.map(()=>id()),items.map(it=>it.id),items.map(it=>it.name),items.map(it=>it.qty),items.map(it=>it.price),items.map(it=>it.station),items.map(it=>it.note)]);systemFlow.mark(flowReq,'orders','Đã ghi đơn và món (chưa COMMIT)');await c.query("INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,'system','order_validated',$2::jsonb)",[orderId,JSON.stringify({checked:'table_menu_quantity_requestId'})]);systemFlow.mark(flowReq,'inventory','Đang kiểm tra và trừ tồn nguyên liệu');await ops.consume(c,orderId);systemFlow.mark(flowReq,'inventory','Đã cập nhật tồn trong transaction');await c.query("INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,'system','inventory_checked',$2::jsonb)",[orderId,JSON.stringify({result:'inventory_rules_processed'})]);await c.query("UPDATE dining_tables SET service_status='occupied' WHERE id=$1 AND service_status='available'",[t.id]);await c.query('INSERT INTO dining_audit(order_id,actor,action,detail) VALUES($1,$2,$3,$4::jsonb)',[orderId,orderActor?'staff':'guest','order_created',JSON.stringify({table:t.name,item_count:items.length,payment_method:paymentMethod,staffUserId:orderActor?.userId||null,role:orderActor?.role||null})]);systemFlow.mark(flowReq,'tx','Đang chờ COMMIT');await c.query('COMMIT');systemFlow.mark(flowReq,'pg','PostgreSQL COMMIT thành công');systemFlow.mark(flowReq,'audit','Audit đã được ghi bền vững');invalidateOrderReads();void orderLive.pulse(true);console.log('ORDER_COMMITTED',orderId,t.name,items.length);return {id:orderId,duplicate:false}}catch(e){await c.query('ROLLBACK');systemFlow.mark(flowReq,'tx','ROLLBACK: đơn chưa được lưu');throw e}finally{c.release()}}
 async function getOrders(activeOnly=false){if(!pool)return orders.map(o=>({...o,table_name:tables.find(t=>t.id===o.table_id)?.name,items:lines.filter(l=>l.order_id===o.id&&(!activeOnly||['new','preparing','ready'].includes(l.status)))})).filter(o=>!activeOnly||o.items.length).reverse();const fields='SELECT o.id,o.created_at,o.note,o.payment_method,o.payment_status,t.name AS table_name,li.id AS line_id,li.name AS item_name,li.quantity,li.unit_price,li.station,li.note AS item_note,li.status FROM dining_orders o JOIN dining_tables t ON o.table_id=t.id ';
  const sql=activeOnly?fields+"JOIN dining_order_lines li ON li.order_id=o.id WHERE li.status IN ('new','preparing','ready') ORDER BY o.created_at DESC":fields+"LEFT JOIN dining_order_lines li ON li.order_id=o.id WHERE o.id IN (SELECT recent.id FROM dining_orders recent WHERE recent.created_at > now()- interval '7 days' ORDER BY recent.created_at DESC LIMIT 100) OR EXISTS (SELECT 1 FROM dining_order_lines pending WHERE pending.order_id=o.id AND pending.status IN ('new','preparing','ready')) ORDER BY o.created_at DESC";
  const q=await pool.query(sql);const map=new Map();for(const x of q.rows){let o=map.get(x.id);if(!o){o={id:x.id,table_name:x.table_name,note:x.note,payment_method:x.payment_method,payment_status:x.payment_status,created_at:x.created_at,items:[]};map.set(x.id,o)}if(x.line_id)o.items.push({id:x.line_id,name:x.item_name,quantity:x.quantity,unit_price:x.unit_price,station:x.station,note:x.item_note,status:x.status})}return [...map.values()]}
@@ -158,18 +163,21 @@ async function updateLine(lineId,status,actor,flowReq){const allowed={new:['prep
 
 async function orderStatus(orderId,qrToken){
  const t=await getTable(qrToken);if(!t)return null;
- const recipient=await paymentRecipient.publicRecipient();
  if(!pool){
   const o=orders.find(x=>x.id===orderId&&x.table_id===t.id);
   if(!o)return null;
   const orderLines=lines.filter(x=>x.order_id===o.id).map(x=>({name:x.name,quantity:x.quantity,unit_price:x.unit_price,status:x.status,station:x.station,note:x.note||''}));
   return {id:o.id,table_name:t.name,created_at:o.created_at,note:o.note||'',payment_method:o.payment_method||null,payment_status:o.payment_status||'unpaid',total_vnd:orderLines.reduce((s,x)=>s+(x.status==='cancelled'?0:x.quantity*x.unit_price),0),payment_transfer:null,persistent:false,items:orderLines};
  }
- const o=(await pool.query('SELECT id,created_at,note,payment_status,payment_method FROM dining_orders WHERE id=$1 AND table_id=$2',[orderId,t.id])).rows[0];
+ const o=(await pool.query('SELECT id,created_at,note,payment_status,payment_method,transfer_bank_bin,transfer_account_number,transfer_account_name,payment_reference FROM dining_orders WHERE id=$1 AND table_id=$2',[orderId,t.id])).rows[0];
  if(!o)return null;
  const result=await pool.query('SELECT name,quantity,unit_price,status,station,note FROM dining_order_lines WHERE order_id=$1 ORDER BY created_at,id',[o.id]);
  const amount=result.rows.reduce((s,x)=>s+(x.status==='cancelled'?0:x.quantity*x.unit_price),0);
- const ref='TT6 '+o.id.replace(/-/g,'').slice(0,12).toUpperCase();
+ const recipient=o.transfer_bank_bin&&o.transfer_account_number?
+  {bankBin:o.transfer_bank_bin,accountNumber:o.transfer_account_number,accountName:o.transfer_account_name}:
+  (!o.payment_reference?await paymentRecipient.publicRecipient():null);
+ const ref=o.payment_reference?(recipient?.bankBin==='970415'?'SEVQR ':'')+o.payment_reference:
+  'TT6 '+o.id.replace(/-/g,'').slice(0,12).toUpperCase();
  const transfer=o.payment_method==='bank_transfer'&&o.payment_status==='unpaid'&&recipient&&amount>0?
   {recipient,amount,reference:ref,qrUrl:paymentRecipient.qrUrl(recipient,amount,ref)}:null;
  return {id:o.id,table_name:t.name,created_at:o.created_at,note:o.note||'',payment_method:o.payment_method,payment_status:o.payment_status,total_vnd:amount,payment_transfer:transfer,persistent:true,items:result.rows};
@@ -410,12 +418,27 @@ if(req.method==='GET'&&p.startsWith('/api/menu/')){const t=await getTable(p.slic
 if(req.method==='GET'&&p==='/api/payment/recipient'){
  const table=await getTable(u.searchParams.get('token')||'');
  if(!table)return err(res,404,'QR bàn không hợp lệ hoặc đã khóa.');
- const recipient=await paymentRecipient.publicRecipient();
- return send(res,200,{configured:Boolean(recipient),recipient});
+ const recipients=await paymentRecipient.publicRecipients();
+ return send(res,200,{configured:recipients.length>0,recipient:recipients[0]||null,recipients});
 }
 if(req.method==='GET'&&p==='/api/admin/payment-banks'){
  if(!await requireAdmin(req,res))return;
  return send(res,200,await paymentRecipient.banks());
+}
+if(p==='/api/admin/receiving-banks'){
+ if(!await requireAdmin(req,res))return;
+ if(req.method==='GET')return send(res,200,{accounts:await paymentRecipient.list(),sepay:{configured:sepayWebhook.enabled,autoConfirm:sepayWebhook.autoConfirm}});
+ if(req.method==='PUT'){
+  if(!throttle(req,'receiving-bank',15))return err(res,429,'Cập nhật quá nhanh.');
+  return send(res,200,{account:await paymentRecipient.setAccount(await input(req))});
+ }
+ return err(res,405,'Phương thức không hỗ trợ.');
+}
+if(p==='/api/webhooks/sepay'&&req.method==='POST'){
+ if(!sepayWebhook.enabled)return err(res,503,'Webhook chưa được cấu hình khóa bí mật.');
+ const result=await sepayWebhook.receive(req);
+ systemFlow.mark(req,'finance',result.paid?'Đối soát thành công':'Đã lưu webhook chờ đối soát');
+ return send(res,200,{success:true,status:result.status||'duplicate',duplicate:Boolean(result.duplicate)});
 }
 if(p==='/api/admin/payment-settings'){
  if(!await requireAdmin(req,res))return;
