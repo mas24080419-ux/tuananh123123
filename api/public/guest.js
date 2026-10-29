@@ -175,7 +175,7 @@ function renderSavedOrders() {
 }
 async function fetchSavedOrder(id) {
   try {
-    const data=await api('/api/order-status/'+encodeURIComponent(id)+'?token='+encodeURIComponent(tableToken));
+    const data=await api('/api/v1/orders/'+encodeURIComponent(id)+'?token='+encodeURIComponent(tableToken));
     if(!data||data.id!==id||!Array.isArray(data.items))throw Error('Máy chủ chưa trả dữ liệu đơn đầy đủ.');
     savedOrderDetails.set(id,data);receiptErrors.delete(id);
   } catch (e) {
@@ -200,7 +200,7 @@ async function verifyRecentOrder() {
   const target = $('#recentStatus');
   hidden('#recentStatus', false);
   try {
-    const data = await api('/api/order-status/' + encodeURIComponent(recentOrderId) + '?token=' + encodeURIComponent(tableToken));
+    const data = await api('/api/v1/orders/' + encodeURIComponent(recentOrderId) + '?token=' + encodeURIComponent(tableToken));
     const waiting = data.items.filter(i => i.status === 'new').length;
     const preparing = data.items.filter(i => i.status === 'preparing').length;
     const ready = data.items.filter(i => i.status === 'ready' || i.status === 'served').length;
@@ -411,7 +411,7 @@ async function submitOrder() {
   savePending();
   sending = true; showError(''); setOrderButton('loading'); render(); setOrderButton('loading');
   try {
-    const order = await api('/api/orders', {method:'POST',body:JSON.stringify(pendingPayload)});
+    const order = await api('/api/v1/orders', {method:'POST',body:JSON.stringify(pendingPayload)});
     if (!order?.id) throw Object.assign(new Error('Máy chủ chưa trả mã đơn hợp lệ.'), {ambiguous:true});
     confirmed = true;
     rememberOrderId(order.id);
@@ -440,7 +440,7 @@ async function refreshMenuAvailability(force=false){
  if(!tableToken||!table||menuRefreshBusy||sending||pendingPayload||confirmed)return;
  menuRefreshBusy=true;
  try{
-  const data=await api('/api/menu/'+tableToken);
+  const data=await api('/api/v1/menu/'+tableToken);
   if(!Array.isArray(data.items))return;
   const updated=data.items.filter(p=>p.active!==false);
   const changed=force||updated.length!==products.length||updated.some((p,i)=>{
@@ -454,11 +454,11 @@ async function refreshMenuAvailability(force=false){
 async function init() {
   if (!tableToken) { $('#notice').textContent = 'QR không hợp lệ. Vui lòng quét lại mã QR được dán tại bàn.'; render(); return; }
   try {
-    const data = await api(`/api/menu/${tableToken}`);
+    const data = await api(`/api/v1/menu/${tableToken}`);
     if (!data?.table || !Array.isArray(data.items)) throw Error('Phản hồi thực đơn không hợp lệ.');
     table = data.table; products = data.items.filter(p=>p.active!==false); mode = data.mode;
     try{
-      const config=await api('/api/payment/recipient?token='+encodeURIComponent(tableToken));
+      const config=await api('/api/v1/payments/recipient?token='+encodeURIComponent(tableToken));
       bankRecipients=Array.isArray(config.recipients)?config.recipients:(config.recipient?[config.recipient]:[]);
        bankRecipient=bankRecipients[0]||null;
        renderReceivingBanks();
