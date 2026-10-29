@@ -4,12 +4,26 @@
 // business implementation, no mutation of database data and no legacy deletion.
 const staticRoutes=new Map([
  ['GET /api/v1/health','/api/health'],
+ ['GET /api/v1/monitoring/health','/api/health'],
  ['GET /api/v1/session','/api/me'],
+ ['POST /api/v1/management/change-password','/api/admin/change-password'],
  ['POST /api/v1/session/login','/api/auth/login'],
  ['POST /api/v1/session/logout','/api/logout'],
  ['GET /api/v1/tables','/api/tables'],
+ ['GET /api/v1/management/summary','/api/admin/summary'],
+ ['GET /api/v1/management/users','/api/admin/users'],
+ ['POST /api/v1/management/users','/api/admin/users'],
+ ['GET /api/v1/management/architecture','/api/admin/architecture'],
+ ['GET /api/v1/management/architecture/live','/api/admin/architecture/live'],
+ ['GET /api/v1/management/architecture/recent','/api/admin/architecture/recent'],
+ ['GET /api/v1/management/architecture/blueprint','/api/admin/architecture/blueprint'],
+ ['GET /api/v1/management/architecture/system/live','/api/admin/architecture/system/live'],
+ ['GET /api/v1/management/architecture/system/recent','/api/admin/architecture/system/recent'],
+ ['GET /api/v1/management/qr-presence','/api/admin/qr/presence'],
  ['GET /api/v1/payments/recipients','/api/payment/recipient'],
  ['GET /api/v1/kitchen/orders','/api/kds'],
+ ['POST /api/v1/staff/order-presence','/api/staff/order-presence'],
+ ['POST /api/v1/staff/order-presence/leave','/api/staff/order-presence/leave'],
  ['GET /api/v1/staff/menu-items','/api/staff/menu'],
  ['GET /api/v1/staff/orders','/api/staff/orders'],
  ['POST /api/v1/staff/orders','/api/staff/orders'],
@@ -17,6 +31,8 @@ const staticRoutes=new Map([
  ['GET /api/v1/finance/reports/profitability','/api/admin/financial-model'],
  ['GET /api/v1/finance/reports/analytics','/api/admin/analytics'],
  ['GET /api/v1/finance/transactions','/api/admin/operations'],
+ ['GET /api/v1/finance/operations','/api/admin/operations'],
+ ['POST /api/v1/finance/entries','/api/admin/finance/entries'],
  ['POST /api/v1/finance/transactions','/api/admin/finance/entries'],
  ['GET /api/v1/finance/ingredient-costs','/api/admin/ingredient-costs'],
  ['PUT /api/v1/finance/ingredient-costs','/api/admin/ingredient-costs'],
@@ -24,6 +40,7 @@ const staticRoutes=new Map([
  ['PUT /api/v1/finance/service-costs','/api/admin/service-cost-rates'],
  ['GET /api/v1/inventory','/api/admin/inventory'],
  ['POST /api/v1/inventory/items','/api/admin/inventory/items'],
+ ['GET /api/v1/inventory/items','/api/admin/inventory'],
  ['PUT /api/v1/inventory/recipes','/api/admin/inventory/recipes'],
  ['POST /api/v1/inventory/movements','/api/admin/inventory/movements'],
  ['GET /api/v1/payments/bank-accounts','/api/admin/receiving-banks'],
@@ -45,8 +62,12 @@ const patterns=[
  {methods:['POST'],pattern:/^\/api\/v1\/lockers\/([AB](?:[1-9]|[12][0-9]|30))\/rentals$/,target:m=>'/api/lockers/'+m[1]+'/rent'},
  {methods:['POST'],pattern:/^\/api\/v1\/lockers\/([AB](?:[1-9]|[12][0-9]|30))\/releases$/,target:m=>'/api/lockers/'+m[1]+'/release'},
  {methods:['POST'],pattern:/^\/api\/v1\/lockers\/([AB](?:[1-9]|[12][0-9]|30))\/collections$/,target:m=>'/api/lockers/'+m[1]+'/collect'},
- {methods:['GET','POST'],pattern:/^\/api\/v1\/service-receipts$/,target:()=>'/api/area/receipts'},
- {methods:['GET'],pattern:/^\/api\/v1\/staff\/orders\/([0-9a-f-]{36})$/,target:()=>null}
+ {methods:['PATCH'],pattern:/^\/api\/v1\/inventory\/items\/([0-9a-f-]{36})\/reorder$/i,target:m=>'/api/admin/inventory/items/'+m[1]+'/reorder'},
+ {methods:['GET','POST','PATCH','PUT','DELETE'],pattern:/^\/api\/v1\/management\/core\/(catalog|tables|suppliers|customers|reservations|shift|audit)(?:\/([0-9a-f-]{36})(?:\/(availability|status|rotate-qr))?)?$/i,target:m=>'/api/admin/core/'+m[1]+(m[2]?'/'+m[2]:'')+(m[3]?'/'+m[3]:'')},
+ {methods:['PATCH'],pattern:/^\/api\/v1\/management\/users\/([0-9a-f-]{36})$/i,target:m=>'/api/admin/users/'+m[1]},
+ {methods:['GET','POST'],pattern:/^\/api\/v1\/monitoring\/event-stream\/(live|recent)$/i,target:m=>'/api/admin/architecture/system/'+m[1]},
+ {methods:['GET','POST'],pattern:/^\/api\/v1\/service-receipts$/,target:()=>'/api/area/receipts'}
+
 ];
 function canonicalize(path,method){
  if(!path.startsWith('/api/v1/'))return {path,versioned:false};
