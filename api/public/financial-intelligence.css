@@ -76,3 +76,17 @@ body.fi-page{margin:0;background:#f7f9fa;color:#193b45;font:14px 'Plus Jakarta S
 .fi-scenario-results strong{display:block;margin:9px 0 0;font-size:clamp(15px,1.8vw,24px);color:#146f65;overflow-wrap:anywhere}
 @media(max-width:850px){.fi-scenario-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.fi-scenario-controls button{grid-column:1/-1}.fi-scenario-results{grid-template-columns:1fr}}
 @media(max-width:550px){.fi-scenario-controls{grid-template-columns:1fr}.fi-scenario-controls button{grid-column:auto}.fi-scenario-controls input{font-size:16px}.fi-scenario{padding:16px}}
+
+.fi-rate-head{display:flex;align-items:end;justify-content:space-between;flex-wrap:wrap;gap:11px;margin-top:22px;padding-top:17px;border-top:1px solid #e8eff0}
+.fi-rate-head h3{font-size:15px;margin:0 0 5px}.fi-rate-head .fi-note{margin:0}
+.fi-rate-refresh{min-height:40px;padding:9px 13px;color:#166b60;background:#eaf6f2;border:1px solid #cce3dd;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer}
+.fi-rate-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:15px 0}
+.fi-rate-card{min-width:0;padding:15px;background:#f8fbfa;border:1px solid #e0ebeb;border-radius:13px;display:grid;gap:8px}
+.fi-rate-card strong{font-size:13px}.fi-rate-card>small{font-size:11px;color:#718891;line-height:1.5}
+.fi-rate-control{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.fi-rate-control input{flex:1 1 140px;width:100%;min-width:0;max-width:230px;height:43px;padding:10px;border:1px solid #dce7e9;border-radius:9px;font-size:14px;color:#193d45;background:#fff}
+.fi-rate-control button{height:43px;padding:9px 12px;background:#147f72;color:#fff;border:0;border-radius:9px;font-size:12px;font-weight:800;cursor:pointer}
+.fi-rate-control button:disabled{opacity:.45;cursor:default}
+.fi-rate-message{font-size:10px!important;line-height:1.5}
+#fiRateStatus{margin:10px 0}
+@media(max-width:800px){.fi-rate-grid{grid-template-columns:minmax(0,1fr)}.fi-rate-control input{max-width:none;font-size:16px}}
