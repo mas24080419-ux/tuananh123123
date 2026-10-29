@@ -292,14 +292,14 @@
  function setConnection(text,ok){$('deepStreamStatus').textContent=text;$('deepStreamStatus').classList.toggle('online',!!ok)}
  async function fallback(){
   try{
-   const r=await fetch('/api/v1/monitoring/system/recent',{credentials:'same-origin',cache:'no-store'});
+   const r=await fetch('/api/monitoring/system/recent',{credentials:'same-origin',cache:'no-store'});
    if(!r.ok)throw Error('HTTP '+r.status);
    receive(await r.json());
   }catch(e){setConnection('Không kết nối: '+e.message,false)}
  }
  function connect(){
   if(typeof EventSource==='undefined'){setConnection('Không hỗ trợ SSE · cập nhật 10s',false);timer=setInterval(fallback,10000);void fallback();return}
-  source=new EventSource('/api/v1/monitoring/system/live');
+  source=new EventSource('/api/monitoring/system/live');
   source.addEventListener('system',e=>{try{receive(JSON.parse(e.data));setConnection('Đang kết nối SSE · dữ liệu thực',true);if(timer){clearInterval(timer);timer=null}}catch{}});
   source.addEventListener('trace',e=>{try{traceUpdate(JSON.parse(e.data))}catch{}});
   source.addEventListener('offline',()=>setConnection('DB tạm mất kết nối',false));
