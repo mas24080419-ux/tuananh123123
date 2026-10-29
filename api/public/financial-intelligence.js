@@ -188,6 +188,54 @@ async function refreshCostRates(){
   status.textContent='Giá vốn dịch vụ là định mức do chủ cửa hàng nhập, không tự trừ tiền mặt.';
  }catch(error){status.textContent='Lỗi tải định mức: '+error.message}
 }
+
+async function refreshIngredientCosts(){
+ const container=$('#fiIngredientForms'),status=$('#fiIngredientStatus');
+ if(!container)return;status.textContent='Đang tải giá vốn nguyên liệu...';
+ try{
+  const response=await fetch('/api/admin/ingredient-costs',{credentials:'same-origin',cache:'no-store'});
+  const json=await response.json();if(!response.ok)throw Error(json.error||'Không lấy được danh sách nguyên liệu.');
+  container.replaceChildren();
+  for(const ingredient of json.ingredients||[]){
+   const form=el('form','fi-rate-card'),name=el('strong',null,ingredient.name),
+     description=el('small',null,'Đơn vị '+ingredient.unit+' · Tồn '+ingredient.quantity+' · Giá vốn kho '+fmt(ingredient.purchaseAverageUnitCost));
+   const field=el('input');field.type='number';field.step='1';field.min='1';field.max='1000000000';
+   field.inputMode='numeric';field.required=true;field.placeholder='Nhập giá vốn / '+ingredient.unit;
+   field.setAttribute('aria-label','Giá vốn tham chiếu '+ingredient.name);
+   if(ingredient.standardUnitCost!==null)field.value=String(ingredient.standardUnitCost);
+   const wrap=el('div','fi-rate-control'),save=el('button',null,'Lưu giá vốn');
+   save.type='submit';wrap.append(field,save);
+   const clear=el('button','fi-cost-clear','Dùng giá vốn kho');clear.type='button';
+   clear.disabled=ingredient.standardUnitCost===null;wrap.append(clear);
+   const hint=el('small','fi-rate-message',ingredient.standardUnitCost===null?
+     'Hiện đang theo giá vốn kho'+(ingredient.purchaseAverageUnitCost===0?' (chưa có giá)':''):
+     'Đang dùng giá vốn tham chiếu · '+fmt(ingredient.standardUnitCost));
+   const update=async value=>{
+    save.disabled=true;clear.disabled=true;hint.textContent='Đang lưu...';
+    try{
+     const response=await fetch('/api/admin/ingredient-costs',{method:'PUT',credentials:'same-origin',
+      headers:{'Content-Type':'application/json'},body:JSON.stringify({ingredientId:ingredient.id,unitCost:value})});
+     const updated=await response.json();if(!response.ok)throw Error(updated.error||'Không lưu được.');
+     hint.textContent=value===null?'Đã trở về giá vốn nhập kho.':'Đã lưu '+fmt(value)+' / '+ingredient.unit+'. Chỉ áp dụng món mới.';
+     if(value===null)field.value='';clear.disabled=value===null;
+     status.textContent='Đã cập nhật '+ingredient.name+'. Tải lại báo cáo để xem giá vốn món hiện tại.';
+    }catch(error){hint.textContent='Lỗi: '+error.message}finally{save.disabled=false;clear.disabled=value===null}
+   };
+   form.addEventListener('submit',e=>{
+    e.preventDefault();if(!field.value.trim()){hint.textContent='Nhập đơn giá vốn trước khi lưu.';return}
+    const value=Number(field.value);
+    if(!Number.isSafeInteger(value)||value<1||value>1000000000){hint.textContent='Đơn giá vốn phải là số nguyên 1–1 tỷ VND.';return}
+    void update(value);
+   });
+   clear.addEventListener('click',()=>{if(!clear.disabled)void update(null)});
+   form.append(name,description,wrap,hint);container.append(form);
+  }
+  if(!container.children.length)container.append(el('p','fi-empty','Chưa có nguyên liệu đang kinh doanh.'));
+  status.textContent='Giá tham chiếu ghi riêng; phiếu nhập, số lượng tồn và dòng tiền không đổi.';
+ }catch(error){status.textContent='Lỗi tải nguyên liệu: '+error.message}
+}
+$('#fiIngredientsRefresh')?.addEventListener('click',()=>{void refreshIngredientCosts()});
+void refreshIngredientCosts();
 $('#fiRatesRefresh')?.addEventListener('click',()=>{void refreshCostRates()});
 void refreshCostRates();
 $('#fiRange').addEventListener('submit',e=>{e.preventDefault();void load()});
