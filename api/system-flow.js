@@ -2,6 +2,7 @@
 // Owner-only cross-module observability. Business events are read from already committed
 // PostgreSQL rows; API measurements exist only in memory for this Node process.
 // No request bodies, tokens, names, phone numbers or raw dynamic URLs are retained.
+const {canonicalize}=require('./rest-v1-routes');
 function makeSystemFlow({pool,qrPresence=null,staffOrderPresence=null,intervalMs=4000,maxClients=4,now=()=>new Date().toISOString()}){
  const subscribers=new Set(),requests=[];
  let timer=null,running=false,revision=0;
@@ -10,7 +11,10 @@ function makeSystemFlow({pool,qrPresence=null,staffOrderPresence=null,intervalMs
   for(const sub of subscribers)if(!sub.res.destroyed&&!sub.res.writableEnded)try{sub.res.write(line)}catch{}
  }});
  const fail=(message,status=503)=>Object.assign(Error(message),{status});
- const classify=(method,path)=>{
+ const classify=(method,rawPath)=>{
+  // Resolve the public REST URL back to its existing business route for
+  // telemetry only. Keep exact same privacy-safe category IDs and trace stages.
+  const path=canonicalize(rawPath,method).path;
   if(method==='GET'&&path.startsWith('/api/staff/'))return null; // Do not trace polling reads
   if(path==='/api/staff/order-presence'||path==='/api/staff/order-presence/leave')return null; // UI activity is a snapshot, never a transaction trace
   if(!path.startsWith('/api/')||path.startsWith('/api/admin/architecture')||path==='/api/me'||path==='/api/health'||/login|logout|password|activate-owner|recipient|payment-banks/.test(path))return null;
