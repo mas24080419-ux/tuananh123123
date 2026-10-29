@@ -4,9 +4,9 @@
 <link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/admin-minimal.css">
 <link rel="stylesheet" href="/pos-sidebar.css?v=tt6-finance-model-v1">
-<link rel="stylesheet" href="/financial-intelligence.css?v=tt6-finance-model-v3">
+<link rel="stylesheet" href="/financial-intelligence.css?v=tt6-unit-cost-v1">
 <script defer src="/pos-sidebar.js?v=tt6-finance-model-v1"></script>
-<script defer src="/financial-intelligence.js?v=tt6-finance-model-v3"></script>
+<script defer src="/financial-intelligence.js?v=tt6-unit-cost-v1"></script>
 </head><body class="fi-page"><div class="shell"><aside class="tt6-sidebar" id="tt6-sidebar"><nav class="tt6-fallback-nav"><a href="/admin">Tổng quan</a><a href="/admin/operations">Thu–chi</a><a href="/admin/financial-intelligence">Phân tích tài chính</a></nav></aside>
 <main class="fi-main">
  <header class="fi-heading">
@@ -51,7 +51,24 @@
     <div id="fiTrend" class="fi-trend"></div><div class="fi-legend">🟩 Tiền vào &nbsp; 🟧 Tiền ra</div></section>
    <section class="fi-panel fi-wide"><div class="fi-section-label">HIỆU QUẢ MÓN BÁN</div><h2>Doanh thu và giá vốn theo món</h2>
     <p class="fi-note">Chỉ tính món thuộc đơn đã thanh toán; giá vốn theo lịch sử xuất kho. Đây là lãi đóng góp trước chi phí vận hành, chưa phải lãi ròng.</p>
-    <div class="fi-table-wrap"><table><thead><tr><th>Món</th><th>SL</th><th>Doanh thu theo dòng món</th><th>Giá vốn đã ghi</th><th>Chênh lệch sơ bộ</th><th>Thiếu định mức</th></tr></thead><tbody id="fiProducts"></tbody></table></div>
+    <div class="fi-table-wrap"><table><thead><tr><th>Món</th><th>SL</th><th>Doanh thu theo dòng món</th><th>Giá vốn đã ghi</th><th>Chênh lệch sơ bộ</th><th>Độ đầy đủ giá vốn</th></tr></thead><tbody id="fiProducts"></tbody></table></div>
+   </section>
+   <section class="fi-panel fi-wide" id="fiRecipeSection">
+    <div class="fi-section-label">ĐỊNH MỨC NGUYÊN LIỆU</div>
+    <h2>Giá vốn hiện tại trên một món</h2>
+    <p class="fi-note">Giá vốn dự kiến = tổng định mức × đơn giá vốn nguyên liệu hiện tại. Dữ liệu này khác giá vốn lịch sử đã xuất kho khi khách đặt món.</p>
+    <div class="fi-table-wrap"><table><thead><tr><th>Món</th><th>Giá bán</th><th>Nguyên liệu</th><th>Giá vốn / món</th><th>Chênh lệch / món</th><th>Biên gộp</th></tr></thead><tbody id="fiRecipeRows"></tbody></table></div>
+    <p class="fi-note">Chỉnh định mức/giá nhập tại <a href="/admin/inventory">Quản lý kho</a>. Món thiếu định mức hoặc giá nguyên liệu sẽ được đánh dấu Chưa đủ dữ liệu.</p>
+   </section>
+   <section class="fi-panel fi-wide" id="fiServiceSection">
+    <div class="fi-section-label">GIÁ VỐN DỊCH VỤ · TỦ ĐỒ & PHAO BƠI</div>
+    <h2>Hiệu quả theo từng dịch vụ</h2>
+    <p class="fi-note">Tổng thu và chi phí trực tiếp đã chốt theo từng lượt. Các lượt thuê cũ thiếu định mức sẽ không bị gán chi phí 0đ.</p>
+    <div class="fi-table-wrap"><table><thead><tr><th>Dịch vụ</th><th>Số lượt</th><th>Thực thu</th><th>Chi phí trực tiếp</th><th>Chênh lệch</th><th>Biên gộp</th><th>Thiếu giá vốn</th></tr></thead><tbody id="fiServiceRows"></tbody></table></div>
+    <div class="fi-rate-head"><div><h3>Nhập chi phí trực tiếp cho dịch vụ mới</h3><p class="fi-note">Chi phí ước tính theo lượt: vật tư, vệ sinh, hao mòn... Chỉ áp dụng cho các phiếu phát sinh sau khi lưu.</p></div><button id="fiRatesRefresh" type="button" class="fi-rate-refresh">Tải lại</button></div>
+    <p id="fiRateStatus" class="fi-note" role="status"></p>
+    <div id="fiRateForms" class="fi-rate-grid"></div>
+    <p class="fi-note">Không tự ghi nhận chi tiền vào sổ Thu–chi. Khi hạch toán lãi ròng, cần đối soát để tránh tính trùng tiền vệ sinh, khấu hao hoặc nhân công.</p>
    </section>
    <section class="fi-panel fi-wide"><div class="fi-section-label">CẦN KIỂM TRA</div><h2>Đơn chưa thu tiền gần đây</h2>
     <div id="fiDueList"></div><p class="fi-note">Chỉ là danh sách đơn chưa xác nhận, không đồng nghĩa toàn bộ đều là khoản phải thu hợp lệ.</p>
