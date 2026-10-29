@@ -1,6 +1,6 @@
 'use strict';
 const {areas,floatTypes,canAccess}=require('./area-access');
-module.exports=({pool,id})=>{
+module.exports=({pool,id,serviceCosts})=>{
  const fail=(s,status=400)=>Object.assign(Error(s),{status});
  const uuid=x=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x);
  function access(actor,area){if(!canAccess(actor,area))throw fail('Không có quyền thao tác khu vực này.',403);if(!pool)throw fail('Chức năng này yêu cầu PostgreSQL.',503)}
@@ -29,6 +29,7 @@ module.exports=({pool,id})=>{
    if(!f.rowCount)throw fail('Mã giao dịch đã tồn tại. Tải lại trang và kiểm tra trước khi ghi tiếp.',409);
    await c.query('INSERT INTO area_receipts(id,request_id,area,service,quantity,staff_user_id,finance_entry_id) VALUES($1,$2,$3,$4,$5,$6,$7)',[receiptId,b.requestId,area,service,quantity,actor.role==='admin'?null:actor.userId,financeId]);
    if(variant)await c.query('INSERT INTO float_receipt_details(receipt_id,float_type,unit_price) VALUES($1,$2,$3)',[receiptId,variant,unitPrice]);
+   await serviceCosts.snapshot(c,{source:'area',receiptId,serviceKey:variant?'float_'+variant:'restroom',quantity});
    await c.query("INSERT INTO pos_audit(id,actor,entity,entity_id,action,after_state) VALUES($1,$2,'area_receipt',$3,'created',$4::jsonb)",[id(),actor.userId||'admin',receiptId,JSON.stringify({area,service,floatType:variant,unitPrice,quantity,amount,paymentMethod:method})]);
    await c.query('COMMIT');return {id:receiptId,amount};
   }catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}

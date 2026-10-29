@@ -286,3 +286,25 @@ CREATE TABLE IF NOT EXISTS bank_webhook_transactions(
  UNIQUE(source,external_id)
 );
 CREATE INDEX IF NOT EXISTS ix_bank_webhook_order ON bank_webhook_transactions(order_id) WHERE order_id IS NOT NULL;
+
+-- SalesHub management cost accounting: never populate fictitious unit costs.
+-- Rates are owner-defined forward-looking direct-cost estimates.
+CREATE TABLE IF NOT EXISTS service_cost_rates (
+ service_key text PRIMARY KEY CHECK(service_key IN
+ ('locker','float_child_vest','float_black_adult','float_child_float','restroom')),
+ unit_cost bigint NOT NULL CHECK(unit_cost BETWEEN 0 AND 1000000000),
+ updated_at timestamptz NOT NULL DEFAULT now()
+);
+-- Immutable per-service receipt snapshots. Historical receipts remain without cost snapshots.
+CREATE TABLE IF NOT EXISTS service_cost_snapshots (
+ source text NOT NULL CHECK(source IN ('locker','area')),
+ receipt_id uuid NOT NULL,
+ service_key text NOT NULL CHECK(service_key IN
+ ('locker','float_child_vest','float_black_adult','float_child_float','restroom')),
+ quantity integer NOT NULL CHECK(quantity BETWEEN 1 AND 10000),
+ unit_cost bigint CHECK(unit_cost BETWEEN 0 AND 1000000000),
+ total_cost bigint GENERATED ALWAYS AS (CASE WHEN unit_cost IS NULL THEN NULL ELSE quantity::bigint*unit_cost END) STORED,
+ created_at timestamptz NOT NULL DEFAULT now(),
+ PRIMARY KEY(source,receipt_id)
+);
+CREATE INDEX IF NOT EXISTS idx_service_cost_snapshots_service ON service_cost_snapshots(service_key,created_at DESC);

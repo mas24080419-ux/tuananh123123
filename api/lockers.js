@@ -1,6 +1,6 @@
 'use strict';
 const {canAccess}=require('./area-access');
-module.exports=({pool,id})=>{
+module.exports=({pool,id,serviceCosts})=>{
  const fail=(message,status=400)=>Object.assign(Error(message),{status});
  const validCode=code=>typeof code==='string'&&/^[AB]([1-9]|[12][0-9]|30)$/.test(code);
  const uuid=x=>typeof x==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(x);
@@ -24,6 +24,7 @@ module.exports=({pool,id})=>{
    if(!income.rowCount)throw fail('Mã giao dịch đã được dùng. Tải lại và kiểm tra trước khi ghi tiếp.',409);
    await c.query('INSERT INTO locker_rentals(id,request_id,locker_code,customer_name,customer_phone,note,opened_by,charged_amount,payment_method,finance_entry_id) VALUES($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)',[rentalId,b.requestId,code,name,phone,note,actor.userId||null,amount,paymentMethod,financeId]);
    await c.query("INSERT INTO area_receipts(id,request_id,area,service,quantity,staff_user_id,finance_entry_id) VALUES($1,$2,'equipment','locker',1,$3,$4)",[id(),b.requestId,actor.role==='admin'?null:actor.userId,financeId]);
+   await serviceCosts.snapshot(c,{source:'locker',receiptId:rentalId,serviceKey:'locker',quantity:1});
    await c.query("INSERT INTO pos_audit(id,actor,entity,entity_id,action,after_state) VALUES($1,$2,'locker_rental',$3,'opened',$4::jsonb)",[id(),actor.userId||'admin',rentalId,JSON.stringify({locker:code,amount,paymentMethod,financeId})]);
    return {id:rentalId,amount};
   });
@@ -53,6 +54,7 @@ module.exports=({pool,id})=>{
    if(!income.rowCount)throw fail('Lượt thuê này đã có mã phiếu thu. Kiểm tra sổ Thu–chi.',409);
    await c.query("INSERT INTO area_receipts(id,request_id,area,service,quantity,staff_user_id,finance_entry_id) VALUES($1,$2,'equipment','locker',1,$3,$4)",[id(),rental.request_id,actor.role==='admin'?null:actor.userId,financeId]);
    await c.query('UPDATE locker_rentals SET charged_amount=30000,payment_method=$2,finance_entry_id=$3 WHERE id=$1',[rental.id,b.paymentMethod,financeId]);
+   await serviceCosts.snapshot(c,{source:'locker',receiptId:rental.id,serviceKey:'locker',quantity:1});
    await c.query("INSERT INTO pos_audit(id,actor,entity,entity_id,action,after_state) VALUES($1,$2,'locker_rental',$3,'fee_recorded',$4::jsonb)",[id(),actor.userId||'admin',rental.id,JSON.stringify({locker:code,amount:30000,paymentMethod:b.paymentMethod,financeId})]);
    return {id:rental.id,amount:30000};
   });

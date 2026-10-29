@@ -29,6 +29,7 @@ const ops=require('./operations')({pool,id});
 const createAsyncTtlCache=require('./async-ttl-cache');
 const analytics=require('./finance-analytics')({pool});
 const financialModel=require('./management-finance');
+const serviceCosts=require('./service-costs')({pool});
 const paymentRecipient=require('./payment-recipient')({pool});
 const sepaySandbox=require('./sepay-sandbox')({secret:process.env.SEPAY_SANDBOX_SECRET||''});
 const sepayWebhook=require('./bank-webhook').createWebhook({
@@ -39,8 +40,8 @@ const sepayWebhook=require('./bank-webhook').createWebhook({
 const core=require('./core')({pool,id,randomToken:()=>crypto.randomBytes(24).toString('hex')});
 const staffAccounts=require('./staff-auth')({pool,id});
 const homeFor=require('./role-home');
-const areaReceipts=require('./area-receipts')({pool,id});
-const lockerService=require('./lockers')({pool,id});
+const areaReceipts=require('./area-receipts')({pool,id,serviceCosts});
+const lockerService=require('./lockers')({pool,id,serviceCosts});
 const {areas:serviceAreas,canAccess:canAccessArea,canUseDining}=require('./area-access');
 const ownerAccounts=require('./owner-auth')({pool});
 const architectureMonitor=require('./architecture-monitor');
@@ -610,6 +611,17 @@ if(req.method==='POST'&&p==='/api/admin/finance/entries'){
  if(!await requireAdmin(req,res))return;
  if(!throttle(req,'finance',40))return err(res,429,'Thao tác quá nhanh.');
  const data=await input(req);systemFlow.mark(req,'tx','Đang ghi sổ thu–chi');const entry=await ops.entry(data);systemFlow.mark(req,'pg','Phiếu thu–chi đã COMMIT');return send(res,201,{entry});
+}
+if(p==='/api/admin/service-cost-rates'){
+ if(!await requireAdmin(req,res))return;
+ if(req.method==='GET')return send(res,200,{services:await serviceCosts.catalog(),basis:'owner-defined direct unit cost, forward-only'});
+ if(req.method==='PUT'){
+  if(!throttle(req,'service-cost',20))return err(res,429,'Cập nhật giá vốn quá nhanh.');
+  const data=await input(req);
+  const rate=await serviceCosts.set(data);
+  return send(res,200,{rate});
+ }
+ return err(res,405,'Phương thức không hỗ trợ.');
 }
 if(req.method==='GET'&&p==='/api/admin/financial-model'){
  if(!await requireAdmin(req,res))return;
