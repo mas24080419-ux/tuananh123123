@@ -28,6 +28,7 @@ const id=()=>crypto.randomUUID();
 const ops=require('./operations')({pool,id});
 const createAsyncTtlCache=require('./async-ttl-cache');
 const analytics=require('./finance-analytics')({pool});
+const financialModel=require('./management-finance');
 const paymentRecipient=require('./payment-recipient')({pool});
 const sepaySandbox=require('./sepay-sandbox')({secret:process.env.SEPAY_SANDBOX_SECRET||''});
 const sepayWebhook=require('./bank-webhook').createWebhook({
@@ -609,6 +610,14 @@ if(req.method==='POST'&&p==='/api/admin/finance/entries'){
  if(!await requireAdmin(req,res))return;
  if(!throttle(req,'finance',40))return err(res,429,'Thao tác quá nhanh.');
  const data=await input(req);systemFlow.mark(req,'tx','Đang ghi sổ thu–chi');const entry=await ops.entry(data);systemFlow.mark(req,'pg','Phiếu thu–chi đã COMMIT');return send(res,201,{entry});
+}
+if(req.method==='GET'&&p==='/api/admin/financial-model'){
+ if(!await requireAdmin(req,res))return;
+ const range=adminDateRange(u.searchParams);
+ systemFlow.mark(req,'finance','Đang tính toán kết quả kinh doanh và chất lượng dữ liệu');
+ const result=await financialModel.overview(pool,range.from,range.to);
+ systemFlow.mark(req,'pg','Đã đọc mô hình tài chính (không ghi dữ liệu)');
+ return send(res,200,result);
 }
 if(req.method==='GET'&&p==='/api/admin/analytics'){
  if(!await requireAdmin(req,res))return;

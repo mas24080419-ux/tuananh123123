@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="vi"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f6f8f9"><title>Tắm Tráng 6 · Phân tích tài chính</title>
+<link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/admin-minimal.css">
+<link rel="stylesheet" href="/pos-sidebar.css?v=tt6-finance-model-v1">
+<link rel="stylesheet" href="/financial-intelligence.css?v=tt6-finance-model-v1">
+<script defer src="/pos-sidebar.js?v=tt6-finance-model-v1"></script>
+<script defer src="/financial-intelligence.js?v=tt6-finance-model-v1"></script>
+</head><body class="fi-page"><div class="shell"><aside class="tt6-sidebar" id="tt6-sidebar"><nav class="tt6-fallback-nav"><a href="/admin">Tổng quan</a><a href="/admin/operations">Thu–chi</a><a href="/admin/financial-intelligence">Phân tích tài chính</a></nav></aside>
+<main class="fi-main">
+ <header class="fi-heading">
+  <div><div class="fi-eyebrow">TẮM TRÁNG 6 / QUẢN TRỊ TÀI CHÍNH</div>
+   <h1>Phân tích tài chính</h1><p>Dữ liệu thực từ Neon PostgreSQL · Không tự phát sinh giao dịch · Chỉ Chủ cửa hàng</p></div>
+  <a class="fi-quiet-link" href="/admin/operations">Mở sổ Thu–chi <span aria-hidden="true">↗</span></a>
+ </header>
+ <form id="fiRange" class="fi-filter" aria-label="Bộ lọc báo cáo">
+  <label>Từ ngày<input id="fiFrom" type="date" required></label>
+  <label>Đến ngày<input id="fiTo" type="date" required></label>
+  <button type="submit" id="fiLoad">Cập nhật báo cáo</button>
+  <button type="button" id="fiExport" class="fi-export" disabled>Xuất báo cáo CSV</button>
+ </form>
+ <div id="fiStatus" class="fi-status" role="status" aria-live="polite">Đang tải báo cáo tài chính…</div>
+ <div id="fiContent" hidden>
+  <section aria-label="KPI tài chính" class="fi-kpis">
+   <article class="fi-kpi fi-kpi-strong"><small>TIỀN THỰC THU</small><strong id="fiCashIn">—</strong><span>Đơn đã xác nhận + các khoản thu</span></article>
+   <article class="fi-kpi"><small>TỔNG TIỀN CHI</small><strong id="fiCashOut">—</strong><span>Gồm cả tiền nhập kho</span></article>
+   <article class="fi-kpi"><small>DÒNG TIỀN THUẦN</small><strong id="fiNetCash">—</strong><span>Tiền vào − tiền ra</span></article>
+   <article class="fi-kpi fi-kpi-outline"><small>KẾT QUẢ QUẢN TRỊ SƠ BỘ</small><strong id="fiContribution">—</strong><span>Không phải lợi nhuận kế toán</span></article>
+  </section>
+  <section class="fi-warning" id="fiQuality" aria-labelledby="fiQualityHeading">
+   <div class="fi-section-label">CHẤT LƯỢNG DỮ LIỆU</div><h2 id="fiQualityHeading">Đang kiểm tra độ tin cậy…</h2>
+   <div id="fiIssues"></div>
+  </section>
+  <section class="fi-secondary-kpis" aria-label="Thanh toán và tồn kho">
+   <div><small>ĐƠN ĐÃ THANH TOÁN</small><strong id="fiPaidOrders">—</strong></div>
+   <div><small>ĐƠN CHƯA THANH TOÁN TRONG KỲ</small><strong id="fiDueCount">—</strong><span id="fiDueAmount">—</span></div>
+   <div><small>GIÁ VỐN NGUYÊN LIỆU ƯỚC TÍNH</small><strong id="fiFoodCogs">—</strong></div>
+   <div><small>GIÁ TRỊ KHO ƯỚC TÍNH (HIỆN TẠI)</small><strong id="fiStock">—</strong></div>
+  </section>
+  <div class="fi-grid">
+   <section class="fi-panel"><div class="fi-panel-header"><div><div class="fi-section-label">CƠ CẤU NGUỒN THU</div><h2>Doanh thu thực thu theo nguồn</h2></div></div>
+    <div id="fiRevenue" class="fi-bars" aria-label="Nguồn thu"></div>
+    <p class="fi-note">Các khoản thu tủ đồ, phao bơi lấy từ sổ thu đã lưu. Thu khác chưa phân loại không mặc nhiên là doanh thu.</p>
+   </section>
+   <section class="fi-panel"><div class="fi-section-label">CẤU TRÚC CHI PHÍ</div><h2>Tiền ra và phân tích chi phí</h2>
+    <div class="fi-breakdown" id="fiExpenses"></div>
+    <p class="fi-note">Tiền mua hàng là dòng tiền ra và tăng tồn kho, không phải toàn bộ giá vốn kỳ này.</p>
+   </section>
+   <section class="fi-panel fi-wide"><div class="fi-section-label">DÒNG TIỀN THEO THỜI GIAN</div><h2>Tiền vào – tiền ra</h2>
+    <div id="fiTrend" class="fi-trend"></div></section>
+   <section class="fi-panel fi-wide"><div class="fi-section-label">HIỆU QUẢ MÓN BÁN</div><h2>Doanh thu và giá vốn theo món</h2>
+    <p class="fi-note">Chỉ tính món thuộc đơn đã thanh toán; giá vốn theo lịch sử xuất kho. Đây là lãi đóng góp trước chi phí vận hành, chưa phải lãi ròng.</p>
+    <div class="fi-table-wrap"><table><thead><tr><th>Món</th><th>SL</th><th>Doanh thu theo dòng món</th><th>Giá vốn đã ghi</th><th>Chênh lệch sơ bộ</th><th>Thiếu định mức</th></tr></thead><tbody id="fiProducts"></tbody></table></div>
+   </section>
+   <section class="fi-panel fi-wide"><div class="fi-section-label">CẦN KIỂM TRA</div><h2>Đơn chưa thu tiền gần đây</h2>
+    <div id="fiDueList"></div><p class="fi-note">Chỉ là danh sách đơn chưa xác nhận, không đồng nghĩa toàn bộ đều là khoản phải thu hợp lệ.</p>
+   </section>
+  </div>
+  <footer id="fiFootnote" class="fi-footnote"></footer>
+ </div>
+</main></div></body></html>
