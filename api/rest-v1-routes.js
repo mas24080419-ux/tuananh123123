@@ -70,17 +70,23 @@ const patterns=[
 
 ];
 function canonicalize(path,method){
- if(!path.startsWith('/api/v1/'))return {path,versioned:false};
+ const isV1=path.startsWith('/api/v1/');
+ // Once new clients use /api without a version, retain /api/v1 and all
+ // grandfathered routes. A canonical /api resource is resolved through the
+ // same explicitly allowlisted v1 mapping: never a generic unprotected proxy.
+ if(!isV1 && (!path.startsWith('/api/') || path.startsWith('/api/webhooks/')))
+  return {path,versioned:false};
+ const requestedPath=isV1?path:'/api/v1/'+path.slice('/api/'.length);
  const m=String(method||'GET').toUpperCase();
- const exact=staticRoutes.get(m+' '+path);
- if(exact)return {path:exact,versioned:true};
+ const exact=staticRoutes.get(m+' '+requestedPath);
+ if(exact)return {path:exact,versioned:isV1};
  for(const route of patterns){
-  const match=path.match(route.pattern);
+  const match=requestedPath.match(route.pattern);
   if(match&&route.methods.includes(m)){
    const target=route.target(match);
-   if(target)return {path:target,versioned:true};
+   if(target)return {path:target,versioned:isV1};
   }
  }
- return {path,versioned:true,unsupported:true};
+ return isV1?{path,versioned:true,unsupported:true}:{path,versioned:false};
 }
 module.exports={canonicalize};
