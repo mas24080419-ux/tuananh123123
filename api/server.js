@@ -29,7 +29,7 @@ const ops=require('./operations')({pool,id});
 const createAsyncTtlCache=require('./async-ttl-cache');
 const analytics=require('./finance-analytics')({pool});
 const financialModel=require('./management-finance');
-const serviceCosts=require('./service-costs')({pool});
+const serviceCosts=require('./service-costs')({pool,id});
 const ingredientCosts=require('./ingredient-costs')({pool,id});
 const paymentRecipient=require('./payment-recipient')({pool});
 const sepaySandbox=require('./sepay-sandbox')({secret:process.env.SEPAY_SANDBOX_SECRET||''});
@@ -629,7 +629,7 @@ if(p==='/api/admin/service-cost-rates'){
  if(req.method==='PUT'){
   if(!throttle(req,'service-cost',20))return err(res,429,'Cập nhật giá vốn quá nhanh.');
   const data=await input(req);
-  const rate=await serviceCosts.set(data);
+  const rate=await serviceCosts.set(data,await identity(req));
   return send(res,200,{rate});
  }
  return err(res,405,'Phương thức không hỗ trợ.');

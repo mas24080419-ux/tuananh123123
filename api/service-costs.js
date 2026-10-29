@@ -20,7 +20,7 @@ function validate(input){
   throw fail('Giá vốn trực tiếp phải là số nguyên VND trong khoảng 0 đến 1 tỷ, không được bỏ trống.');
  return {key,unitCost:value};
 }
-module.exports=function serviceCosts({pool}){
+module.exports=function serviceCosts({pool,id=()=>require('node:crypto').randomUUID()}){
  async function list(){
   if(!pool)throw fail('Chức năng giá vốn yêu cầu PostgreSQL.',503);
   const rows=(await pool.query('SELECT service_key,unit_cost,updated_at FROM service_cost_rates ORDER BY service_key')).rows;
@@ -31,11 +31,18 @@ module.exports=function serviceCosts({pool}){
     configured:Boolean(record),updatedAt:record?.updated_at||null};
   });
  }
- async function set(input){
+ async function set(input,actor){
   if(!pool)throw fail('Chức năng giá vốn yêu cầu PostgreSQL.',503);
-  const {key,unitCost}=validate(input);
-  const q=await pool.query('INSERT INTO service_cost_rates(service_key,unit_cost) VALUES($1,$2) ON CONFLICT(service_key) DO UPDATE SET unit_cost=EXCLUDED.unit_cost,updated_at=now() RETURNING service_key,unit_cost,updated_at',[key,unitCost]);
-  return {serviceKey:q.rows[0].service_key,unitCost:Number(q.rows[0].unit_cost),updatedAt:q.rows[0].updated_at};
+  const {key,unitCost}=validate(input),c=await pool.connect();
+  try{
+   await c.query('BEGIN');
+   const previous=await c.query('SELECT unit_cost FROM service_cost_rates WHERE service_key=$1 FOR UPDATE',[key]);
+   const q=await c.query('INSERT INTO service_cost_rates(service_key,unit_cost) VALUES($1,$2) ON CONFLICT(service_key) DO UPDATE SET unit_cost=EXCLUDED.unit_cost,updated_at=now() RETURNING service_key,unit_cost,updated_at',[key,unitCost]);
+   await c.query("INSERT INTO pos_audit(id,actor,entity,action,before_state,after_state) VALUES($1,$2,'service_direct_cost','rate_changed',$3::jsonb,$4::jsonb)",
+    [id(),actor?.userId||'admin',JSON.stringify({serviceKey:key,unitCost:previous.rows[0]?.unit_cost??null}),JSON.stringify({serviceKey:key,unitCost})]);
+   await c.query('COMMIT');
+   return {serviceKey:q.rows[0].service_key,unitCost:Number(q.rows[0].unit_cost),updatedAt:q.rows[0].updated_at};
+  }catch(e){await c.query('ROLLBACK');throw e}finally{c.release()}
  }
  async function snapshot(client,{source,receiptId,serviceKey,quantity}){
   if(!['locker','area'].includes(source)||!accepted.has(serviceKey)||
