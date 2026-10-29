@@ -26,3 +26,15 @@ test('unlisted versioned path is rejected and old paths remain untouched in migr
  assert.equal(resolveRestV1('/api/v1/unsupported','GET'),'/api/__unknown-rest-v1-route');
  assert.equal(resolveRestV1('/api/orders','POST'),'/api/orders');
 });
+
+test('canonical API root supports all versioned resource aliases without requiring v1',()=>{
+ for(const [method,source,target] of mapping){
+  const clean=source.replace('/api/v1/','/api/');
+  assert.equal(resolveRestV1(clean,method),target,clean);
+ }
+ const id='a1d5b18d-7dbe-4c34-9899-8e8c0c05b606';
+ assert.equal(resolveRestV1('/api/order-items/'+id,'PATCH'),'/api/items/'+id);
+ assert.equal(resolveRestV1('/api/lockers/A1/rentals','POST'),'/api/lockers/A1/rent');
+ assert.equal(resolveRestV1('/api/finance/reports/profitability','GET'),'/api/admin/financial-model');
+ assert.equal(resolveRestV1('/api/unknown-path','GET'),'/api/unknown-path');
+});

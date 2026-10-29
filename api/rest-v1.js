@@ -67,7 +67,12 @@ const dynamic=[
  ['PUT',new RegExp('^/api/v1/inventory/items/('+uuid+')/reorder-level$'),'/api/admin/inventory/items/','$1/reorder']
 ];
 function resolveRestV1(path,method){
- if(!path.startsWith('/api/v1/'))return path;
+ const versioned=path.startsWith('/api/v1/');
+ if(!versioned&&!path.startsWith('/api/'))return path;
+ // Canonical /api resource URLs use the same dispatch rules as the temporary
+ // /api/v1 routes. Unrecognized root paths continue through legacy handling.
+ const originalPath=path;
+ if(!versioned)path='/api/v1/'+path.slice('/api/'.length);
  const key=method.toUpperCase()+' '+path;
  if(exact.has(key))return exact.get(key);
  const user=path.match(/^\/api\/v1\/admin\/users\/([0-9a-f-]{36})$/);
@@ -83,6 +88,6 @@ function resolveRestV1(path,method){
   const hit=path.match(pattern);
   if(hit)return base+hit[1]+(suffix?suffix.replace('$1',''):'');
  }
- return '/api/__unknown-rest-v1-route';
+ return versioned?'/api/__unknown-rest-v1-route':originalPath;
 }
 module.exports={resolveRestV1,mapping};
