@@ -2,7 +2,7 @@
 const $=x=>document.querySelector(x),esc=x=>String(x??'').replace(/[&<>"']/g,a=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[a]));
 const vnd=x=>new Intl.NumberFormat('vi-VN',{style:'currency',currency:'VND',maximumFractionDigits:0}).format(Number(x)||0);
 const stamp=x=>new Date(x).toLocaleString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh',dateStyle:'short',timeStyle:'short'});
-const base='/api/v1/admin/core/';
+const base='/api/admin/core/';
 if(location.hash==='#customers')location.replace('/admin/customers'); // Keep old bookmarks working.
 let data={},busy=false;
 const menuPending=new Set();
@@ -68,7 +68,7 @@ document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()
  document.querySelectorAll('[data-tab]').forEach(el=>el.classList.toggle('active',el===b));
  document.querySelectorAll('.section').forEach(s=>s.classList.toggle('active',s.id===b.dataset.tab));
 }));
-(async()=>{try{const r=await fetch('/api/v1/session',{credentials:'same-origin'});const me=await r.json();if(me.role!=='admin'){location.replace('/admin');return}await refresh()}catch(e){note('Không xác minh được quyền: '+e.message,true)}})();
+(async()=>{try{const r=await fetch('/api/session',{credentials:'same-origin'});const me=await r.json();if(me.role!=='admin'){location.replace('/admin');return}await refresh()}catch(e){note('Không xác minh được quyền: '+e.message,true)}})();
 
 /* V11 progressive disclosure: preserve all original forms and connected APIs. */
 (function minimalCore(){

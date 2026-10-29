@@ -42,15 +42,15 @@ $('#passwordForm').addEventListener('submit',async ev=>{
  if(neu!==confirmed){output.textContent='Hai lần nhập mật khẩu mới không khớp.';return}
  btn.disabled=true;
  try{
-  await request('/api/v1/session/password',{method:'POST',body:JSON.stringify({currentPassword:old,newPassword:neu})});
+  await request('/api/session/password',{method:'POST',body:JSON.stringify({currentPassword:old,newPassword:neu})});
   $('#passwordForm').reset();output.style.color='#197a63';
   output.textContent='Đổi mật khẩu thành công. Những phiên đăng nhập cũ đã bị thu hồi.';
  }catch(e){output.textContent=e.message}finally{btn.disabled=false}
 });
-$('#logout').addEventListener('click',async()=>{try{await request('/api/v1/sessions/logout',{method:'POST',body:'{}'})}catch{}location.replace('/login');onLogout()});
+$('#logout').addEventListener('click',async()=>{try{await request('/api/sessions/logout',{method:'POST',body:'{}'})}catch{}location.replace('/login');onLogout()});
 $('#filterForm').addEventListener('submit',e=>{e.preventDefault();reload()});
 $('#today').addEventListener('click',()=>{$('#from').value=zoneDate;$('#to').value=zoneDate;reload()});
 $('#thisMonth').addEventListener('click',()=>{defaultDates();reload()});
 
-(async()=>{defaultDates();try{const me=await request('/api/v1/session');if(me.role==='admin'){screen(true);await reload();if(location.hash==='#security')securityPanel(true)}else screen(false)}catch{screen(false)}})();
+(async()=>{defaultDates();try{const me=await request('/api/session');if(me.role==='admin'){screen(true);await reload();if(location.hash==='#security')securityPanel(true)}else screen(false)}catch{screen(false)}})();
 }
