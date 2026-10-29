@@ -3,6 +3,7 @@
 // Basis: actual cash collections; purchases are cash outflows, not period COGS.
 // COGS uses the historical unit_cost on stock consumption/restore movements,
 // matched to fully paid orders at their settlement date.
+const unitEconomics=require('./unit-economics');
 const TZONE='Asia/Ho_Chi_Minh';
 const day="(paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date";
 const ledgerDay="(created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date";
@@ -164,6 +165,15 @@ async function overview(pool,from,to){
  ]);
  const report=buildReport({cash:cash.rows,services:services.rows,expenses:expenses.rows,trend:trend.rows,products:products.rows,due:due.rows},from,to);
  report.range.granularity=interval;
+ report.unitEconomics=await unitEconomics.overview(pool,from,to);
+ if(report.unitEconomics.quality.uncostedMenuItems>0){
+  report.quality.issues.push({level:'warning',text:report.unitEconomics.quality.uncostedMenuItems+' món đang bán chưa đủ định mức/giá nguyên liệu hiện tại.'});
+  report.quality.level='incomplete';
+ }
+ if(report.unitEconomics.quality.uncostedServiceReceipts>0){
+  report.quality.issues.push({level:'warning',text:report.unitEconomics.quality.uncostedServiceReceipts+' phiếu dịch vụ trong kỳ chưa có định mức giá vốn tại thời điểm bán.'});
+  report.quality.level='incomplete';
+ }
  return report;
 }
 module.exports={overview,buildReport,queries};
