@@ -4,9 +4,9 @@
 <link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/admin-minimal.css">
 <link rel="stylesheet" href="/pos-sidebar.css?v=tt6-finance-model-v1">
-<link rel="stylesheet" href="/financial-intelligence.css?v=tt6-unit-cost-v1">
+<link rel="stylesheet" href="/financial-intelligence.css?v=tt6-ingredient-cost-v2">
 <script defer src="/pos-sidebar.js?v=tt6-finance-model-v1"></script>
-<script defer src="/financial-intelligence.js?v=tt6-unit-cost-v1"></script>
+<script defer src="/financial-intelligence.js?v=tt6-ingredient-cost-v2"></script>
 </head><body class="fi-page"><div class="shell"><aside class="tt6-sidebar" id="tt6-sidebar"><nav class="tt6-fallback-nav"><a href="/admin">Tổng quan</a><a href="/admin/operations">Thu–chi</a><a href="/admin/financial-intelligence">Phân tích tài chính</a></nav></aside>
 <main class="fi-main">
  <header class="fi-heading">
@@ -59,6 +59,12 @@
     <p class="fi-note">Giá vốn dự kiến = tổng định mức × đơn giá vốn nguyên liệu hiện tại. Dữ liệu này khác giá vốn lịch sử đã xuất kho khi khách đặt món.</p>
     <div class="fi-table-wrap"><table><thead><tr><th>Món</th><th>Giá bán</th><th>Nguyên liệu</th><th>Giá vốn / món</th><th>Chênh lệch / món</th><th>Biên gộp</th></tr></thead><tbody id="fiRecipeRows"></tbody></table></div>
     <p class="fi-note">Chỉnh định mức/giá nhập tại <a href="/admin/inventory">Quản lý kho</a>. Món thiếu định mức hoặc giá nguyên liệu sẽ được đánh dấu Chưa đủ dữ liệu.</p>
+    <div class="fi-rate-head"><div><h3>Giá vốn tham chiếu theo nguyên liệu</h3>
+     <p class="fi-note">Giá tham chiếu chỉ áp dụng cho món đặt từ lần tiếp theo, không tạo phiếu nhập hàng hoặc sửa giá vốn lịch sử. Khi đã có đơn giá nhập kho đúng, có thể bỏ giá tham chiếu để dùng giá vốn kho.</p></div>
+     <button id="fiIngredientsRefresh" type="button" class="fi-rate-refresh">Tải lại nguyên liệu</button></div>
+    <p id="fiIngredientStatus" class="fi-note" role="status"></p>
+    <div id="fiIngredientForms" class="fi-rate-grid"></div>
+
    </section>
    <section class="fi-panel fi-wide" id="fiServiceSection">
     <div class="fi-section-label">GIÁ VỐN DỊCH VỤ · TỦ ĐỒ & PHAO BƠI</div>
