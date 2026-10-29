@@ -47,15 +47,13 @@ async function main(){
   const started=performance.now();
   const latencies=[];
   let successes=0;
-  // 60 concurrent clients followed by 40 concurrent clients, 100 orders total.
-  for(const batch of [requestIds.slice(0,60),requestIds.slice(60)]){
-   const results=await Promise.allSettled(batch.map(id=>request('/api/v1/orders',{method:'POST',body:body(id)})));
-   for(const result of results){
-    if(result.status!=='fulfilled')throw Error('Concurrent order request failed: '+String(result.reason));
-    const value=result.value;
-    if(value.status!==201||!value.data.id||value.data.duplicate)throw Error('Order rejected under load: '+value.status+' '+JSON.stringify(value.data));
-    latencies.push(value.elapsed);successes++;
-   }
+  // All 100 orders start together against isolated PostgreSQL, never production.
+  const results=await Promise.allSettled(requestIds.map(id=>request('/api/v1/orders',{method:'POST',body:body(id)})));
+  for(const result of results){
+   if(result.status!=='fulfilled')throw Error('Concurrent order request failed: '+String(result.reason));
+   const value=result.value;
+   if(value.status!==201||!value.data.id||value.data.duplicate)throw Error('Order rejected under load: '+value.status+' '+JSON.stringify(value.data));
+   latencies.push(value.elapsed);successes++;
   }
   const elapsed=Math.round(performance.now()-started);
   assert.equal(successes,100);
@@ -96,7 +94,7 @@ async function main(){
   assert.equal(view.status,200);
   assert.equal(view.data.payment_status,'paid');
   const latency=latencies.sort((a,b)=>a-b);
-  const summary={environment:'isolated PostgreSQL 16; NEVER Neon production',concurrency:60,totalOrders:100,accepted:successes,durationMs:elapsed,p50Ms:latency[Math.floor(.50*(latency.length-1))],p95Ms:latency[Math.floor(.95*(latency.length-1))],stockRemaining:qty,costSnapshot:cost.min_cost,paidOrders:paid.n};
+  const summary={environment:'isolated PostgreSQL 16; NEVER Neon production',concurrency:100,totalOrders:100,accepted:successes,durationMs:elapsed,p50Ms:latency[Math.floor(.50*(latency.length-1))],p95Ms:latency[Math.floor(.95*(latency.length-1))],stockRemaining:qty,costSnapshot:cost.min_cost,paidOrders:paid.n};
   console.log('STAGING_E2E_RESULT '+JSON.stringify(summary));
  }finally{await pool.end()}
 }
