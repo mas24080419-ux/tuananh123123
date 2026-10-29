@@ -33,7 +33,7 @@ test('cashflow separates paid orders, service receipts, inventory purchases, ope
  assert.equal(r.summary.unpaidAmount,450000);
  assert.equal(r.revenueSegments.find(x=>x.source==='locker').amount,60000);
  assert.equal(r.revenueSegments.find(x=>x.source==='float').amount,20000);
- assert.equal(r.quality.profitVerified===false,true);
+ assert.equal(r.summary.profitVerified,false);
  assert.equal(r.quality.paidLineValueMismatch,false);
 });
 test('quality gate flags uncosted stock movements and recipes; never claims audited profit',()=>{

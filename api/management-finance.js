@@ -137,7 +137,7 @@ function buildReport(raw,from,to){
   summary:{cashIn,cashOut,netCashflow:cashIn-cashOut,foodReceived:receivedFood,serviceAndOtherIncome:income,
    settledOrders:integer(sale.orders),foodCogsEstimate:estimatedCogs,stockPurchases:paidPurchase,
    otherExpenses:otherExpense,contributionEstimate:operatingResult,
-   reliableProfit:coverageIncomplete||revenueMismatch?null:operatingResult,
+   reliableProfit:null,
    profitVerified:false,unpaidOrders:integer(due.unpaid_orders),unpaidAmount:integer(due.unpaid_value),
    cashReceived:integer(sale.cash)+integer(ledger.cash),bankReceived:integer(sale.bank)+integer(ledger.bank),
    inventoryValueEstimate:integer(stock.stock_value_estimate),
