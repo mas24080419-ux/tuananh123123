@@ -6,7 +6,7 @@
  const form=$('#customerForm'),editor=$('#customerEditor'),notice=$('#customerNotice');
  const notify=(message,error=false)=>{notice.textContent=message;notice.classList.toggle('error',error)};
  const api=async(route,options={})=>{
-  const response=await fetch('/api/admin/core/customers'+route,{credentials:'same-origin',cache:'no-store',
+  const response=await fetch('/api/v1/management/core/customers'+route,{credentials:'same-origin',cache:'no-store',
    ...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
   const data=await response.json().catch(()=>null);
   if(!response.ok)throw Error(data?.error||'Không thể xử lý yêu cầu ('+response.status+').');
@@ -80,7 +80,7 @@
  });
  (async()=>{
   try{
-   const response=await fetch('/api/me',{credentials:'same-origin',cache:'no-store'});
+   const response=await fetch('/api/v1/session',{credentials:'same-origin',cache:'no-store'});
    const me=await response.json().catch(()=>null);
    if(!response.ok||me?.role!=='admin'){location.replace('/login');return}
    await load();
