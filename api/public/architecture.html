@@ -55,7 +55,7 @@
       </div>
       <p id="archQrFeedback" class="arch-qr-feedback" role="status" aria-live="polite">Chỉ mã QR của bàn đang hoạt động mới được hiển thị.</p>
     </div>
-    <div class="arch-qr-dialog-foot"><span>QR lấy từ API /api/tables và /qr/:token.svg · Không dùng mã demo.</span><button type="button" id="archQrDone">Đóng QR và xem luồng backend</button></div>
+    <div class="arch-qr-dialog-foot"><span>QR lấy từ API /api/v1/tables và /qr/:token.svg · Không dùng mã demo.</span><button type="button" id="archQrDone">Đóng QR và xem luồng backend</button></div>
   </dialog>
   <section id="archError" class="arch-error" role="alert" hidden></section>
   <div id="archContent" hidden>
@@ -92,11 +92,11 @@
         <div class="deep-metric deep-qr-metric"><span>BÀN ĐANG CÓ KHÁCH XEM</span><strong id="deepQrTables">—</strong><small>Số bàn có ít nhất 1 phiên QR</small></div>
         <div class="deep-metric deep-qr-metric deep-qr-selecting"><span>ĐANG CHỌN MÓN</span><strong id="deepQrSelecting">—</strong><small>Phiên QR có món trong giỏ (chưa đặt)</small></div>
         <div class="deep-metric deep-qr-metric"><span>SỐ PHẦN TRONG GIỎ</span><strong id="deepQrCartItems">—</strong><small>Số lượng tạm, chưa ghi đơn vào DB</small></div>
-        <div class="deep-metric deep-qr-metric"><span>ĐANG GỬI ĐƠN</span><strong id="deepQrSubmitting">—</strong><small>Chờ máy chủ phản hồi POST /api/orders</small></div>
+        <div class="deep-metric deep-qr-metric"><span>ĐANG GỬI ĐƠN</span><strong id="deepQrSubmitting">—</strong><small>Chờ máy chủ phản hồi POST /api/v1/orders</small></div>
         <div class="deep-metric deep-staff-metric"><span>PHIÊN NHÂN VIÊN</span><strong id="deepStaffSessions">—</strong><small>Đang mở gọi món</small></div>
          <div class="deep-metric deep-staff-metric"><span>NV ĐANG CHỌN MÓN</span><strong id="deepStaffSelecting">—</strong><small>Giỏ tạm nhân viên · chưa đặt</small></div>
          <div class="deep-metric deep-staff-metric"><span>PHẦN NV ĐANG CHỌN</span><strong id="deepStaffCartItems">—</strong><small>Chưa trừ tồn kho</small></div>
-         <div class="deep-metric deep-staff-metric"><span>NV ĐANG GỬI ĐƠN</span><strong id="deepStaffSubmitting">—</strong><small>Chờ POST /api/staff/orders</small></div>
+         <div class="deep-metric deep-staff-metric"><span>NV ĐANG GỬI ĐƠN</span><strong id="deepStaffSubmitting">—</strong><small>Chờ POST /api/v1/staff/orders</small></div>
          <div class="deep-metric"><span>ĐƠN / 24 GIỜ</span><strong id="deepMetricOrders">—</strong><small>Đơn đã lưu trên PostgreSQL</small></div>
         <div class="deep-metric"><span>ĐƠN CHƯA HOÀN TẤT</span><strong id="deepMetricInProgress">—</strong><small>Có món new / preparing / ready</small></div>
         <div class="deep-metric"><span>ĐƠN ĐANG CHẾ BIẾN</span><strong id="deepMetricOrderPreparing">—</strong><small>Có ít nhất một món preparing</small></div>
