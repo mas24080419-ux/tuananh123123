@@ -17,7 +17,7 @@ test('Architecture shows the QR launcher prominently, not inside collapsed legac
  assert(page.includes('/architecture-qr.js'));
 });
 test('QR preview uses real admin-readable table data and authenticated QR SVG, not demo codes',()=>{
- assert(js.includes("fetch('/api/v1/tables',{credentials:'same-origin'"));
+ assert(js.includes("fetch('/api/tables',{credentials:'same-origin'"));
  assert(js.includes("t.active===true"));
  assert(js.includes("/^[0-9a-f]{48}$/i.test(t.token)"));
  assert(js.includes("const src='/qr/'+token+'.svg'"));

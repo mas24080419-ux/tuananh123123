@@ -35,8 +35,8 @@ test('unified auth endpoint chooses account by email; only server may assign rol
  assert(!handler.includes('body.role'));
  assert(s.includes('home:homeFor(a)'));
  const js=read('unified-login.js');
- assert(js.includes("fetch('/api/v1/session/login'"));
- assert(js.includes("fetch('/api/v1/session'"));
+ assert(js.includes("fetch('/api/session/login'"));
+ assert(js.includes("fetch('/api/session'"));
  assert(!js.includes('Tuan123456&'));
 });
 

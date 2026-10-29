@@ -36,7 +36,7 @@ test('inventory typography stays readable and does not load an extra icon font',
 test('inventory buttons preserve accessible labels and real API actions',()=>{
  for(const id of ['refreshStock','addStockItem','viewAllAlerts','stockSearch','movementForm','itemForm','reorderForm'])
   assert(html.includes('id="'+id+'"'),'missing UI control '+id);
- for(const api of ['/api/v1/inventory','/api/v1/inventory/items','/api/v1/inventory/movements'])
+ for(const api of ['/api/inventory','/api/inventory/items','/api/inventory/movements'])
   assert(js.includes(api),'missing real API '+api);
  const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(x=>x[1]);
  assert.equal(new Set(ids).size,ids.length,'duplicate DOM ids including SVG symbols');

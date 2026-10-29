@@ -42,7 +42,7 @@ test('first tap opens inline confirmation without POST; second deliberate tap co
  const request=async(url,opts)=>{
   calls.push({url,opts});
   if(url.includes('payment-confirmations'))return {payment:{amount:42000,already:false}};
-  if(url.startsWith('/api/v1/management/summary'))return {summary:{},orders:[{...order,payment_status:'paid',paid_amount:42000}] ,daily:[],top_items:[],mode:'postgres'};
+  if(url.startsWith('/api/management/summary'))return {summary:{},orders:[{...order,payment_status:'paid',paid_amount:42000}] ,daily:[],top_items:[],mode:'postgres'};
   throw Error('Unexpected request '+url);
  };
  const globals={
@@ -64,7 +64,7 @@ test('first tap opens inline confirmation without POST; second deliberate tap co
  await new Promise(resolve=>setImmediate(resolve));
  assert.equal(calls.filter(x=>x.url.includes('payment-confirmations')).length,1);
  const [paymentCall]=calls.filter(x=>x.url.includes('payment-confirmations'));
- assert.match(paymentCall.url,/\/api\/v1\/orders\/[0-9a-f-]+\/payment-confirmations/);
+ assert.match(paymentCall.url,/\/api\/orders\/[0-9a-f-]+\/payment-confirmations/);
  assert.deepEqual(JSON.parse(paymentCall.opts.body),{confirm:true,paymentMethod:'cash'});
  assert(alerts.some(x=>x.k==='ok'&&x.m.includes('Đã nhận')),'successful UI confirmation is reported');
 });

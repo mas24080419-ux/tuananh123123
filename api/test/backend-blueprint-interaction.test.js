@@ -15,7 +15,7 @@ test('blueprint renders all tabs, real ERD columns, selecting table and drilldow
  };
  const document={readyState:'loading',body:{dataset:{deepFlow:'all'}},getElementById:element,
   addEventListener(name,cb){listeners.set(name,cb)},querySelector(){return null}};
- const fetch=async url=>({ok:url==='/api/v1/management/architecture/blueprint',json:async()=>getModel()});
+ const fetch=async url=>({ok:url==='/api/management/architecture/blueprint',json:async()=>getModel()});
  vm.runInNewContext(text,{document,fetch,console,Intl,window:{}});
  const run=listeners.get('DOMContentLoaded');assert.equal(typeof run,'function');run();
  await new Promise(resolve=>setImmediate(resolve));

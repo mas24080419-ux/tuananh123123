@@ -21,26 +21,28 @@ async function request(path,{method='GET',body,cookie,origin}={}){
 }
 async function main(){
  try{
-  const health=await request('/api/v1/health');
+  const health=await request('/api/health');
+  assert.equal((await request('/api/v1/health')).status,200,'Versioned compatibility must continue during cutover');
   assert.equal(health.status,200);
   assert.equal(health.data.database,'ready');
   assert.equal(health.data.pilot,false);
-  const noAuth=await request('/api/v1/finance/reports/profitability');
+  const noAuth=await request('/api/finance/reports/profitability');
   assert.equal(noAuth.status,403,'Financial API must reject guests');
-  const blockedOrigin=await request('/api/v1/orders',{method:'POST',origin:'https://attacker.example',body:{}});
+  const blockedOrigin=await request('/api/orders',{method:'POST',origin:'https://attacker.example',body:{}});
   assert.equal(blockedOrigin.status,403,'Cross-origin POST must be rejected');
-  assert.equal((await request('/api/v1/garbage')).status,404);
+  assert.equal((await request('/api/garbage')).status,404);
   const tables=(await pool.query('SELECT token FROM dining_tables WHERE active=true ORDER BY name LIMIT 1')).rows;
   assert.equal(tables.length,1);
   const token=tables[0].token;
-  assert.equal((await request('/api/v1/tables/'+token+'/menu')).status,200);
-  assert.equal((await request('/api/v1/tables/'+('a'.repeat(48))+'/menu')).status,404);
+  assert.equal((await request('/api/tables/'+token+'/menu')).status,200);
+  assert.equal((await request('/api/v1/tables/'+token+'/menu')).status,200,'Versioned QR clients remain supported');
+  assert.equal((await request('/api/tables/'+('a'.repeat(48))+'/menu')).status,404);
   const menuRow=(await pool.query('SELECT id,name,price FROM menu_items WHERE active=true ORDER BY name LIMIT 1')).rows[0];
   assert(menuRow);
   const inventoryId=crypto.randomUUID();
   await pool.query('INSERT INTO inventory_items(id,name,unit,quantity,avg_unit_cost) VALUES($1,$2,$3,1000,12000)',[inventoryId,'CI staging only ingredient','portion']);
   await pool.query('INSERT INTO inventory_recipes(menu_item_id,inventory_item_id,quantity_per_unit) VALUES($1,$2,1)',[menuRow.id,inventoryId]);
-  const menu=await request('/api/v1/tables/'+token+'/menu');
+  const menu=await request('/api/tables/'+token+'/menu');
   assert(menu.data.items.some(it=>it.id===menuRow.id&&Number(it.available_quantity)>=1000));
   const requestIds=Array.from({length:100},()=>crypto.randomUUID());
   const body=id=>({token,requestId:id,items:[{id:menuRow.id,qty:1}],paymentMethod:'cash'});
@@ -49,7 +51,7 @@ async function main(){
   let successes=0;
   // 60 concurrent clients followed by 40 concurrent clients, 100 orders total.
   for(const batch of [requestIds.slice(0,60),requestIds.slice(60)]){
-   const results=await Promise.allSettled(batch.map(id=>request('/api/v1/orders',{method:'POST',body:body(id)})));
+   const results=await Promise.allSettled(batch.map(id=>request('/api/orders',{method:'POST',body:body(id)})));
    for(const result of results){
     if(result.status!=='fulfilled')throw Error('Concurrent order request failed: '+String(result.reason));
     const value=result.value;
@@ -67,32 +69,32 @@ async function main(){
   assert.equal(cost.n,100);
   assert.equal(cost.units,100);
   assert.equal(cost.min_cost,12000);
-  const replay=await request('/api/v1/orders',{method:'POST',body:body(requestIds[0])});
+  const replay=await request('/api/orders',{method:'POST',body:body(requestIds[0])});
   assert.equal(replay.status,200);
   assert.equal(replay.data.duplicate,true);
   const afterReplay=Number((await pool.query('SELECT quantity FROM inventory_items WHERE id=$1',[inventoryId])).rows[0].quantity);
   assert.equal(afterReplay,900,'Idempotent replay must never deduct stock twice');
-  const owner=await request('/api/v1/session/login',{method:'POST',body:{email:'mas24080419@hsb.edu.vn',password:'StagingOnly_123456!'}});
+  const owner=await request('/api/session/login',{method:'POST',body:{email:'mas24080419@hsb.edu.vn',password:'StagingOnly_123456!'}});
   assert.equal(owner.status,200,'Owner should authenticate against isolated staging DB');
   const cookie=owner.cookie?.split(';')[0];
   assert(cookie?.startsWith('sh_session='));
-  assert.equal((await request('/api/v1/session',{cookie})).data.role,'admin');
-  const finance=await request('/api/v1/finance/reports/profitability',{cookie});
+  assert.equal((await request('/api/session',{cookie})).data.role,'admin');
+  const finance=await request('/api/finance/reports/profitability',{cookie});
   assert.equal(finance.status,200,'Financial report requires authenticated owner');
-  const entry=await request('/api/v1/management/summary',{cookie});
+  const entry=await request('/api/management/summary',{cookie});
   assert.equal(entry.status,200);
   assert.equal(Number(entry.data.summary.order_count),100);
   const firstOrder=(await pool.query('SELECT id FROM dining_orders WHERE request_id=$1',[requestIds[0]])).rows[0].id;
   const confirmation={method:'POST',cookie,body:{confirm:true,paymentMethod:'cash'}};
-  const pay=await request('/api/v1/orders/'+firstOrder+'/payment-confirmations',confirmation);
+  const pay=await request('/api/orders/'+firstOrder+'/payment-confirmations',confirmation);
   assert.equal(pay.status,200);
-  const repeatedPay=await request('/api/v1/orders/'+firstOrder+'/payment-confirmations',confirmation);
+  const repeatedPay=await request('/api/orders/'+firstOrder+'/payment-confirmations',confirmation);
   assert.equal(repeatedPay.status,200);
   assert.equal(repeatedPay.data.payment.already,true);
   const paid=(await pool.query("SELECT COUNT(*)::int n,COALESCE(SUM(paid_amount),0)::bigint amount FROM dining_orders WHERE payment_status='paid'")).rows[0];
   assert.equal(paid.n,1);
   assert.equal(Number(paid.amount),Number(menuRow.price));
-  const view=await request('/api/v1/orders/'+firstOrder+'?token='+token);
+  const view=await request('/api/orders/'+firstOrder+'?token='+token);
   assert.equal(view.status,200);
   assert.equal(view.data.payment_status,'paid');
   const latency=latencies.sort((a,b)=>a-b);

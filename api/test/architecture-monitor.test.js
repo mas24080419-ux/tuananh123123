@@ -75,7 +75,7 @@ test('architecture UI loads existing sidebar with a read-only node explorer',()=
  assert(!/<style[\s>]/i.test(page));
  assert(!/<script(?:\s[^>]*)?>\s*[^<\s]/i.test(page));
  assert(!/fontawesome|vis-network|mermaid/i.test(page),'no new dependency required');
- assert(front.includes("fetch('/api/v1/management/architecture'"));
+ assert(front.includes("fetch('/api/management/architecture'"));
  assert(front.includes('credentials:\'same-origin\''));
  assert(front.includes('cache:\'no-store\''));
  assert(front.includes('esc(value)')||front.includes('const esc=value=>'));
