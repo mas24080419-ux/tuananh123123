@@ -30,6 +30,7 @@ const createAsyncTtlCache=require('./async-ttl-cache');
 const analytics=require('./finance-analytics')({pool});
 const financialModel=require('./management-finance');
 const serviceCosts=require('./service-costs')({pool});
+const ingredientCosts=require('./ingredient-costs')({pool,id});
 const paymentRecipient=require('./payment-recipient')({pool});
 const sepaySandbox=require('./sepay-sandbox')({secret:process.env.SEPAY_SANDBOX_SECRET||''});
 const sepayWebhook=require('./bank-webhook').createWebhook({
@@ -611,6 +612,16 @@ if(req.method==='POST'&&p==='/api/admin/finance/entries'){
  if(!await requireAdmin(req,res))return;
  if(!throttle(req,'finance',40))return err(res,429,'Thao tác quá nhanh.');
  const data=await input(req);systemFlow.mark(req,'tx','Đang ghi sổ thu–chi');const entry=await ops.entry(data);systemFlow.mark(req,'pg','Phiếu thu–chi đã COMMIT');return send(res,201,{entry});
+}
+if(p==='/api/admin/ingredient-costs'){
+ if(!await requireAdmin(req,res))return;
+ if(req.method==='GET')return send(res,200,{ingredients:await ingredientCosts.list()});
+ if(req.method==='PUT'){
+  if(!throttle(req,'ingredient-standard',20))return err(res,429,'Điều chỉnh giá vốn quá nhanh.');
+  const updated=await ingredientCosts.set(await input(req),await identity(req));
+  return send(res,200,{updated});
+ }
+ return err(res,405,'Phương thức không hỗ trợ.');
 }
 if(p==='/api/admin/service-cost-rates'){
  if(!await requireAdmin(req,res))return;

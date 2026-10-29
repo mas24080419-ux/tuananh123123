@@ -6,12 +6,13 @@ const sql={
  recipeCatalog:`SELECT m.id,m.name,m.category,m.price,
   COUNT(r.inventory_item_id)::int AS ingredient_count,
   COUNT(*) FILTER (WHERE r.inventory_item_id IS NOT NULL AND
-   (i.avg_unit_cost IS NULL OR i.avg_unit_cost<=0))::int AS missing_ingredient_costs,
-  COALESCE(SUM(r.quantity_per_unit * COALESCE(i.avg_unit_cost,0)),0)::numeric AS cost_per_unit,
+   COALESCE(s.unit_cost,i.avg_unit_cost,0)<=0)::int AS missing_ingredient_costs,
+  COALESCE(SUM(r.quantity_per_unit * COALESCE(s.unit_cost,i.avg_unit_cost,0)),0)::numeric AS cost_per_unit,
   COUNT(*) FILTER(WHERE r.inventory_item_id IS NOT NULL AND i.active=false)::int AS inactive_ingredients
  FROM menu_items m
  LEFT JOIN inventory_recipes r ON r.menu_item_id=m.id
  LEFT JOIN inventory_items i ON i.id=r.inventory_item_id
+ LEFT JOIN ingredient_cost_standards s ON s.inventory_item_id=i.id
  WHERE m.active=true
  GROUP BY m.id,m.name,m.category,m.price
  ORDER BY m.category,m.name`,

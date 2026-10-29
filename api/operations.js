@@ -142,7 +142,7 @@ module.exports=function operations({pool,id}){
    const ingredients=recipe.rows.map(line=>line.inventory_item_id);
    const amounts=recipe.rows.map(line=>line.amount);
    const orderLines=recipe.rows.map(line=>line.line_id);
-   await c.query("INSERT INTO inventory_movements(id,inventory_item_id,delta,kind,unit_cost,note,order_line_id) SELECT m.id,m.inventory_item_id,-(m.amount::numeric(14,3)),'consume',i.avg_unit_cost,'Trừ theo đơn hàng',m.line_id FROM UNNEST($1::uuid[],$2::uuid[],$3::numeric[],$4::uuid[]) AS m(id,inventory_item_id,amount,line_id) JOIN inventory_items i ON i.id=m.inventory_item_id",[ids,ingredients,amounts,orderLines]);
+   await c.query("INSERT INTO inventory_movements(id,inventory_item_id,delta,kind,unit_cost,note,order_line_id) SELECT m.id,m.inventory_item_id,-(m.amount::numeric(14,3)),'consume',COALESCE(s.unit_cost,i.avg_unit_cost),'Trừ theo đơn hàng',m.line_id FROM UNNEST($1::uuid[],$2::uuid[],$3::numeric[],$4::uuid[]) AS m(id,inventory_item_id,amount,line_id) JOIN inventory_items i ON i.id=m.inventory_item_id LEFT JOIN ingredient_cost_standards s ON s.inventory_item_id=i.id",[ids,ingredients,amounts,orderLines]);
   }
  }
  async function restore(c,lineId,previousStatus){

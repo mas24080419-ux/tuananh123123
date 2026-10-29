@@ -308,3 +308,11 @@ CREATE TABLE IF NOT EXISTS service_cost_snapshots (
  PRIMARY KEY(source,receipt_id)
 );
 CREATE INDEX IF NOT EXISTS idx_service_cost_snapshots_service ON service_cost_snapshots(service_key,created_at DESC);
+
+-- Forward-only cost standards for individual ingredients. This does not create
+-- inventory, cash expense, or retroactively edit historical order movements.
+CREATE TABLE IF NOT EXISTS ingredient_cost_standards (
+ inventory_item_id uuid PRIMARY KEY REFERENCES inventory_items(id),
+ unit_cost bigint NOT NULL CHECK(unit_cost BETWEEN 1 AND 1000000000),
+ updated_at timestamptz NOT NULL DEFAULT now()
+);
