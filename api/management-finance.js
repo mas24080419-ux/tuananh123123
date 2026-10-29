@@ -84,18 +84,20 @@ const queries={
  products:`SELECT l.name,m.category,COALESCE(SUM(l.quantity),0)::int quantity,
         COALESCE(SUM(l.quantity*l.unit_price),0)::bigint line_sales,
         COALESCE(SUM(c.cost),0)::bigint ingredient_cost,
-        COUNT(*) FILTER(WHERE c.has_consumption=0)::int missing_consumption_lines
+        COUNT(*) FILTER(WHERE c.has_consumption=0)::int missing_consumption_lines,
+        COUNT(*) FILTER(WHERE c.zero_cost_movements>0)::int zero_cost_lines
  FROM dining_order_lines l
  JOIN dining_orders o ON o.id=l.order_id
  LEFT JOIN menu_items m ON m.id=l.menu_item_id
  LEFT JOIN LATERAL (
   SELECT COALESCE(SUM(-v.delta*v.unit_cost),0)::bigint cost,
-         COUNT(*) FILTER(WHERE v.kind='consume')::int has_consumption
+         COUNT(*) FILTER(WHERE v.kind='consume')::int has_consumption,
+         COUNT(*) FILTER(WHERE v.kind='consume' AND v.unit_cost=0)::int zero_cost_movements
   FROM inventory_movements v WHERE v.order_line_id=l.id AND v.kind IN ('consume','restore')
  ) c ON true
  WHERE o.payment_status='paid' AND o.paid_at IS NOT NULL AND l.status<>'cancelled'
  AND (o.paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN $1::date AND $2::date
- GROUP BY l.name,m.category ORDER BY line_sales DESC LIMIT 30`,
+ GROUP BY l.name,m.category ORDER BY line_sales DESC`,
  due:`SELECT o.id,t.name table_name,o.created_at,
    COALESCE(SUM(l.quantity*l.unit_price) FILTER(WHERE l.status<>'cancelled'),0)::bigint unpaid_amount
  FROM dining_orders o JOIN dining_tables t ON t.id=o.table_id
@@ -114,9 +116,11 @@ function buildReport(raw,from,to){
  const zeroMoves=integer(cost.zero_cost_movements);
  const sales=raw.products.map(r=>({name:r.name,category:r.category||'Khác',quantity:integer(r.quantity),
   lineSales:integer(r.line_sales),ingredientCost:integer(r.ingredient_cost),
-  missingConsumptionLines:integer(r.missing_consumption_lines)}));
- const missingSoldMovements=sales.reduce((n,p)=>n+p.missingConsumptionLines,0);
- const coverageIncomplete=ingredientsMissing>0||zeroMoves>0||recipeMissing>0||missingSoldMovements>0;
+  missingConsumptionLines:integer(r.missing_consumption_lines),
+  zeroCostLines:integer(r.zero_cost_lines)}));
+ const missingSoldMovements=sales.reduce((n,p)=>n+p.missingConsumptionLines,0),
+       missingPricedMovements=sales.reduce((n,p)=>n+p.zeroCostLines,0);
+ const coverageIncomplete=ingredientsMissing>0||zeroMoves>0||recipeMissing>0||missingSoldMovements>0||missingPricedMovements>0;
  const productTotals=sum(sales,'lineSales'),revenueMismatch=productTotals!==receivedFood;
  const flags=[];
  if(ingredientsMissing>0)flags.push({level:'critical',text:ingredientsMissing+' nguyên liệu hoạt động chưa có đơn giá vốn; lãi gộp có thể bị ghi cao.'});
@@ -149,7 +153,7 @@ function buildReport(raw,from,to){
    costCoverageIncomplete:coverageIncomplete,paidLineValueMismatch:revenueMismatch,
    caveat:'Đây là báo cáo quản trị theo tiền đã thu; giá vốn từ lịch sử xuất kho. Không phải báo cáo lợi nhuận kế toán/thuế đã kiểm toán. Chưa tính đủ công nợ, khấu hao, thuế và mọi chi phí chưa ghi sổ.'},
   revenueSegments:segments,expenses:raw.expenses.map(x=>({name:x.category,type:x.type,amount:integer(x.amount),transactions:integer(x.transactions)})),
-  products:sales.map(x=>({...x,contributionEstimate:x.lineSales-x.ingredientCost})),
+  products:sales.map(x=>({...x,contributionEstimate:x.missingConsumptionLines||x.zeroCostLines?null:x.lineSales-x.ingredientCost})),
   trend,unpaidRecent:raw.due.map(x=>({id:x.id,table:x.table_name,createdAt:x.created_at,amount:integer(x.unpaid_amount)})),
   asOf:new Date().toISOString()
  };
