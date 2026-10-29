@@ -82,3 +82,11 @@ test('finance page has protected API and mobile navigation',()=>{
  assert(markup.includes('id="fiQuality"'));
  assert(markup.includes('id="fiScenarioForm"'));
 });
+
+test('financial dashboard JavaScript compiles without requiring browser runtime',()=>{
+ const vm=require('node:vm');
+ const client=fs.readFileSync(path.join(__dirname,'../public/financial-intelligence.js'),'utf8');
+ assert.doesNotThrow(()=>new vm.Script(client,{filename:'financial-intelligence.js'}));
+ assert(client.includes("r.quality.level==='incomplete'?'Chưa đủ dữ liệu'"),'Incomplete cost must not show a profit number');
+ assert(client.includes("function breakEven("),'Scenario model must be present');
+});
