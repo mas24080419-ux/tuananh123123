@@ -40,7 +40,7 @@ jobs:
       DATABASE_URL: postgresql://postgres:staging_only@127.0.0.1:5432/saleshub_staging
       STAFF_PASSWORD: staging-only-staff-not-production
       SESSION_SECRET: staging-only-secret-do-not-use-live-32
-      OWNER_BOOTSTRAP_EMAIL: ci-owner@example.test
+      OWNER_BOOTSTRAP_EMAIL: mas24080419@hsb.edu.vn
       OWNER_BOOTSTRAP_PASSWORD: staging-owner-password-only
       PORT: '32109'
       PILOT_MODE: 'false'
