@@ -53,11 +53,12 @@ function render(){
  const products=$('#fiProducts');products.replaceChildren();
  for(const x of r.products){
   const row=el('tr');
-  for(const value of [x.name,x.quantity,fmt(x.lineSales),fmt(x.ingredientCost),fmt(x.contributionEstimate),x.missingConsumptionLines?'Có ('+x.missingConsumptionLines+')':'—'])
+  for(const value of [x.name,x.quantity,fmt(x.lineSales),fmt(x.ingredientCost),x.contributionEstimate===null?'Chưa đủ dữ liệu':fmt(x.contributionEstimate),(x.missingConsumptionLines||x.zeroCostLines)?'Thiếu ('+(x.missingConsumptionLines||0)+' chưa xuất, '+(x.zeroCostLines||0)+' chưa giá)':'Đã liên kết'])
    row.append(el('td',null,String(value)));
   products.append(row);
  }
  if(!r.products.length){const row=el('tr'),cell=el('td','fi-empty','Chưa có món thuộc đơn đã thanh toán trong kỳ.');cell.colSpan=6;row.append(cell);products.append(row)}
+ renderUnitEconomics(r.unitEconomics);
  const due=$('#fiDueList');due.replaceChildren();
  for(const x of r.unpaidRecent){
   const line=el('div','fi-due-row');line.append(el('span',null,x.table+' · '+x.id.slice(0,8)),el('strong',null,fmt(x.amount)));due.append(line);
@@ -76,7 +77,11 @@ function csv(){
   ['Chất lượng dữ liệu',report.quality.level],['CẢNH BÁO',report.quality.caveat],
   ...report.quality.issues.map(x=>['Lưu ý',x.text]),
   ['Nguồn thu','Số tiền VND'],...report.revenueSegments.map(x=>[x.name,x.amount]),
-  ['Món','Số lượng','Doanh thu','Giá vốn','Chênh lệch sơ bộ'],...report.products.map(x=>[x.name,x.quantity,x.lineSales,x.ingredientCost,x.contributionEstimate])];
+  ['Món','Số lượng','Doanh thu','Giá vốn','Chênh lệch sơ bộ'],...report.products.map(x=>[x.name,x.quantity,x.lineSales,x.ingredientCost,x.contributionEstimate===null?'Chưa đủ dữ liệu':x.contributionEstimate]),
+  ['GIÁ VỐN HIỆN TẠI THEO MÓN'],['Món','Giá bán','Giá vốn/món','Biên gộp %'],
+  ...(report.unitEconomics?.recipes||[]).map(x=>[x.name,x.unitPrice,x.estimatedUnitCost??'Chưa đủ dữ liệu',x.estimatedMarginPct??'—']),
+  ['HIỆU QUẢ DỊCH VỤ'],['Dịch vụ','Số lượt','Thực thu','Chi phí trực tiếp','Chênh lệch','Biên gộp %','Phiếu chưa có giá vốn'],
+  ...(report.unitEconomics?.services||[]).map(x=>[x.name,x.quantity,x.received,x.knownDirectCost,x.estimatedContribution??'Chưa đủ dữ liệu',x.estimatedMarginPct??'—',x.missingCostReceipts])];
  const quote=v=>{let x=String(v??'');if(/^[=+\-@\t\r]/.test(x))x="'"+x;return '"'+x.replace(/"/g,'""')+'"';};
  const blob=new Blob(['\ufeff'+rows.map(r=>r.map(quote).join(',')).join('\r\n')],{type:'text/csv;charset=utf-8'});
  const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='SalesHub_Financial_Intelligence_'+report.range.from+'_'+report.range.to+'.csv';
@@ -116,6 +121,75 @@ $('#fiScenarioForm').addEventListener('submit',event=>{
   $('#fiScenarioNotice').textContent='Kết quả chỉ dựa trên các giả định đã nhập. Không bao gồm thuế, đầu tư hoặc biến động giá vốn ngoài dự kiến.';
  }catch(e){$('#fiScenarioResults').hidden=true;$('#fiScenarioNotice').textContent=e.message}
 });
+
+function percentage(value){
+ return value===null||value===undefined?'—':new Intl.NumberFormat('vi-VN',{maximumFractionDigits:2}).format(value)+'%';
+}
+function tableRow(container,values){
+ const tr=document.createElement('tr');
+ for(const value of values)tr.append(el('td',null,String(value)));
+ container.append(tr);
+}
+function renderUnitEconomics(info){
+ const recipes=$('#fiRecipeRows'),services=$('#fiServiceRows');
+ if(!recipes||!services)return;
+ recipes.replaceChildren();services.replaceChildren();
+ for(const x of info?.recipes||[]){
+  tableRow(recipes,[x.name,fmt(x.unitPrice),x.ingredientCount,
+   x.configured?fmt(x.estimatedUnitCost):'Chưa đủ dữ liệu',
+   x.configured?fmt(x.estimatedUnitContribution):'Chưa đủ dữ liệu',
+   x.configured?percentage(x.estimatedMarginPct):'—']);
+ }
+ if(!recipes.children.length){const tr=el('tr'),td=el('td','fi-empty','Chưa có món đang bán.');td.colSpan=6;tr.append(td);recipes.append(tr)}
+ for(const x of info?.services||[]){
+  tableRow(services,[x.name,x.quantity,fmt(x.received),
+   x.knownDirectCost===0&&x.missingCostReceipts>0?'Chưa đủ dữ liệu':fmt(x.knownDirectCost),
+   x.estimatedContribution===null?'Chưa đủ dữ liệu':fmt(x.estimatedContribution),
+   percentage(x.estimatedMarginPct),x.missingCostReceipts||'Không']);
+ }
+ if(!services.children.length){const tr=el('tr'),td=el('td','fi-empty','Chưa có phiếu thu dịch vụ trong kỳ.');td.colSpan=7;tr.append(td);services.append(tr)}
+}
+async function refreshCostRates(){
+ const container=$('#fiRateForms'),status=$('#fiRateStatus');if(!container)return;
+ status.textContent='Đang tải định mức...';
+ try{
+  const response=await fetch('/api/admin/service-cost-rates',{credentials:'same-origin',cache:'no-store'});
+  const json=await response.json();
+  if(!response.ok)throw Error(json.error||'Không lấy được giá vốn dịch vụ.');
+  container.replaceChildren();
+  for(const service of json.services||[]){
+   const form=el('form','fi-rate-card'),name=el('strong',null,service.name),
+    description=el('small',null,(service.sellPrice===null?'Giá bán theo phiếu':('Giá bán '+fmt(service.sellPrice)))+' / '+service.unit);
+   const number=el('input');number.type='number';number.min='0';number.max='1000000000';
+   number.step='1';number.inputMode='numeric';number.required=true;
+   number.placeholder='Chưa nhập giá vốn';number.setAttribute('aria-label','Giá vốn '+service.name);
+   if(service.configured)number.value=String(service.unitCost);
+   const control=el('div','fi-rate-control'),button=el('button',null,'Lưu định mức');
+   button.type='submit';control.append(number,button);
+   const hint=el('small','fi-rate-message',service.configured?'Đã cấu hình · Chỉ áp dụng lượt mới':'Chưa cấu hình · Không dùng 0đ mặc định');
+   form.append(name,description,control,hint);
+   form.addEventListener('submit',async e=>{
+    e.preventDefault();button.disabled=true;hint.textContent='Đang lưu...';
+    try{
+     if(number.value.trim()==='')throw Error('Vui lòng điền định mức.');
+     const value=Number(number.value);
+     if(!Number.isSafeInteger(value)||value<0||value>1000000000)throw Error('Vui lòng nhập giá vốn nguyên VND từ 0 đến 1 tỷ.');
+     const response=await fetch('/api/admin/service-cost-rates',{
+      method:'PUT',credentials:'same-origin',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({serviceKey:service.key,unitCost:value})
+     });
+     const data=await response.json();if(!response.ok)throw Error(data.error||'Không lưu được.');
+     hint.textContent='Đã lưu '+fmt(data.rate.unitCost)+' / '+service.unit+'. Không đổi phiếu cũ.';
+     status.textContent='Đã cập nhật '+service.name+'. Phiếu mới sẽ tự chốt giá vốn này.';
+    }catch(error){hint.textContent='Lỗi: '+error.message}finally{button.disabled=false}
+   });
+   container.append(form);
+  }
+  status.textContent='Giá vốn dịch vụ là định mức do chủ cửa hàng nhập, không tự trừ tiền mặt.';
+ }catch(error){status.textContent='Lỗi tải định mức: '+error.message}
+}
+$('#fiRatesRefresh')?.addEventListener('click',()=>{void refreshCostRates()});
+void refreshCostRates();
 $('#fiRange').addEventListener('submit',e=>{e.preventDefault();void load()});
 $('#fiExport').addEventListener('click',csv);
 void load();
