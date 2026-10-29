@@ -1,0 +1,135 @@
+openapi: 3.1.0
+info:
+  title: SalesHub POS REST API v1 (migration)
+  version: 1.0.0-pre-release
+  description: |
+    Transitional REST API supported alongside legacy /api routes.
+    Internal clients authenticate via HttpOnly Secure SameSite cookie.
+    All transactional operations reuse the existing authorized handlers.
+    Never remove legacy handlers without staging E2E, load and external-client checks.
+servers:
+  - url: https://saleshub-qr-live-pilot.onrender.com
+security:
+  - ownerSession: []
+paths:
+  /api/v1/session:
+    get:
+      summary: Current signed-in identity
+      responses:
+        '200':
+          description: Session state
+  /api/v1/tables:
+    get:
+      summary: Read tables (authorized staff)
+      responses:
+        '200':
+          description: Tables
+        '403':
+          description: Forbidden
+  /api/v1/tables/{token}/menu:
+    get:
+      security: []
+      summary: Read menu for valid table QR token
+      parameters:
+        - name: token
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9a-f]{48}$'
+      responses:
+        '200':
+          description: Menu
+        '404':
+          description: Invalid QR
+  /api/v1/orders:
+    post:
+      security: []
+      summary: Create order using table QR and requestId for idempotency
+      responses:
+        '201':
+          description: Created
+        '200':
+          description: Previously submitted
+        '409':
+          description: Inventory or business constraint conflict
+  /api/v1/orders/{id}:
+    get:
+      security: []
+      summary: Read order status (requires table token query parameter)
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+        - name: token
+          in: query
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Order status
+        '404':
+          description: Not found or inaccessible
+  /api/v1/finance/reports/profitability:
+    get:
+      summary: Management financial report (owner only)
+      parameters:
+        - name: from
+          in: query
+          required: true
+          schema: {type: string, format: date}
+        - name: to
+          in: query
+          required: true
+          schema: {type: string, format: date}
+      responses:
+        '200':
+          description: Financial report
+        '403':
+          description: Owner-only
+  /api/v1/finance/ingredient-costs:
+    get:
+      summary: List ingredient unit costs
+      responses:
+        '200':
+          description: Ingredients
+    put:
+      summary: Update future ingredient cost standard (audited)
+      responses:
+        '200':
+          description: Saved
+        '400':
+          description: Invalid input
+  /api/v1/finance/service-costs:
+    get:
+      summary: List service direct-cost rates
+      responses:
+        '200':
+          description: Service rates
+    put:
+      summary: Update future service unit costs (audited)
+      responses:
+        '200':
+          description: Saved
+  /api/v1/staff/orders/{id}/payment-confirmations:
+    post:
+      summary: Confirm receipt manually as authorized cashier/manager
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: {type: string, format: uuid}
+      responses:
+        '200':
+          description: Paid or already paid
+        '403':
+          description: Insufficient role
+        '409':
+          description: Payment conflict
+components:
+  securitySchemes:
+    ownerSession:
+      type: apiKey
+      in: cookie
+      name: sh_session
