@@ -25,7 +25,7 @@
   const email=$('email').value.trim().toLowerCase(),password=$('password').value;
   button.disabled=true;message('');
   try{
-   const response=await fetch('/api/auth/login',{method:'POST',credentials:'same-origin',
+   const response=await fetch('/api/v1/sessions',{method:'POST',credentials:'same-origin',
     headers:{'Content-Type':'application/json'},body:JSON.stringify({email,password})});
    const data=await response.json();
    if(!response.ok)throw Error(data.error||'Email hoặc mật khẩu không chính xác.');
@@ -35,6 +35,6 @@
   }catch(error){message(error.message||'Không kết nối được máy chủ.')}
   finally{button.disabled=false}
  });
- fetch('/api/me',{credentials:'same-origin',cache:'no-store'}).then(r=>r.ok?r.json():null)
+ fetch('/api/v1/session',{credentials:'same-origin',cache:'no-store'}).then(r=>r.ok?r.json():null)
   .then(me=>{if(me?.staff)navigate(me.home||landing(me))}).catch(()=>{});
 })();
