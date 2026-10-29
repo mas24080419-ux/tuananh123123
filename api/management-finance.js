@@ -68,16 +68,16 @@ const queries={
  AND (created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN $1::date AND $2::date
  GROUP BY 1,2 ORDER BY amount DESC`,
  trend:`WITH flows AS (
-  SELECT (paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date day,COALESCE(paid_amount,0)::bigint incoming,0::bigint outgoing
+  SELECT (paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date AS flow_day,COALESCE(paid_amount,0)::bigint incoming,0::bigint outgoing
   FROM dining_orders WHERE payment_status='paid' AND paid_at IS NOT NULL
   AND (paid_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN $1::date AND $2::date
   UNION ALL
-  SELECT (created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date day,
+  SELECT (created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date AS flow_day,
   (CASE WHEN direction='income' THEN amount ELSE 0 END)::bigint,
   (CASE WHEN direction='expense' THEN amount ELSE 0 END)::bigint
   FROM finance_entries WHERE (created_at AT TIME ZONE 'Asia/Ho_Chi_Minh')::date BETWEEN $1::date AND $2::date
  )
- SELECT to_char(date_trunc($3::text,day::timestamp),'YYYY-MM-DD') period,
+ SELECT to_char(date_trunc($3::text,flow_day::timestamp),'YYYY-MM-DD') period,
         COALESCE(SUM(incoming),0)::bigint incoming,COALESCE(SUM(outgoing),0)::bigint outgoing
  FROM flows GROUP BY 1 ORDER BY 1`,
  products:`SELECT l.name,m.category,COALESCE(SUM(l.quantity),0)::int quantity,

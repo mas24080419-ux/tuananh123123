@@ -48,7 +48,7 @@ function render(){
   pair.append(income,expense);item.append(pair,el('small',null,x.period.slice(5)));trend.append(item);
  }
  if(!r.trend.length)empty(trend,'Chưa có dòng tiền phát sinh trong kỳ.');
- else trend.after && ($('#fiTrendLegend')?.remove(),trend.insertAdjacentElement('afterend',el('div','fi-legend','■ Xanh: tiền vào · ■ Cam: tiền ra')));
+
  const products=$('#fiProducts');products.replaceChildren();
  for(const x of r.products){
   const row=el('tr');
