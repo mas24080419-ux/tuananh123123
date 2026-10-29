@@ -1,0 +1,44 @@
+name: SalesHub REST migration integrated E2E
+on:
+  push:
+    branches:
+      - 'saleshub-rest-migration-*'
+jobs:
+  postgres-rest-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: testuser
+          POSTGRES_PASSWORD: isolated-ci-only
+          POSTGRES_DB: saleshub_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U testuser -d saleshub_test"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgres://testuser:isolated-ci-only@127.0.0.1:5432/saleshub_test
+      REST_E2E_ISOLATED: 'true'
+      REST_E2E_ORIGIN: http://127.0.0.1:4812
+      PORT: '4812'
+      STAFF_PASSWORD: ci-only-not-live
+      SESSION_SECRET: ci-only-scope-isolated-please-do-not-reuse
+      PG_SSL: 'false'
+      PILOT_MODE: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install API dependencies
+        run: npm install --prefix api --ignore-scripts --no-audit --no-fund
+      - name: Run isolated PostgreSQL server and 50/100 concurrent order tests
+        shell: bash
+        run: |
+          node api/server.js > /tmp/saleshub-rest.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill "$SERVER_PID" || true' EXIT
+          node api/test/rest-v1-integration.js || (cat /tmp/saleshub-rest.log && exit 1)
