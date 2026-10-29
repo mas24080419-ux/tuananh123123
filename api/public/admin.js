@@ -18,7 +18,7 @@ async function reload(){
  loading=true;
  try{
  const params=new URLSearchParams({from:$('#from').value,to:$('#to').value});
- const analyticsReport=await request('/api/admin/analytics?'+params.toString());
+ const analyticsReport=await request('/api/v1/finance/reports/analytics?'+params.toString());
  renderFinanceAnalytics(analyticsReport);
  notice('Đã cập nhật biểu đồ · '+new Date().toLocaleTimeString('vi-VN',{timeZone:'Asia/Ho_Chi_Minh'}));
  }catch(e){notice(e.message,'error');if(e.status===401||e.status===403)screen(false)}
