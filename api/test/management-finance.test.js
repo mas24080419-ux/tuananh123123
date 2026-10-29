@@ -80,4 +80,5 @@ test('finance page has protected API and mobile navigation',()=>{
  assert(staticCode.includes("['/admin/financial-intelligence', 'financial-intelligence.html']"));
  assert(side.includes("link('/admin/financial-intelligence','Phân tích tài chính','chart')"));
  assert(markup.includes('id="fiQuality"'));
+ assert(markup.includes('id="fiScenarioForm"'));
 });

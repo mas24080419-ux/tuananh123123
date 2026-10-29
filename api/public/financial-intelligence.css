@@ -61,3 +61,18 @@ body.fi-page{margin:0;background:#f7f9fa;color:#193b45;font:14px 'Plus Jakarta S
 .fi-footnote{font-size:11px;color:#70868b;line-height:1.7;margin:19px 0}
 @media(max-width:1200px){.fi-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}.fi-secondary-kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:760px){.fi-main{padding:22px 15px 105px}.fi-grid{grid-template-columns:minmax(0,1fr)}.fi-panel.fi-wide{grid-column:auto}.fi-kpis{gap:9px}.fi-kpi{padding:15px}.fi-kpi strong{font-size:18px}.fi-secondary-kpis{gap:9px}.fi-secondary-kpis>div{padding:13px}.fi-secondary-kpis strong{font-size:16px}.fi-panel{padding:16px}.fi-filter{gap:9px}.fi-filter label{flex:1;min-width:125px}.fi-filter input{width:100%;font-size:16px}.fi-filter button{flex:1;min-width:130px}.fi-trend-item{flex-basis:34px}.fi-quiet-link{width:100%;text-align:center}}
+
+.fi-kpi-outline strong{font-size:clamp(14px,1.7vw,21px)}
+.fi-scenario{margin-top:16px;padding:21px;background:#fff;border:1px solid #d8e7e3;border-radius:17px}
+.fi-scenario h2{margin:7px 0;font-size:18px}
+.fi-scenario-controls{display:grid;grid-template-columns:repeat(3,minmax(0,1fr)) auto;gap:12px;align-items:end;margin-top:15px}
+.fi-scenario-controls label{display:grid;gap:7px;font-size:11px;color:#64808b;font-weight:750}
+.fi-scenario-controls input{height:45px;min-width:0;width:100%;font:inherit;font-size:14px;border:1px solid #dbe7e8;border-radius:9px;padding:10px;background:#fff;color:#1b4249}
+.fi-scenario-controls button{min-height:45px;border:0;border-radius:9px;background:#157f73;color:#fff;padding:10px 15px;font-weight:800;cursor:pointer}
+.fi-scenario-results{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:16px}
+.fi-scenario-results[hidden]{display:none!important}
+.fi-scenario-results>div{background:#eff7f4;border-radius:12px;padding:16px;min-width:0}
+.fi-scenario-results small{display:block;font-size:10px;color:#6d8485;font-weight:800;line-height:1.5}
+.fi-scenario-results strong{display:block;margin:9px 0 0;font-size:clamp(15px,1.8vw,24px);color:#146f65;overflow-wrap:anywhere}
+@media(max-width:850px){.fi-scenario-controls{grid-template-columns:repeat(2,minmax(0,1fr))}.fi-scenario-controls button{grid-column:1/-1}.fi-scenario-results{grid-template-columns:1fr}}
+@media(max-width:550px){.fi-scenario-controls{grid-template-columns:1fr}.fi-scenario-controls button{grid-column:auto}.fi-scenario-controls input{font-size:16px}.fi-scenario{padding:16px}}

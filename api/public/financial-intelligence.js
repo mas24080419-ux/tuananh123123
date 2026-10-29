@@ -10,7 +10,8 @@ function empty(parent,label){parent.replaceChildren(el('p','fi-empty',label))}
 function render(){
  const r=report,s=r.summary;
  money('#fiCashIn',s.cashIn);money('#fiCashOut',s.cashOut);money('#fiNetCash',s.netCashflow);
- money('#fiContribution',s.contributionEstimate);money('#fiFoodCogs',s.foodCogsEstimate);
+ $('#fiContribution').textContent=r.quality.level==='incomplete'?'Chưa đủ dữ liệu':fmt(s.contributionEstimate);
+ money('#fiFoodCogs',s.foodCogsEstimate);
  money('#fiStock',s.inventoryValueEstimate);
  $('#fiPaidOrders').textContent=new Intl.NumberFormat('vi-VN').format(s.settledOrders);
  $('#fiDueCount').textContent=s.unpaidOrders+' đơn';
@@ -95,6 +96,26 @@ async function load(){
  }catch(error){status.className='fi-status is-error';status.textContent='Lỗi: '+error.message}
  finally{loadBtn.disabled=false}
 }
+
+function breakEven(fixed,variablePct,averageTicket){
+ if(!Number.isSafeInteger(fixed)||fixed<0||!Number.isFinite(variablePct)||variablePct<0||variablePct>=100||!Number.isSafeInteger(averageTicket)||averageTicket<=0)throw Error('Nhập chi phí cố định từ 0đ, tỷ lệ biến phí dưới 100% và giá trị đơn lớn hơn 0.');
+ const contributionRatio=1-variablePct/100;
+ const revenue=Math.ceil(fixed/contributionRatio);
+ const orders=Math.ceil(revenue/averageTicket);
+ if(!Number.isSafeInteger(revenue)||!Number.isSafeInteger(orders))throw Error('Giá trị kịch bản vượt giới hạn an toàn.');
+ return {revenue,orders,daily:Math.ceil(orders/30)};
+}
+$('#fiScenarioForm').addEventListener('submit',event=>{
+ event.preventDefault();
+ try{
+  const results=breakEven(Number($('#fiFixed').value),Number($('#fiVariable').value),Number($('#fiTicket').value));
+  $('#fiBreakEvenRevenue').textContent=fmt(results.revenue);
+  $('#fiBreakEvenOrders').textContent=new Intl.NumberFormat('vi-VN').format(results.orders);
+  $('#fiBreakEvenDaily').textContent=new Intl.NumberFormat('vi-VN').format(results.daily);
+  $('#fiScenarioResults').hidden=false;
+  $('#fiScenarioNotice').textContent='Kết quả chỉ dựa trên các giả định đã nhập. Không bao gồm thuế, đầu tư hoặc biến động giá vốn ngoài dự kiến.';
+ }catch(e){$('#fiScenarioResults').hidden=true;$('#fiScenarioNotice').textContent=e.message}
+});
 $('#fiRange').addEventListener('submit',e=>{e.preventDefault();void load()});
 $('#fiExport').addEventListener('click',csv);
 void load();

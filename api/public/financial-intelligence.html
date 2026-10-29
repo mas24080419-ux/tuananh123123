@@ -4,9 +4,9 @@
 <link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml">
 <link rel="stylesheet" href="/admin-minimal.css">
 <link rel="stylesheet" href="/pos-sidebar.css?v=tt6-finance-model-v1">
-<link rel="stylesheet" href="/financial-intelligence.css?v=tt6-finance-model-v2">
+<link rel="stylesheet" href="/financial-intelligence.css?v=tt6-finance-model-v3">
 <script defer src="/pos-sidebar.js?v=tt6-finance-model-v1"></script>
-<script defer src="/financial-intelligence.js?v=tt6-finance-model-v2"></script>
+<script defer src="/financial-intelligence.js?v=tt6-finance-model-v3"></script>
 </head><body class="fi-page"><div class="shell"><aside class="tt6-sidebar" id="tt6-sidebar"><nav class="tt6-fallback-nav"><a href="/admin">Tổng quan</a><a href="/admin/operations">Thu–chi</a><a href="/admin/financial-intelligence">Phân tích tài chính</a></nav></aside>
 <main class="fi-main">
  <header class="fi-heading">
@@ -57,6 +57,23 @@
     <div id="fiDueList"></div><p class="fi-note">Chỉ là danh sách đơn chưa xác nhận, không đồng nghĩa toàn bộ đều là khoản phải thu hợp lệ.</p>
    </section>
   </div>
-  <footer id="fiFootnote" class="fi-footnote"></footer>
+  <section class="fi-scenario" aria-labelledby="fiScenarioHeading">
+ <div class="fi-section-label">KẾ HOẠCH KINH DOANH · GIẢ ĐỊNH DO BẠN NHẬP</div>
+ <h2 id="fiScenarioHeading">Mô phỏng điểm hòa vốn</h2>
+ <p class="fi-note">Không lấy tỷ lệ giá vốn thiếu từ database để dự báo. Bạn nhập chi phí cố định, tỷ lệ biến phí dự kiến và giá trị trung bình mỗi đơn để tính mục tiêu doanh thu tối thiểu.</p>
+ <form id="fiScenarioForm" class="fi-scenario-controls">
+  <label>Chi phí cố định mỗi tháng (VND)<input id="fiFixed" type="number" min="0" step="1000" placeholder="Ví dụ: lương, thuê, điện nước" required></label>
+  <label>Biến phí / doanh thu dự kiến (%)<input id="fiVariable" type="number" min="0" max="99.9" step=".1" placeholder="Tự nhập tỷ lệ, 0–99,9%" required></label>
+  <label>Giá trị trung bình một đơn (VND)<input id="fiTicket" type="number" min="1" step="1000" placeholder="Giá trị đơn trung bình" required></label>
+  <button type="submit">Tính hòa vốn</button>
+ </form>
+ <div class="fi-scenario-results" id="fiScenarioResults" hidden aria-live="polite">
+  <div><small>DOANH THU HÒA VỐN / THÁNG</small><strong id="fiBreakEvenRevenue">—</strong></div>
+  <div><small>SỐ ĐƠN HÒA VỐN / THÁNG</small><strong id="fiBreakEvenOrders">—</strong></div>
+  <div><small>ĐƠN TỐI THIỂU / NGÀY (30 NGÀY)</small><strong id="fiBreakEvenDaily">—</strong></div>
+ </div>
+ <p id="fiScenarioNotice" class="fi-note">Chỉ là mô phỏng quản trị, không tự lưu vào Neon và không thay đổi doanh thu thực tế.</p>
+</section>
+<footer id="fiFootnote" class="fi-footnote"></footer>
  </div>
 </main></div></body></html>
