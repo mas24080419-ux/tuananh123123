@@ -304,7 +304,7 @@ async function confirmPayment(orderId,providedMethod,actor={role:'admin'}){
 }
 
 const serveStatic=require('./static-files')(path.join(__dirname,'public'));
-async function route(req,res){for(const [k,v]of Object.entries(securityHeaders))res.setHeader(k,v);const u=new URL(req.url,'http://localhost');const p=u.pathname;
+async function route(req,res){for(const [k,v]of Object.entries(securityHeaders))res.setHeader(k,v);const u=new URL(req.url,'http://localhost');const p=require('./rest-v1').resolveRestV1(u.pathname,req.method);
 if(!sameOrigin(req,res))return;
 if(req.method==='GET'&&p==='/api/health'){let db='pilot';if(pool){try{await pool.query('SELECT 1');db='ready'}catch{db='unavailable'}}return send(res,db==='unavailable'?503:200,{ok:db!=='unavailable',mode,database:db,pilot:mode==='pilot',notice:mode==='pilot'?'BẢN THỬ NGHIỆM: đơn hàng lưu RAM và bị xóa khi server khởi động lại. Không dùng vận hành thật.':'Dữ liệu được lưu trên PostgreSQL.'})}
 if(req.method==='POST'&&p==='/api/auth/login'){

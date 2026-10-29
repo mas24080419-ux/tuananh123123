@@ -4,6 +4,7 @@ on:
     branches:
       - 'perf/**'
       - saleshub-v3-preview
+      - 'saleshub-rest-migration-*'
   pull_request:
     branches:
       - saleshub-v3-preview
