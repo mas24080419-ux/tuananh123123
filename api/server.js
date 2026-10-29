@@ -30,6 +30,7 @@ const createAsyncTtlCache=require('./async-ttl-cache');
 const analytics=require('./finance-analytics')({pool});
 const financialModel=require('./management-finance');
 const restV1=require('./rest-v1-routes');
+const {legacyLabel}=require('./api-migration-telemetry');
 const serviceCosts=require('./service-costs')({pool,id});
 const ingredientCosts=require('./ingredient-costs')({pool,id});
 const paymentRecipient=require('./payment-recipient')({pool});
@@ -307,6 +308,12 @@ async function confirmPayment(orderId,providedMethod,actor={role:'admin'}){
 const serveStatic=require('./static-files')(path.join(__dirname,'public'));
 async function route(req,res){for(const [k,v]of Object.entries(securityHeaders))res.setHeader(k,v);const u=new URL(req.url,'http://localhost');const originalPath=u.pathname;const mapped=restV1.canonicalize(originalPath,req.method);const p=mapped.path;
 if(!sameOrigin(req,res))return;
+const legacy=legacyLabel(originalPath);
+if(legacy){
+ res.setHeader('Deprecation','true');
+ // Never include the original URL in the log: it can contain QR tokens or IDs.
+ console.info('SALESHUB_LEGACY_API_USED',req.method,legacy);
+}
 if(mapped.unsupported)return err(res,404,'REST API v1: Không tìm thấy tài nguyên.');
 if(mapped.versioned)res.setHeader('X-SalesHub-API-Version','v1');
 if(req.method==='GET'&&p==='/api/health'){let db='pilot';if(pool){try{await pool.query('SELECT 1');db='ready'}catch{db='unavailable'}}return send(res,db==='unavailable'?503:200,{ok:db!=='unavailable',mode,database:db,pilot:mode==='pilot',notice:mode==='pilot'?'BẢN THỬ NGHIỆM: đơn hàng lưu RAM và bị xóa khi server khởi động lại. Không dùng vận hành thật.':'Dữ liệu được lưu trên PostgreSQL.'})}
