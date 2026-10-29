@@ -72,8 +72,8 @@ function resolveRestV1(path,method){
  if(exact.has(key))return exact.get(key);
  const user=path.match(/^\/api\/v1\/admin\/users\/([0-9a-f-]{36})$/);
  if(user&&['PATCH','GET'].includes(method))return '/api/admin/users/'+user[1];
- const menu=path.match(/^\/api\/v1\/menu\/([0-9a-f]{48})$/);
- if(menu&&method==='GET')return '/api/menu/'+menu[1];
+ const qrMenu=path.match(/^\/api\/v1\/menu\/([0-9a-f]{48})$/);
+ if(qrMenu&&method==='GET')return '/api/menu/'+qrMenu[1];
  const core=path.match(/^\/api\/v1\/admin\/core\/(.*)$/);
  if(core)return '/api/admin/core/'+core[1]; // current CRUD uses resource names internally
  const menu=path.match(/^\/api\/v1\/qr\/tables\/([0-9a-f]{48})\/payment-recipient$/);
