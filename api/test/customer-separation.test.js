@@ -18,7 +18,7 @@ test('customer management is a standalone admin page, not mixed with menu and QR
 test('customers reuse protected owner API and never expose PII in QR public routes',()=>{
  const js=read('customers.js'),server=fs.readFileSync(path.join(__dirname,'../server.js'),'utf8');
  const staticFile=fs.readFileSync(path.join(__dirname,'../static-files.js'),'utf8');
- assert(js.includes("'/api/admin/core/customers'"));
+ assert(js.includes("'/api/v1/admin/core/customers'"));
  assert(js.includes("me?.role!=='admin'"));
  assert(js.includes("method:id?'PATCH':'POST'"));
  assert(js.includes('encodeURIComponent(id)'));
