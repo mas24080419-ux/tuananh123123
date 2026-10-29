@@ -83,7 +83,7 @@ test('staff phone sends browser events and the owner map shows its own staff car
  assert(client.includes('queuePresence()'));
  assert(client.includes('pulsePresence()'));
  assert(client.includes("window.addEventListener('pagehide',leavePresence)"));
- assert(read('public/staff-orders.html').includes('/staff-orders.js?v=payment-feedback-v3'));
+ assert(/\/staff-orders\.js\?v=rest-v1-rollout-20261029/.test(read('public/staff-orders.html')));
  assert(graph.includes("id:'staffcart'"));
  assert(graph.includes("['stafforder','staffcart','stafforder']"));
  assert(graph.includes("['staffcart','http','stafforder']"));

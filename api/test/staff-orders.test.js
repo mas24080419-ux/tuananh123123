@@ -58,13 +58,13 @@ test('staff page, links and browser controller parse and expose safe actions',()
  assert(html.includes('id="orderForm"')&&html.includes('id="orders"'));
  assert(html.includes('viewport-fit=cover'));
  assert(read('public/staff-orders.css').includes('@media(max-width:520px)'));
- assert(js.includes("api('/api/staff/orders'")&&js.includes("api('/api/staff/menu'"));
+ assert(js.includes("api('/api/v1/staff/orders'")&&js.includes("api('/api/v1/staff/menu-items'"));
  assert(js.includes('state.requestId=body.requestId')&&js.includes('crypto.randomUUID()'));
  assert(js.includes('class="foodPick"')&&js.includes("data-step=\"1\""),'tap target must add one portion');
  assert(js.includes('btn.disabled||state.saving'),'disabled items cannot be selected by tap');
  assert(js.includes('cartTotal<60')&&js.includes('q<n&&q<20'),'preserve stock and quantity guards');
  assert(html.includes('Chạm vào món để thêm vào đơn'),'mobile UI describes tap-to-select');
- assert(html.includes('/staff-orders.js?v=payment-feedback-v3'));
+ assert(html.includes('/staff-orders.js?v=rest-v1-rollout-20261029'));
  assert(js.includes('Chỉ Thu ngân / Quản lý xác nhận thu tiền'));
  assert(js.includes('paymentFeedback(o.id'));
  assert(js.includes("o.payment_status='paid'"));
