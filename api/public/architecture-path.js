@@ -15,7 +15,7 @@
  const layer=document.createElementNS(ns,'g');layer.setAttribute('id','deepRuntimeLinks');
  layer.setAttribute('aria-hidden','true');svg.appendChild(layer);
  const text=(id,value)=>{const n=$(id);if(n)n.textContent=String(value)};
- const originFor=trace=>trace.source==='postgresql-audit'&&trace.orderSource==='unknown'?'http':trace.module==='stafforder'||trace.route?.startsWith('/api/staff/orders')?'stafforder':trace.module==='orders'?'guest':trace.module==='kds'||trace.module==='rental'?'staff':'owner';
+ const originFor=trace=>trace.source==='postgresql-audit'&&trace.orderSource==='unknown'?'http':trace.module==='stafforder'||trace.route?.startsWith('/api/v1/staff/orders')?'stafforder':trace.module==='orders'?'guest':trace.module==='kds'||trace.module==='rental'?'staff':'owner';
  const titles={orders:'Đơn QR',stafforder:'Nhân viên gọi món',kds:'Bếp / Bar',inventory:'Kho',finance:'Thu–chi',rental:'Phao & Tủ',admin:'Quản trị'};
  const auditAction={
   order_validated:{node:'validate',label:'Đã xác thực yêu cầu (audit PostgreSQL)'},
@@ -155,7 +155,7 @@
     if(previous!==undefined&&trace.steps.length>previous){
      addFrames(trace,previous,true);
     }else if(previous===undefined&&!restoredIds.has(trace.id)&&
-      trace.state!=='running'&&trace.method==='POST'&&['/api/orders','/api/staff/orders'].includes(trace.route)&&
+      trace.state!=='running'&&trace.method==='POST'&&['/api/v1/orders','/api/v1/staff/orders'].includes(trace.route)&&
       trace.steps.length>1&&
       snapshotTime-Date.parse(trace.finishedAt||trace.createdAt)>=0&&
       snapshotTime-Date.parse(trace.finishedAt||trace.createdAt)<180000){
@@ -181,9 +181,9 @@
    const prev=seen.get(id);
    const latest=Date.parse(flow.latestAt||steps[steps.length-1].at);
    const near=Number.isFinite(latest)&&snapshotTime-latest>=0&&snapshotTime-latest<180000;
-   const sourceRoute=flow.source==='staff'?'/api/staff/orders':flow.source==='guest'?'/api/orders':null;
+   const sourceRoute=flow.source==='staff'?'/api/v1/staff/orders':flow.source==='guest'?'/api/v1/orders':null;
    const hasLiveTrace=[...known.values()].some(t=>
-    t.source!=='postgresql-audit'&&t.method==='POST'&&(sourceRoute?t.route===sourceRoute:['/api/orders','/api/staff/orders'].includes(t.route))&&
+    t.source!=='postgresql-audit'&&t.method==='POST'&&(sourceRoute?t.route===sourceRoute:['/api/v1/orders','/api/v1/staff/orders'].includes(t.route))&&
     Number.isFinite(Date.parse(t.createdAt))&&Math.abs(Date.parse(t.createdAt)-latest)<12000
    );
    const recovered={id,module:flow.source==='staff'?'stafforder':'orders',method:'POST',route:sourceRoute?sourceRoute+' (DB audit)':'DB audit · chưa rõ nguồn tạo đơn',orderSource:flow.source||'unknown',
