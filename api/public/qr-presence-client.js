@@ -15,7 +15,7 @@
   if(inFlight){dirty=true;return}
   inFlight=true;const version=generation;
   try{
-   const r=await fetch('/api/v1/qr/presences',{
+   const r=await fetch('/api/qr/presences',{
     method:'POST',credentials:'same-origin',cache:'no-store',
     headers:{'Content-Type':'application/json'},body:payload()
    });
@@ -38,10 +38,10 @@
   // Best-effort immediate removal; TTL (55s) recovers if this request is lost.
   if(navigator.sendBeacon){
    try{
-    if(navigator.sendBeacon('/api/v1/qr/presences/leave',new Blob([body],{type:'text/plain;charset=UTF-8'})))return;
+    if(navigator.sendBeacon('/api/qr/presences/leave',new Blob([body],{type:'text/plain;charset=UTF-8'})))return;
    }catch{}
   }
-  try{void fetch('/api/v1/qr/presences/leave',{method:'POST',body,keepalive:true,credentials:'same-origin',headers:{'Content-Type':'text/plain'}})}catch{}
+  try{void fetch('/api/qr/presences/leave',{method:'POST',body,keepalive:true,credentials:'same-origin',headers:{'Content-Type':'text/plain'}})}catch{}
  }
  function queueUpdate(){
   if(document.hidden)return;

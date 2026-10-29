@@ -1,4 +1,4 @@
-/* Mobile-only menu presentation. All writes keep the existing /api/v1/admin/core/catalog APIs. */
+/* Mobile-only menu presentation. All writes keep the existing /api/admin/core/catalog APIs. */
 (() => {
  'use strict';
  const host=document.getElementById('mobileMenuApp');

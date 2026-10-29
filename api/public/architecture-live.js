@@ -116,7 +116,7 @@
   if(inFlight||document.hidden)return;
   inFlight=true;
   try{
-   const response=await fetch('/api/v1/monitoring/architecture/recent',{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}});
+   const response=await fetch('/api/monitoring/architecture/recent',{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}});
    if(response.status===401||response.status===403){disconnect();changeConnection('offline','Cần đăng nhập lại');return}
    if(!response.ok)throw Error('HTTP '+response.status);
    consume(await response.json());
@@ -132,7 +132,7 @@
  function stopFallback(){if(fallbackTimer){clearInterval(fallbackTimer);fallbackTimer=null}}
  function connect(){
   if(source||document.hidden||!window.EventSource)return startFallback();
-  const stream=new EventSource('/api/v1/monitoring/architecture/live',{withCredentials:true});
+  const stream=new EventSource('/api/monitoring/architecture/live',{withCredentials:true});
   source=stream;
   stream.addEventListener('open',()=>{stopFallback();changeConnection('connected','Đang nhận trực tiếp · SSE')});
   stream.addEventListener('snapshot',event=>{
@@ -165,7 +165,7 @@
  // The API remains protected on the server; the event source is only opened after an admin check.
  (async()=>{
   try{
-   const r=await fetch('/api/v1/session',{credentials:'same-origin',cache:'no-store'});
+   const r=await fetch('/api/session',{credentials:'same-origin',cache:'no-store'});
    const me=await r.json();
    if(!r.ok||me.role!=='admin'){changeConnection('offline','Chỉ chủ cửa hàng');return}
    await reload();connect();
