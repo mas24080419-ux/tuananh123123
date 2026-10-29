@@ -11,7 +11,7 @@ test('detailed interactive map includes schema-backed table explorer and protect
  for(const id of ['bpTabs','bpFilters','bpSearch','bpNodes','bpWires','bpInspector','bpZoomIn','bpZoomOut','bpFit','bpReset'])assert(html.includes('id="'+id+'"'),id);
  assert(html.includes('architecture-blueprint.js?v=20261028-blueprint-v1'));
  assert(html.includes('architecture-blueprint.css?v=20261028-blueprint-v1'));
- assert(js.includes("fetch('/api/admin/architecture/blueprint'"));
+ assert(js.includes("fetch('/api/v1/monitoring/blueprint'"));
  assert(js.includes("document.addEventListener('saleshub:snapshot'"));
  assert(js.includes("state.tab='topology',filter:'all'")||js.includes("tab:'topology',filter:'all'"));
  assert(css.includes('@media(max-width:780px)'));
