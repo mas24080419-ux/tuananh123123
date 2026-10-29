@@ -79,7 +79,7 @@ test('staff phone sends browser events and the owner map shows its own staff car
  const mon=require('../architecture-monitor').model;
  assert(source.includes("p==='/api/staff/order-presence'")||source.includes("'/api/staff/order-presence','/api/staff/order-presence/leave'"));
  assert(source.includes('canManageOrders(actor)'));
- assert(client.includes("api('/api/staff/order-presence'"));
+ assert(client.includes("api('/api/v1/staff/order-presence'"));
  assert(client.includes('queuePresence()'));
  assert(client.includes('pulsePresence()'));
  assert(client.includes("window.addEventListener('pagehide',leavePresence)"));

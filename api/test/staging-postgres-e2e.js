@@ -72,7 +72,7 @@ async function main(){
   assert.equal(replay.data.duplicate,true);
   const afterReplay=Number((await pool.query('SELECT quantity FROM inventory_items WHERE id=$1',[inventoryId])).rows[0].quantity);
   assert.equal(afterReplay,900,'Idempotent replay must never deduct stock twice');
-  const owner=await request('/api/v1/session/login',{method:'POST',body:{email:'mas24080419@hsb.edu.vn',password:'staging-owner-password-only'}});
+  const owner=await request('/api/v1/session/login',{method:'POST',body:{email:'mas24080419@hsb.edu.vn',password:'StagingOnly_123456!'}});
   assert.equal(owner.status,200,'Owner should authenticate against isolated staging DB');
   const cookie=owner.cookie?.split(';')[0];
   assert(cookie?.startsWith('sh_session='));

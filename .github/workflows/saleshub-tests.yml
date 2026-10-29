@@ -41,7 +41,7 @@ jobs:
       STAFF_PASSWORD: staging-only-staff-not-production
       SESSION_SECRET: staging-only-secret-do-not-use-live-32
       OWNER_BOOTSTRAP_EMAIL: mas24080419@hsb.edu.vn
-      OWNER_BOOTSTRAP_PASSWORD: staging-owner-password-only
+      OWNER_BOOTSTRAP_PASSWORD: StagingOnly_123456!
       PORT: '32109'
       PILOT_MODE: 'false'
       SEPAY_AUTO_CONFIRM: 'false'

@@ -34,7 +34,7 @@
   if(!state.ready||document.hidden)return;
   if(staffPresence.inFlight){staffPresence.dirty=true;return}
   staffPresence.inFlight=true;
-  try{await api('/api/staff/order-presence',{method:'POST',body:JSON.stringify(activity())})}
+  try{await api('/api/v1/staff/order-presence',{method:'POST',body:JSON.stringify(activity())})}
   catch{ /* Advisory telemetry only: ordering remains available if tracking is offline. */ }
   finally{
    staffPresence.inFlight=false;
@@ -50,9 +50,9 @@
   if(!state.ready)return;
   const body=JSON.stringify({sessionId:staffPresence.sessionId});
   if(navigator.sendBeacon){
-   try{if(navigator.sendBeacon('/api/staff/order-presence/leave',new Blob([body],{type:'text/plain;charset=UTF-8'})))return}catch{}
+   try{if(navigator.sendBeacon('/api/v1/staff/order-presence/leave',new Blob([body],{type:'text/plain;charset=UTF-8'})))return}catch{}
   }
-  try{void fetch('/api/staff/order-presence/leave',{method:'POST',credentials:'same-origin',keepalive:true,headers:{'Content-Type':'text/plain'},body})}catch{}
+  try{void fetch('/api/v1/staff/order-presence/leave',{method:'POST',credentials:'same-origin',keepalive:true,headers:{'Content-Type':'text/plain'},body})}catch{}
  }
  function drawCart(){
   const count=[...state.cart.values()].reduce((a,b)=>a+b,0);
