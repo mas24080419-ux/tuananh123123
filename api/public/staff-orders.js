@@ -84,7 +84,7 @@
   drawCart();
  }
  async function loadCatalog(){
-  const [menu,tables]=await Promise.all([api('/api/staff/menu'),api('/api/tables')]);
+  const [menu,tables]=await Promise.all([api('/api/v1/staff/menu-items'),api('/api/v1/tables')]);
   state.menu=menu.items;state.tables=tables.tables.filter(t=>t.active);
   const selected=$('table').value;
   $('table').innerHTML='<option value="">Chọn bàn</option>'+state.tables.map(t=>'<option value="'+esc(t.id)+'">'+esc(t.name)+'</option>').join('');
@@ -120,7 +120,7 @@
  }
  async function loadOrders(silent=false){
   if(!state.ready||state.loading||document.hidden)return;state.loading=true;
-  try{state.orders=(await api('/api/staff/orders')).orders;drawOrders();if(!silent)message('Đã cập nhật đơn hàng.')}
+  try{state.orders=(await api('/api/v1/staff/orders')).orders;drawOrders();if(!silent)message('Đã cập nhật đơn hàng.')}
   catch(e){message(e.message,true);if(e.status===401||e.status===403)location.replace('/login')}
   finally{state.loading=false}
  }
@@ -143,7 +143,7 @@
   const table=state.tables.find(t=>t.id===$('table').value);if(!table){message('Chọn bàn trước khi gọi món.',true);return}
   const body={token:table.token,requestId:state.requestId||crypto.randomUUID(),paymentMethod:$('payment').value,note:$('note').value.trim(),items:[...state.cart].map(([id,qty])=>({id,qty}))};
   state.requestId=body.requestId;state.saving=true;drawCart();void pulsePresence();
-  try{const result=await api('/api/staff/orders',{method:'POST',body:JSON.stringify(body)});
+  try{const result=await api('/api/v1/staff/orders',{method:'POST',body:JSON.stringify(body)});
    state.cart.clear();staffPresence.ordered=true;state.requestId=null;$('note').value='';$('search').value='';
    message('Đã gửi đơn #'+result.id.slice(0,8)+' đến Bếp/Bar.');
    await loadCatalog();await loadOrders(true);
@@ -154,7 +154,7 @@
   const line=e.target.closest('button[data-line]');
   if(line){
    if(line.dataset.next==='cancelled'&&!confirm('Hủy món chưa chế biến? Hệ thống sẽ hoàn lại tồn kho.'))return;
-   line.disabled=true;try{await api('/api/items/'+encodeURIComponent(line.dataset.line),{method:'PATCH',body:JSON.stringify({status:line.dataset.next})});await loadOrders(true);message('Đã cập nhật món.')}catch(error){message(error.message,true)}finally{line.disabled=false}return;
+   line.disabled=true;try{await api('/api/v1/order-items/'+encodeURIComponent(line.dataset.line),{method:'PATCH',body:JSON.stringify({status:line.dataset.next})});await loadOrders(true);message('Đã cập nhật món.')}catch(error){message(error.message,true)}finally{line.disabled=false}return;
   }
   const pay=e.target.closest('button[data-pay]');if(!pay||!canPay())return;
   const o=state.orders.find(o=>o.id===pay.dataset.pay);if(!o)return;
@@ -163,7 +163,7 @@
   if(!confirm('Xác nhận đã nhận đủ '+money(o.total_vnd)+' bằng '+(method==='cash'?'tiền mặt':'chuyển khoản')+'?'))return;
   pay.disabled=true;paymentFeedback(o.id,'Đang ghi nhận thanh toán…');
   try{
-   const result=await api('/api/staff/orders/'+encodeURIComponent(o.id)+'/confirm-payment',{method:'POST',body:JSON.stringify({confirm:true,paymentMethod:method})});
+   const result=await api('/api/v1/staff/orders/'+encodeURIComponent(o.id)+'/payment-confirmations',{method:'POST',body:JSON.stringify({confirm:true,paymentMethod:method})});
    // The background 5s poll may be in flight; update the visible state immediately.
    o.payment_status='paid';o.paid_amount=result.payment.amount;o.paid_at=new Date().toISOString();
    drawOrders();
@@ -179,10 +179,10 @@
  $('filter').addEventListener('input',drawOrders);
  $('status').addEventListener('change',drawOrders);
  $('reload').addEventListener('click',()=>loadOrders());
- $('logout').addEventListener('click',async()=>{leavePresence();try{await api('/api/logout',{method:'POST',body:'{}'})}finally{location.replace('/login')}});
+ $('logout').addEventListener('click',async()=>{leavePresence();try{await api('/api/v1/session/logout',{method:'POST',body:'{}'})}finally{location.replace('/login')}});
  (async()=>{
   try{
-   const me=await api('/api/me');
+   const me=await api('/api/v1/session');
    if(!me.staff){$('gate').textContent='Bạn cần đăng nhập trước. Mở trang Nhân viên để tiếp tục.';return}
    if(me.workArea||!['admin','waiter','cashier','manager'].includes(me.role)){$('gate').textContent='Vai trò này không có quyền gọi món. Quay lại màn hình Bếp hoặc khu vực được giao.';return}
    state.role=me.role;$('employeeName').textContent=me.displayName||me.username||'Chủ cửa hàng';
