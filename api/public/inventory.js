@@ -78,7 +78,7 @@ function render(){
 async function loadStock(){
  if(loading)return;loading=true;$('#refreshStock').disabled=true;
  try{
-  const response=await request('/api/v1/inventory');
+  const response=await request('/api/inventory');
   if(!Array.isArray(response.items)||!Array.isArray(response.movements))throw Error('Danh sách kho không hợp lệ.');
   stockData=response;synced=true;setReady(true);showError('');
   render();
@@ -153,7 +153,7 @@ $('#itemForm').addEventListener('submit',async event=>{
  setSaving(form,true);feedback('#itemFeedback','Đang lưu nguyên liệu…');
  let createdId=null;
  try{
-  const result=await request('/api/v1/inventory/items',{method:'POST',body:JSON.stringify(body)});
+  const result=await request('/api/inventory/items',{method:'POST',body:JSON.stringify(body)});
   createdId=result.item?.id||null;$('#itemDialog').close();await loadStock();
  }catch(e){feedback('#itemFeedback',e.message)}
  finally{setSaving(form,false)}
@@ -163,7 +163,7 @@ $('#reorderForm').addEventListener('submit',async event=>{
  event.preventDefault();if(saving||!synced||!selectedId)return;
  const form=event.currentTarget,id=selectedId,level=Number(form.elements.namedItem('reorderLevel').value);
  setSaving(form,true);feedback('#reorderFeedback','Đang lưu mức cảnh báo…');
- try{await request('/api/v1/inventory/items/'+encodeURIComponent(id)+'/reorder',{method:'PATCH',body:JSON.stringify({reorderLevel:level})});$('#reorderDialog').close();selectedId=null;await loadStock()}
+ try{await request('/api/inventory/items/'+encodeURIComponent(id)+'/reorder',{method:'PATCH',body:JSON.stringify({reorderLevel:level})});$('#reorderDialog').close();selectedId=null;await loadStock()}
  catch(e){feedback('#reorderFeedback',e.message)}
  finally{setSaving(form,false)}
 });
@@ -177,7 +177,7 @@ $('#movementForm').addEventListener('submit',async event=>{
  }
  setSaving(form,true);feedback('#movementFeedback','Đang lưu giao dịch kho…');
  try{
-  const result=await request('/api/v1/inventory/movements',{method:'POST',body:JSON.stringify(pendingMovement)});
+  const result=await request('/api/inventory/movements',{method:'POST',body:JSON.stringify(pendingMovement)});
   pendingMovement=null;$('#movementDialog').close();selectedId=null;
   await loadStock();
   if(result.movement?.duplicate)showError('Giao dịch này đã được ghi nhận trước đó, hệ thống không tạo thêm phiếu mới.');
@@ -187,7 +187,7 @@ $('#movementForm').addEventListener('submit',async event=>{
  }finally{setSaving(form,false)}
 });
 (async()=>{
- try{const me=await request('/api/v1/session');if(me.role!=='admin')throw Object.assign(Error('Chỉ chủ cửa hàng có quyền xem và điều chỉnh kho.'),{status:403});await loadStock()}
+ try{const me=await request('/api/session');if(me.role!=='admin')throw Object.assign(Error('Chỉ chủ cửa hàng có quyền xem và điều chỉnh kho.'),{status:403});await loadStock()}
  catch(e){setReady(false);$('#syncLabel').textContent='Chưa xác thực';$('#accessGate h2').textContent=e.status===403?'Tài khoản chưa có quyền quản lý kho':'Cần đăng nhập để tiếp tục';$('#accessGate p').textContent=e.message}
 })();
 setInterval(()=>{if(synced&&!document.hidden&&!activeModal())loadStock()},30000);

@@ -22,7 +22,7 @@ function floatAmount(){
 async function loadFloats(){
  if(!authorized||floatLoading)return;floatLoading=true;
  try{
-  const report=await api('/api/v1/service-receipts?area=equipment');floatCatalog=report.floatTypes||{};
+  const report=await api('/api/service-receipts?area=equipment');floatCatalog=report.floatTypes||{};
   if(!Object.hasOwn(floatCatalog,floatType))floatType=Object.keys(floatCatalog)[0]||'';
   $('#floatTypes').innerHTML=Object.entries(floatCatalog).map(([key,item])=>'<button type="button" data-float-type="'+esc(key)+'" class="float-type'+(key===floatType?' active':'')+'" aria-pressed="'+String(key===floatType)+'"><span class="float-symbol" aria-hidden="true">'+(key==='child_vest'?'♧':key==='black_adult'?'◉':'◎')+'</span><b>'+esc(item.name)+'</b><strong>'+vnd(item.price)+'</strong><small>Mỗi áo / phao · mỗi lượt</small></button>').join('');
   $('#floatTypes').querySelectorAll('[data-float-type]').forEach(b=>b.addEventListener('click',()=>{if(floatSaving)return;floatType=b.dataset.floatType;$('#floatTypes').querySelectorAll('[data-float-type]').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',String(x===b))});floatAmount()}));
@@ -40,7 +40,7 @@ $('#floatForm').addEventListener('submit',async e=>{
  e.preventDefault();if(floatSaving||!floatCatalog[floatType])return;
  if(!floatPending)floatPending={service:'float',floatType,quantity:Number($('#floatQuantity').value),paymentMethod:$('#floatPaymentMethod').value,note:$('#floatNote').value,confirmPayment:true,requestId:crypto.randomUUID()};
  floatSaving=true;floatLock();$('#floatSubmit').disabled=true;$('#floatFeedback').textContent='Đang ghi thu…';
- try{const result=await api('/api/v1/service-receipts?area=equipment','POST',floatPending);floatPending=null;$('#floatForm').reset();await loadFloats();$('#floatFeedback').textContent='Đã ghi thu '+vnd(result.amount)+' và cập nhật sổ Thu–chi.';}
+ try{const result=await api('/api/service-receipts?area=equipment','POST',floatPending);floatPending=null;$('#floatForm').reset();await loadFloats();$('#floatFeedback').textContent='Đã ghi thu '+vnd(result.amount)+' và cập nhật sổ Thu–chi.';}
  catch(error){if(error.status&&error.status<500)floatPending=null;$('#floatFeedback').textContent=error.message+(floatPending?' Bấm lại sẽ kiểm tra cùng phiếu thu, không ghi thêm phiếu mới.':'');}
  finally{floatSaving=false;floatAmount();floatLock();}
 });

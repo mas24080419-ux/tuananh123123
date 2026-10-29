@@ -190,7 +190,7 @@
   if(modelState.refreshing)return;
   modelState.refreshing=true;$('archRefresh').disabled=true;
   try{
-   const response=await fetch('/api/v1/management/architecture',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
+   const response=await fetch('/api/management/architecture',{credentials:'same-origin',headers:{Accept:'application/json'},cache:'no-store'});
    if(response.status===401||response.status===403){
     $('archContent').hidden=true;$('archAccess').hidden=false;return;
    }

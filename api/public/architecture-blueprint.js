@@ -192,7 +192,7 @@
   if(!$('bpStage'))return;
   initEvents();
   try{
-   const res=await fetch('/api/v1/management/architecture/blueprint',{credentials:'same-origin',cache:'no-store'});
+   const res=await fetch('/api/management/architecture/blueprint',{credentials:'same-origin',cache:'no-store'});
    if(!res.ok)throw Error('HTTP '+res.status);
    const model=await res.json();
    if(!model?.architecture?.blocks?.length||!model?.schema?.tables?.length)throw Error('Dữ liệu sơ đồ không đầy đủ');

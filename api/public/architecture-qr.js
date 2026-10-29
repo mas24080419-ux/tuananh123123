@@ -46,7 +46,7 @@
    placeholder.textContent='Đang tải mã QR thực từ hệ thống…';
    showStatus('Đang xác minh danh sách QR hoạt động.');
    try {
-    const response=await fetch('/api/v1/tables',{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}});
+    const response=await fetch('/api/tables',{credentials:'same-origin',cache:'no-store',headers:{Accept:'application/json'}});
     if(!response.ok)throw Error(response.status===401||response.status===403?'Cần đăng nhập tài khoản có quyền quản lý QR.':'HTTP '+response.status);
     const result=await response.json();
     if(request!==fetchIndex)return;
