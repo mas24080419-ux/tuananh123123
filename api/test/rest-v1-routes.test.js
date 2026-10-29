@@ -20,6 +20,8 @@ const samples=[
  ['POST','/api/v1/orders/'+uuid+'/payment-confirmations','/api/admin/orders/'+uuid+'/confirm-payment'],
  ['POST','/api/v1/lockers/A1/rentals','/api/lockers/A1/rent'],
  ['POST','/api/v1/lockers/B30/releases','/api/lockers/B30/release'],
+ ['POST','/api/v1/staff/order-presence','/api/staff/order-presence'],
+ ['POST','/api/v1/staff/order-presence/leave','/api/staff/order-presence/leave'],
  ['POST','/api/v1/service-receipts','/api/area/receipts']
 ];
 test('versioned REST routes reuse exact legacy business transactions',()=>{
