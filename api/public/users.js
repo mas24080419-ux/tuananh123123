@@ -6,7 +6,7 @@ let users=[];
 function msg(s,isError=false){$('#notice').textContent=s;$('#notice').className='alert'+(isError?' error':'')}
 async function api(path,options={}){const res=await fetch(path,{credentials:'same-origin',headers:{'Content-Type':'application/json'},...options});const data=await res.json();if(!res.ok)throw Error(data.error||'Máy chủ từ chối yêu cầu');return data}
 async function load(){
- const j=await api('/api/v1/management/users');users=j.users;$('#users').innerHTML=users.map(u=>
+ const j=await api('/api/management/users');users=j.users;$('#users').innerHTML=users.map(u=>
  '<tr><td>'+escapeHTML(u.display_name)+'</td><td>'+escapeHTML(u.username)+'</td><td>'+escapeHTML(roleNames[roleOf(u)]||u.role)+'</td><td>'+escapeHTML(u.active?'Đang hoạt động':'Đã khóa')+'</td><td><button class="secondary" data-role="'+escapeHTML(u.id)+'">Đổi phân công</button><button class="secondary" data-toggle="'+escapeHTML(u.id)+'">'+(u.active?'Khóa':'Mở')+'</button><button class="secondary" data-pwd="'+escapeHTML(u.id)+'">Đặt lại mật khẩu</button></td></tr>').join('')||'<tr><td colspan="5">Chưa có tài khoản riêng. Tạo tài khoản đầu tiên.</td></tr>';
  document.querySelectorAll('[data-role]').forEach(b=>b.addEventListener('click',()=>{
  const u=users.find(x=>x.id===b.dataset.role),panel=$('#assignmentPanel');
@@ -24,13 +24,13 @@ async function load(){
  }));
 }
 async function change(id,data){
- try{await api('/api/v1/management/users/'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify(data)});msg('Đã cập nhật và thu hồi phiên đăng nhập cũ.');await load()}catch(e){msg(e.message,true)}
+ try{await api('/api/management/users/'+encodeURIComponent(id),{method:'PATCH',body:JSON.stringify(data)});msg('Đã cập nhật và thu hồi phiên đăng nhập cũ.');await load()}catch(e){msg(e.message,true)}
 }
 $('#createUser').addEventListener('submit',async e=>{
  e.preventDefault();const form=e.currentTarget,button=form.querySelector('button[type=submit]');button.disabled=true;
- try{await api('/api/v1/management/users',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(form)))});form.reset();msg('Tạo nhân viên thành công.');await load()}catch(error){msg(error.message,true)}finally{button.disabled=false}
+ try{await api('/api/management/users',{method:'POST',body:JSON.stringify(Object.fromEntries(new FormData(form)))});form.reset();msg('Tạo nhân viên thành công.');await load()}catch(error){msg(error.message,true)}finally{button.disabled=false}
 });
-(async()=>{try{const me=await api('/api/v1/session');if(me.role!=='admin'){location.replace('/admin');return}await load();msg('Đã đồng bộ danh sách nhân viên từ Neon.')}catch(e){msg(e.message,true)}})();
+(async()=>{try{const me=await api('/api/session');if(me.role!=='admin'){location.replace('/admin');return}await load();msg('Đã đồng bộ danh sách nhân viên từ Neon.')}catch(e){msg(e.message,true)}})();
 
 (function simplifiedStaff(){
  const columns=document.getElementById('usersColumns');
