@@ -92,9 +92,9 @@ async function load(){
  if(!from||!to||from>to){status.textContent='Vui lòng chọn khoảng ngày hợp lệ.';status.className='fi-status is-error';return}
  loadBtn.disabled=true;status.className='fi-status';status.textContent='Đang tổng hợp báo cáo tài chính…';
  try{
-  const me=await fetch('/api/v1/session',{credentials:'same-origin',cache:'no-store'}).then(r=>r.json());
+  const me=await fetch('/api/session',{credentials:'same-origin',cache:'no-store'}).then(r=>r.json());
   if(me.role!=='admin'){location.assign('/login');return}
-  const response=await fetch('/api/v1/finance/reports/profitability?from='+encodeURIComponent(from)+'&to='+encodeURIComponent(to),{credentials:'same-origin',cache:'no-store'});
+  const response=await fetch('/api/finance/reports/profitability?from='+encodeURIComponent(from)+'&to='+encodeURIComponent(to),{credentials:'same-origin',cache:'no-store'});
   const data=await response.json();if(!response.ok)throw Error(data.error||'Không tải được mô hình tài chính.');
   report=data;render();$('#fiContent').hidden=false;$('#fiExport').disabled=false;
   status.textContent='Báo cáo '+from+' → '+to+' · dữ liệu PostgreSQL · chỉ đọc.';
@@ -153,7 +153,7 @@ async function refreshCostRates(){
  const container=$('#fiRateForms'),status=$('#fiRateStatus');if(!container)return;
  status.textContent='Đang tải định mức...';
  try{
-  const response=await fetch('/api/v1/services/cost-rates',{credentials:'same-origin',cache:'no-store'});
+  const response=await fetch('/api/services/cost-rates',{credentials:'same-origin',cache:'no-store'});
   const json=await response.json();
   if(!response.ok)throw Error(json.error||'Không lấy được giá vốn dịch vụ.');
   container.replaceChildren();
@@ -174,7 +174,7 @@ async function refreshCostRates(){
      if(number.value.trim()==='')throw Error('Vui lòng điền định mức.');
      const value=Number(number.value);
      if(!Number.isSafeInteger(value)||value<0||value>1000000000)throw Error('Vui lòng nhập giá vốn nguyên VND từ 0 đến 1 tỷ.');
-     const response=await fetch('/api/v1/services/cost-rates',{
+     const response=await fetch('/api/services/cost-rates',{
       method:'PUT',credentials:'same-origin',headers:{'Content-Type':'application/json'},
       body:JSON.stringify({serviceKey:service.key,unitCost:value})
      });
@@ -193,7 +193,7 @@ async function refreshIngredientCosts(){
  const container=$('#fiIngredientForms'),status=$('#fiIngredientStatus');
  if(!container)return;status.textContent='Đang tải giá vốn nguyên liệu...';
  try{
-  const response=await fetch('/api/v1/inventory/ingredient-costs',{credentials:'same-origin',cache:'no-store'});
+  const response=await fetch('/api/inventory/ingredient-costs',{credentials:'same-origin',cache:'no-store'});
   const json=await response.json();if(!response.ok)throw Error(json.error||'Không lấy được danh sách nguyên liệu.');
   container.replaceChildren();
   for(const ingredient of json.ingredients||[]){
@@ -213,7 +213,7 @@ async function refreshIngredientCosts(){
    const update=async value=>{
     save.disabled=true;clear.disabled=true;hint.textContent='Đang lưu...';
     try{
-     const response=await fetch('/api/v1/inventory/ingredient-costs',{method:'PUT',credentials:'same-origin',
+     const response=await fetch('/api/inventory/ingredient-costs',{method:'PUT',credentials:'same-origin',
       headers:{'Content-Type':'application/json'},body:JSON.stringify({ingredientId:ingredient.id,unitCost:value})});
      const updated=await response.json();if(!response.ok)throw Error(updated.error||'Không lưu được.');
      hint.textContent=value===null?'Đã trở về giá vốn nhập kho.':'Đã lưu '+fmt(value)+' / '+ingredient.unit+'. Chỉ áp dụng món mới.';

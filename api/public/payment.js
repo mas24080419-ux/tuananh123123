@@ -23,8 +23,8 @@ function display(account){
 }
 async function init(){
  try{
-  const me=await api('/api/v1/session');if(me.role!=='admin'){location.replace('/login');return}
-  const r=await api('/api/v1/payments/receiving-banks');
+  const me=await api('/api/session');if(me.role!=='admin'){location.replace('/login');return}
+  const r=await api('/api/payments/receiving-banks');
   for(const account of r.accounts||[])if(label[account.bankBin])display(account);
   $('#sepayWebhookUrl').textContent=location.origin+'/api/webhooks/sepay';
   $('#sepayState').textContent=!r.sepay?.configured?'Chưa cấu hình khóa webhook — chỉ QR và xác nhận thủ công':
@@ -38,7 +38,7 @@ document.querySelectorAll('.receivingBankForm').forEach(form=>form.addEventListe
  const account={bankBin:form.dataset.bankBin,accountNumber:form.elements.namedItem('accountNumber').value.trim(),
  accountName:form.elements.namedItem('accountName').value.trim(),enabled:form.elements.namedItem('enabled').checked};
  try{
-  const r=await api('/api/v1/payments/receiving-banks',{method:'PUT',body:JSON.stringify(account)});
+  const r=await api('/api/payments/receiving-banks',{method:'PUT',body:JSON.stringify(account)});
   display(r.account);
   notice('Đã lưu '+label[account.bankBin]+' trên PostgreSQL. Hãy quét QR kiểm tra thông tin.');
  }catch(e){notice(e.message,true)}finally{btn.disabled=false}
@@ -47,7 +47,7 @@ async function refreshSandbox(){
  const status=$('#sepaySandboxStatus'),feed=$('#sepaySandboxEvents');
  if(!status||!feed)return;
  try{
-  const r=await api('/api/v1/payments/sepay-sandbox');
+  const r=await api('/api/payments/sepay-sandbox');
   $('#sepaySandboxUrl').textContent=location.origin+'/api/webhooks/sepay-sandbox';
   status.textContent=!r.configured?'Chưa kết nối — cần cấu hình khóa HMAC sandbox trên Render.':
     'Đã sẵn sàng nhận webhook sandbox. Tổng '+r.events.length+' thông báo đã xác thực kể từ khi server khởi động.';
@@ -70,7 +70,7 @@ async function refreshTransactions(){
  const status=$('#bankTxStatus'),list=$('#bankTxList');
  if(!list)return;
  try{
-  const result=await api('/api/v1/payments/bank-transactions');
+  const result=await api('/api/payments/bank-transactions');
   const rows=result.transactions||[];
   status.textContent=rows.length?'Đang hiển thị '+rows.length+' thông báo giao dịch gần nhất.':'Chưa có thông báo giao dịch nào từ webhook đã xác thực.';
   const labels={needs_review:'Cần đối soát',verified_test:'Đã khớp · Chế độ thử nghiệm',auto_paid:'Đã tự xác nhận',already_paid:'Đơn đã được xác nhận trước đó'};

@@ -74,8 +74,8 @@ function drawFinancialCharts(report){
 async function load(){
  if(busy)return;busy=true;
  try{const params=new URLSearchParams({from:$('#dateFrom').value,to:$('#dateTo').value});
-  const [operations,finance]=await Promise.all([api('/api/v1/finance/overview?'+params),
-    api('/api/v1/finance/reports/analytics?'+params).catch(e=>({error:e.message}))]);
+  const [operations,finance]=await Promise.all([api('/api/finance/overview?'+params),
+    api('/api/finance/reports/analytics?'+params).catch(e=>({error:e.message}))]);
   data=operations;render();drawFinancialCharts(finance);
   notice('');
  }catch(e){notice(e.message,'error');if(e.status===403||e.status===401)location.assign('/admin')}
@@ -182,8 +182,8 @@ if(financeMode==='income'||financeMode==='expense'){
 }
 const analyticsFold=$('#financeAnalyticsFold');
 analyticsFold.open=false;
-$('#financeForm').addEventListener('submit',e=>{e.preventDefault();submit(e.currentTarget,'/api/v1/finance/entries',x=>({...x,amount:Number(x.amount)}))});
+$('#financeForm').addEventListener('submit',e=>{e.preventDefault();submit(e.currentTarget,'/api/finance/entries',x=>({...x,amount:Number(x.amount)}))});
 $('#dateFilter').addEventListener('submit',e=>{e.preventDefault();load()});
 $('#refresh').addEventListener('click',load);
-(async()=>{try{const m=await api('/api/v1/session');if(m.role!=='admin'){location.assign('/admin');return}await load()}catch(e){notice(e.message,'error')}})();
+(async()=>{try{const m=await api('/api/session');if(m.role!=='admin'){location.assign('/admin');return}await load()}catch(e){notice(e.message,'error')}})();
 
