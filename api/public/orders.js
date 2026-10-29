@@ -90,7 +90,7 @@ async function submitPayment(button){
  const opener=row.querySelector('.mark-paid');
  if(opener)opener.disabled=true;
  try{
-  const result=await request('/api/admin/orders/'+encodeURIComponent(order.id)+'/confirm-payment',
+  const result=await request('/api/v1/orders/'+encodeURIComponent(order.id)+'/payment-confirmations',
    {method:'POST',body:JSON.stringify({confirm:true,paymentMethod})});
   const matched=(latest?.orders||[]).find(o=>o.id===order.id);
   if(matched){matched.payment_status='paid';matched.paid_amount=result.payment.amount;matched.payment_method=paymentMethod;matched.paid_at=new Date().toISOString()}
@@ -161,7 +161,7 @@ async function reload(announce=true){
  loading=true;
  try{
  const params=new URLSearchParams({from:$('#from').value,to:$('#to').value});
- const data=await request('/api/admin/summary?'+params.toString());
+ const data=await request('/api/v1/management/summary?'+params.toString());
  latest=data;
  const s=data.summary||{};
  for(const [key,v] of [['#totalOrders',s.order_count],['#orderValue',cash(s.order_value)],['#collected',cash(s.collected)],['#outstanding',cash(s.outstanding)],['#unpaidOrders',s.unpaid_orders],['#paidCash',cash(s.paid_cash)],['#paidTransfer',cash(s.paid_transfer)],['#paidUnknown',cash(s.paid_unknown)],['#paidOrders',s.paid_orders]])text(key,v??'0');
