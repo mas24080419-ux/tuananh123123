@@ -20,3 +20,52 @@ jobs:
         run: find api -name '*.js' -type f -print0 | xargs -0 -n 1 node --check
       - name: Run server and frontend regression tests
         run: node --test api/test/*.test.js
+
+  staging-postgres-e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 14
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: staging_only
+          POSTGRES_DB: saleshub_staging
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d saleshub_staging"
+          --health-interval 3s --health-timeout 4s --health-retries 15
+    env:
+      DATABASE_URL: postgresql://postgres:staging_only@127.0.0.1:5432/saleshub_staging
+      STAFF_PASSWORD: staging-only-staff-not-production
+      SESSION_SECRET: staging-only-secret-do-not-use-live-32
+      OWNER_BOOTSTRAP_EMAIL: ci-owner@example.test
+      OWNER_BOOTSTRAP_PASSWORD: staging-owner-password-only
+      PORT: '32109'
+      PILOT_MODE: 'false'
+      SEPAY_AUTO_CONFIRM: 'false'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install isolated staging dependencies
+        run: npm install --prefix api --no-audit --no-fund
+      - name: Start SalesHub against ephemeral PostgreSQL
+        run: |
+          node api/server.js > /tmp/saleshub-staging.log 2>&1 &
+          echo $! > /tmp/saleshub-staging.pid
+          for i in $(seq 1 50); do
+            if curl --silent --fail http://127.0.0.1:32109/api/v1/health | grep -q '"database":"ready"'; then
+              exit 0
+            fi
+            sleep 1
+          done
+          cat /tmp/saleshub-staging.log
+          exit 1
+      - name: Verify REST security, QR, inventory, payment and 60 concurrent clients
+        run: node api/test/staging-postgres-e2e.js
+      - name: Report staging service logs if failed
+        if: failure()
+        run: tail -150 /tmp/saleshub-staging.log || true
