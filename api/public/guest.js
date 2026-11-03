@@ -8,8 +8,10 @@ const tableToken = location.pathname.match(/^\/t\/([0-9a-f]{48})$/)?.[1] || null
 const cart = new Map();
 const itemNotes = new Map(); // one note per dish, persisted on the order line
 let products = [], table = null, mode = 'pilot', sending = false, confirmed = false;
+let selectedCategory = 'all';
 const guestSearch = window.SalesHubSmartSearch.create({
-  root: '#guestSmartSearch', mode: 'guest',
+  root: '#guestSmartSearch', mode: 'guest', compact: true,
+  placeholder: 'Tìm món ăn, nước uống...',
   onChange: () => render(),
   onPick: item => changeQuantity(item.id, 1)
 });
@@ -111,11 +113,17 @@ function restoreSavedOrderIds() {
   } catch (_) {}
   savedOrderIds = [...new Set(savedOrderIds)].slice(0,8);
   $('#ordersCountBadge').textContent = String(savedOrderIds.length);
+  const quickCount = $('#quickOrdersCount');
+  quickCount.textContent = String(savedOrderIds.length);
+  quickCount.classList.toggle('hidden', savedOrderIds.length === 0);
 }
 function rememberOrderId(orderId) {
   if (!isUUID(orderId)) return;
   savedOrderIds = [orderId,...savedOrderIds.filter(id=>id!==orderId)].slice(0,8);
   $('#ordersCountBadge').textContent = String(savedOrderIds.length);
+  const quickCount = $('#quickOrdersCount');
+  quickCount.textContent = String(savedOrderIds.length);
+  quickCount.classList.toggle('hidden', savedOrderIds.length === 0);
   try { if(savedOrdersKey) localStorage.setItem(savedOrdersKey,JSON.stringify(savedOrderIds)); } catch (_) {}
   recentOrderId=orderId;
   try { if(recentKey) sessionStorage.setItem(recentKey,orderId); } catch (_) {}
@@ -323,17 +331,39 @@ function wireSteppers() {
     });
   });
 }
+function renderGuestCategories() {
+  const host = $('#guestCategoryNav');
+  const cats = [...new Set(products.map(p => String(p.category || 'Khác').trim()).filter(Boolean))];
+  if (selectedCategory !== 'all' && !cats.includes(selectedCategory)) selectedCategory = 'all';
+  const scroll = host.scrollLeft;
+  const choices = [['all', 'Tất cả'], ...cats.map(cat => [cat, cat])];
+  host.replaceChildren(...choices.map(([value, label]) => {
+    const button = document.createElement('button');
+    button.type = 'button';
+    button.dataset.category = value;
+    button.setAttribute('aria-pressed', String(selectedCategory === value));
+    button.textContent = label;
+    return button;
+  }));
+  host.scrollLeft = scroll;
+}
 function render() {
   document.dispatchEvent(new Event('saleshub:qr-activity'));
   const {count, subtotal} = totalStats();
+  renderGuestCategories();
+  const visibleProducts = guestSearch.getResults().filter(p => selectedCategory === 'all' || p.category === selectedCategory);
+  $('#menuSectionTitle').textContent = selectedCategory === 'all' ? 'Thực đơn' : selectedCategory;
+  $('#menuSectionCaption').textContent = visibleProducts.length + ' món phù hợp · Chạm món hoặc bấm + để thêm vào giỏ';
   const groups = {};
-  for (const p of guestSearch.getResults()) (groups[p.category] ??= []).push(p);
+  for (const p of visibleProducts) (groups[p.category] ??= []).push(p);
   $('#menuList').innerHTML = Object.entries(groups).map(([category, list]) => `
     <h3 class="qr-category">${escapeHTML(category)}</h3>
     <div class="qr-menu-grid">${list.map(p => `<article class="qr-menu-card${cart.get(p.id) ? ' is-selected' : ''}${availableQty(p)===0?' is-sold-out':''}">
       <button type="button" class="qr-card-hit" data-select-item="${p.id}" aria-label="Chọn ${escapeHTML(p.name)}, thêm một phần vào giỏ hàng" aria-controls="cartList" ${availableQty(p)===0?'disabled':''}></button>
-      <div class="qr-menu-head"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div><h3>${escapeHTML(p.name)}</h3><small>${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small></div></div>
-      <div class="qr-menu-bottom"><span class="qr-money">${money(p.price)}</span>${quantityUI(p, cart.get(p.id)||0)}</div><div class="qr-stock-indicator">${stockBadge(p)}</div>
+      <div class="qr-menu-topline">
+        <div class="qr-menu-head"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div class="qr-menu-text"><h3>${escapeHTML(p.name)}</h3><div class="qr-menu-meta">${escapeHTML(p.category)} · ${stockBadge(p)}</div><strong class="qr-money">${money(p.price)}</strong></div></div>
+        <div class="qr-menu-action">${quantityUI(p, cart.get(p.id)||0)}</div>
+      </div>
       ${cart.get(p.id)?itemNoteField(p,'menu'):''}
     </article>`).join('')}</div>`).join('') || '<p class="qr-empty">Không có món phù hợp. Hãy thử tên hoặc danh mục khác.</p>';
   $('#cartList').innerHTML = [...cart.entries()].map(([id, qty]) => {
@@ -344,7 +374,7 @@ function render() {
   $('#cartTitleCount').textContent = `${count} món`;
   $('#subtotal').textContent = money(subtotal);
   $('#total').textContent = money(subtotal);
-  $('#viewCartLabel').textContent = `Xem giỏ hàng · ${count} món`;
+  $('#viewCartLabel').textContent = `Xem giỏ hàng (${count} món)`;
   submit.disabled = sending || !count || !table || confirmed || hasUnavailableCart();
   note.disabled = sending || Boolean(pendingPayload) || confirmed;
   syncPaymentMethod();
@@ -491,6 +521,13 @@ async function init() {
     $('#notice').textContent = `Không tải được thực đơn: ${error.message}`;
   }
 }
+$('#guestCategoryNav').addEventListener('click', event => {
+  const button = event.target.closest('button[data-category]');
+  if (!button) return;
+  selectedCategory = button.dataset.category;
+  render();
+});
+$('#quickOrders').addEventListener('click',()=>showView('orders'));
 $('#menuTab').addEventListener('click',()=>showView('menu'));
 $('#cartTab').addEventListener('click',()=>showView('cart'));
 $('#viewCart').addEventListener('click',()=>showView('cart'));
