@@ -6,6 +6,14 @@ const base='/api/management/core/';
 if(location.hash==='#customers')location.replace('/admin/customers'); // Keep old bookmarks working.
 let data={},busy=false;
 const menuPending=new Set();
+const adminSearch=window.SalesHubSmartSearch.create({
+ root:'#adminSmartSearch', mode:'admin',
+ onChange:()=>{if(Array.isArray(data.catalog))render()},
+ onPick:item=>{
+  const button=[...document.querySelectorAll('#menuRows [data-edit="menu"]')].find(el=>el.dataset.id===String(item.id));
+  if(button)button.click();
+ }
+});
 function note(text,error=false){const el=$('#notice');el.textContent=text;el.className='notice'+(error?' error':'')}
 async function api(path,options={}){
  const res=await fetch(base+path,{credentials:'same-origin',...options,headers:{'Content-Type':'application/json',...(options.headers||{})}});
@@ -22,11 +30,12 @@ async function refresh(){
    api('catalog'),api('tables'),api('audit?limit=100')
   ]);
   data={catalog:catalog.items,tables:tables.tables,audit:audit.events};
+  adminSearch.setItems(data.catalog);
   render();note('Đã đồng bộ dữ liệu quản trị từ PostgreSQL.');
  }catch(e){note(e.message,true)}finally{busy=false}
 }
 function render(){
- $('#menuRows').innerHTML=data.catalog.map(x=>'<tr><td><b>'+esc(x.name)+'</b><div class="muted">'+esc(x.sku||'')+'</div></td><td>'+esc(x.category)+'<div class="muted">'+(x.station==='bar'?'Bar':'Bếp')+'</div></td><td>'+vnd(x.price)+'</td><td><span class="pill '+(!x.active?'warn':'')+'">'+(x.active?'Đang bán':'Tạm ẩn')+'</span></td><td><button class="secondary" data-edit="menu" data-id="'+esc(x.id)+'">Sửa</button><button class="secondary" data-toggle="'+esc(x.id)+'">'+(x.active?'Ngừng bán':'Mở bán')+'</button></td></tr>').join('')||empty(5,'Chưa có món nào.');
+ $('#menuRows').innerHTML=adminSearch.getResults().map(x=>'<tr><td><b>'+esc(x.name)+'</b><div class="muted">'+esc(x.sku||'')+'</div></td><td>'+esc(x.category)+'<div class="muted">'+(x.station==='bar'?'Bar':'Bếp')+'</div></td><td>'+vnd(x.price)+'</td><td><span class="pill '+(!x.active?'warn':'')+'">'+(x.active?'Đang bán':'Tạm ẩn')+'</span></td><td><button class="secondary" data-edit="menu" data-id="'+esc(x.id)+'">Sửa</button><button class="secondary" data-toggle="'+esc(x.id)+'">'+(x.active?'Ngừng bán':'Mở bán')+'</button></td></tr>').join('')||empty(5,adminSearch.getQuery()?'Không tìm thấy món phù hợp.':'Chưa có món nào.');
  if(window.TT6MenuMobile)window.TT6MenuMobile.render(data.catalog);
  $('#tableRows').innerHTML=data.tables.map(t=>'<tr><td><b>'+esc(t.name)+'</b></td><td>'+esc(t.zone)+'</td><td>'+t.capacity+'</td><td><select data-table-status="'+esc(t.id)+'"><option value="available" '+(t.service_status==='available'?'selected':'')+'>Trống</option><option value="occupied" '+(t.service_status==='occupied'?'selected':'')+'>Có khách</option><option value="reserved" '+(t.service_status==='reserved'?'selected':'')+'>Đã đặt</option><option value="cleaning" '+(t.service_status==='cleaning'?'selected':'')+'>Đang dọn</option></select></td><td><a href="/t/'+esc(t.token)+'" target="_blank" rel="noopener">Mở QR</a><div class="muted">'+(t.active?'QR hoạt động':'QR đang khóa')+'</div></td><td><button data-table-active="'+esc(t.id)+'" class="secondary">'+(t.active?'Khóa QR':'Mở QR')+'</button><button data-table-rotate="'+esc(t.id)+'" class="secondary">Đổi QR</button></td></tr>').join('')||empty(6,'Chưa có bàn.');
  const setRows=(id,rows,cols)=>{$(id).innerHTML=rows||empty(cols,'Chưa có dữ liệu.')};
