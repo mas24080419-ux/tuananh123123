@@ -254,6 +254,21 @@ function restorePending() {
   } catch (_) { return false; }
 }
 function art(p) { return p.station === 'bar' ? '🥤' : /phở|bún/i.test(p.name) ? '🍜' : /cơm/i.test(p.name) ? '🍚' : /khoai/i.test(p.name) ? '🍟' : '🍽️'; }
+// Use actual menu photos supplied with the reference design only for matching
+// product names. The DB remains the source of truth for prices and inventory.
+function menuPhoto(p) {
+  const input = p.image_url || p.imageUrl || null;
+  const stored = typeof input === 'string' && (/^https:\/\//i.test(input) || /^\/[a-zA-Z0-9/_\-.]+$/.test(input))
+    ? input : null;
+  const src = stored || window.TT6MenuPhotos?.imageFor(p);
+  const fallback = '<span class="qr-food-fallback" aria-hidden="true">' + art(p) + '</span>';
+  return src
+    ? '<div class="qr-food-art has-image">' + fallback +
+        '<img src="' + escapeHTML(src) + '" alt="' + escapeHTML(p.name) +
+        '" loading="lazy" decoding="async"></div>'
+    : '<div class="qr-food-art">' + fallback + '</div>';
+}
+const displayVND = value => new Intl.NumberFormat('vi-VN', {maximumFractionDigits: 0}).format(Number(value)||0) + ' đ';
 function hidden(sel, isHidden) { $(sel).classList.toggle('hidden', isHidden); }
 function showError(message, retry = false) {
   $('#submitError').textContent = message;
@@ -317,6 +332,12 @@ function wireSteppers() {
     button.disabled = sending || Boolean(pendingPayload) || confirmed || !item || (cart.get(item.id)||0)>=availableQty(item);
     button.addEventListener('click', () => changeQuantity(button.dataset.selectItem, 1));
   });
+  document.querySelectorAll('.qr-food-art.has-image img').forEach(img => {
+    img.addEventListener('error', () => {
+      img.parentElement?.classList.remove('has-image');
+      img.remove();
+    }, {once:true});
+  });
   document.querySelectorAll('[data-item-note]').forEach(field=>{
     field.disabled=sending || Boolean(pendingPayload) || confirmed;
     field.addEventListener('input',()=>{
@@ -351,29 +372,30 @@ function render() {
   document.dispatchEvent(new Event('saleshub:qr-activity'));
   const {count, subtotal} = totalStats();
   renderGuestCategories();
-  const visibleProducts = guestSearch.getResults().filter(p => selectedCategory === 'all' || p.category === selectedCategory);
-  $('#menuSectionTitle').textContent = selectedCategory === 'all' ? 'Thực đơn' : selectedCategory;
+  const searching = Boolean(guestSearch.getQuery());
+  const visibleProducts = guestSearch.getResults().filter(p => searching || selectedCategory === 'all' || p.category === selectedCategory);
+  $('#menuSectionTitle').textContent = searching ? 'Kết quả tìm kiếm' : (selectedCategory === 'all' ? 'Thực đơn' : selectedCategory);
   $('#menuSectionCaption').textContent = visibleProducts.length + ' món phù hợp · Chạm món hoặc bấm + để thêm vào giỏ';
   const groups = {};
   for (const p of visibleProducts) (groups[p.category] ??= []).push(p);
   $('#menuList').innerHTML = Object.entries(groups).map(([category, list]) => `
-    <h3 class="qr-category">${escapeHTML(category)}</h3>
+    ${!searching && selectedCategory !== "all" ? "" : `<h3 class="qr-category">${escapeHTML(category)}</h3>`}
     <div class="qr-menu-grid">${list.map(p => `<article class="qr-menu-card${cart.get(p.id) ? ' is-selected' : ''}${availableQty(p)===0?' is-sold-out':''}">
       <button type="button" class="qr-card-hit" data-select-item="${p.id}" aria-label="Chọn ${escapeHTML(p.name)}, thêm một phần vào giỏ hàng" aria-controls="cartList" ${availableQty(p)===0?'disabled':''}></button>
       <div class="qr-menu-topline">
-        <div class="qr-menu-head"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div class="qr-menu-text"><h3>${escapeHTML(p.name)}</h3><div class="qr-menu-meta">${escapeHTML(p.category)} · ${stockBadge(p)}</div><strong class="qr-money">${money(p.price)}</strong></div></div>
+        <div class="qr-menu-head">${menuPhoto(p)}<div class="qr-menu-text"><h3 title="${escapeHTML(p.name)}">${escapeHTML(p.name)}</h3><div class="qr-menu-meta">${escapeHTML(p.category)} · ${stockBadge(p)}</div><strong class="qr-money">${displayVND(p.price)}</strong></div></div>
         <div class="qr-menu-action">${quantityUI(p, cart.get(p.id)||0)}</div>
       </div>
       ${cart.get(p.id)?itemNoteField(p,'menu'):''}
     </article>`).join('')}</div>`).join('') || '<p class="qr-empty">Không có món phù hợp. Hãy thử tên hoặc danh mục khác.</p>';
   $('#cartList').innerHTML = [...cart.entries()].map(([id, qty]) => {
     const p = products.find(x => x.id === id);
-    return p ? `<article class="qr-cart-card"><div class="qr-cart-main"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div class="qr-cart-info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category)} · ${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small><span class="qr-money">${money(qty*p.price)}</span></div>${quantityUI(p, qty)}</div>${itemNoteField(p,'cart')}</article>` : '';
+    return p ? `<article class="qr-cart-card"><div class="qr-cart-main">${menuPhoto(p)}<div class="qr-cart-info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category)} · ${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small><span class="qr-money">${money(qty*p.price)}</span></div>${quantityUI(p, qty)}</div>${itemNoteField(p,'cart')}</article>` : '';
   }).join('') || '<p class="qr-empty">Giỏ hàng trống. Quay lại thực đơn để chọn món.</p>';
   $('#cartCountBadge').textContent = count;
   $('#cartTitleCount').textContent = `${count} món`;
-  $('#subtotal').textContent = money(subtotal);
-  $('#total').textContent = money(subtotal);
+  $('#subtotal').textContent = displayVND(subtotal);
+  $('#total').textContent = displayVND(subtotal);
   $('#viewCartLabel').textContent = `Xem giỏ hàng (${count} món)`;
   submit.disabled = sending || !count || !table || confirmed || hasUnavailableCart();
   note.disabled = sending || Boolean(pendingPayload) || confirmed;
@@ -495,6 +517,10 @@ async function init() {
     const data = await api(`/api/tables/${tableToken}/menu`);
     if (!data?.table || !Array.isArray(data.items)) throw Error('Phản hồi thực đơn không hợp lệ.');
     table = data.table; products = data.items.filter(p=>p.active!==false); mode = data.mode;
+    // Match the requested reference view: show the drinks tab by default
+    // only when this real menu contains such a category.
+    const drink = products.find(p => /đồ uống|do uong|giải khát|giai khat/i.test(p.category));
+    if (drink) selectedCategory = drink.category;
     guestSearch.setItems(products);
     try{
       const config=await api('/api/payments/recipients?token='+encodeURIComponent(tableToken));
