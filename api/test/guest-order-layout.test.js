@@ -48,3 +48,32 @@ test('compact search hides only the guest suggestions, preserving admin suggesti
  assert(css.includes('.guest-orange .tt6-smart-search-compact .tt6-search-body'));
  assert(!css.includes('#adminSmartSearch'));
 });
+
+test('QR cards display bundled user-provided product photos and never overwrite live menu pricing',()=>{
+ const html=read('guest.html');
+ const js=read('guest.js');
+ const css=read('guest-order-v2.css');
+ const photos=require('../public/qr-menu-photos');
+ assert(html.includes('/qr-menu-photos.js'),'bundled photos must load before guest controller');
+ assert(html.indexOf('/qr-menu-photos.js') < html.indexOf('/guest.js'));
+ for(const name of ['Coca Cola','Pepsi','Bia Tươi Hạ Long / Tiger Bạc',
+  'Trà Đào Cam Sả Tươi','Mực Một Nắng Nướng Sa Tế','Tôm Sú Hấp Nước Dừa']) {
+  const src=photos.imageFor({name});
+  assert(src && src.startsWith('data:image/webp;base64,UklG'), name);
+ }
+ assert.equal(photos.imageFor({name:'Phở bò đặc biệt'}), null,
+  'do not attach incorrect product photos to unrelated menu items');
+ assert(js.includes('function menuPhoto(p)'));
+ assert(js.includes('window.TT6MenuPhotos?.imageFor(p)'));
+ assert(js.includes('menuPhoto(p)'), 'real photo thumbnails must be rendered');
+ assert(js.includes('displayVND(p.price)'), 'price must come from the live catalog');
+ assert(js.includes('availableQty(item)'), 'stock check must be preserved');
+ assert(css.includes('.qr-food-art img'));
+ assert(css.includes('object-fit:cover'));
+});
+test('selected drink category is not duplicated in the menu list',()=>{
+ const js=read('guest.js');
+ assert(js.includes('selectedCategory !== "all"'), 'hide repeated subgroup heading');
+ assert(js.includes("drink.category"), 'select real drink group from live menu');
+ assert(js.includes("searching || selectedCategory === 'all'"), 'search globally even with a tab selected');
+});
