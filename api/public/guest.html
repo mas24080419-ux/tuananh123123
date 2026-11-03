@@ -7,6 +7,7 @@
   <meta name="description" content="Tắm Tráng 6 — Quét QR, chọn món và gọi món ngay tại bàn.">
   <title>Tắm Tráng 6 · Gọi món tại bàn</title>
   <link rel="stylesheet" href="/style.css?v=stock-guard-20261028-1">
+  <link rel="stylesheet" href="/smart-search.css?v=20261103-1">
 <link rel="icon" href="/tam-trang-6-logo.svg" type="image/svg+xml"></head>
 <body class="guest-orange">
 <div class="qr-app">
@@ -25,6 +26,7 @@
     </div>
     <section id="menuPane" role="tabpanel" aria-labelledby="menuTab">
       <div class="qr-section-head"><h2>Khám phá thực đơn</h2><p>Chạm vào món để thêm vào giỏ, hoặc dùng nút + / − để điều chỉnh số lượng.</p></div>
+      <div id="guestSmartSearch" aria-label="Tìm kiếm món ăn và đồ uống"></div>
       <div id="menuList"><p class="qr-empty">Đang tải thực đơn…</p></div>
     </section>
     <section id="cartPane" class="hidden" role="tabpanel" aria-labelledby="cartTab">
@@ -105,7 +107,8 @@
     </div>
   </div>
 </div>
-<script src="/guest.js?v=rest-v1-rollout-20261029"></script>
+<script src="/smart-search.js?v=20261103-1"></script>
+<script src="/guest.js?v=20261103-smartsearch-1"></script>
 <script src="/qr-presence-client.js?v=qr-selecting-20261028-v1"></script>
 </body>
 </html>
