@@ -1,0 +1,42 @@
+/* Premium search shared by QR guests and admin. Scoped: does not affect the POS sidebar or other forms. */
+.tt6-smart-search{--ss-accent:#4f46e5;--ss-ink:#172b44;--ss-muted:#64748b;width:100%;min-width:0;margin:14px 0 18px;padding:15px;background:#fff;border:1px solid #e5e9f2;border-radius:21px;box-shadow:0 8px 24px rgba(27,43,85,.055);font-family:"Plus Jakarta Sans",Inter,system-ui,-apple-system,sans-serif;color:var(--ss-ink)}
+.tt6-smart-search *, .tt6-smart-search *::before,.tt6-smart-search *::after{box-sizing:border-box}
+.tt6-search-field{display:flex;align-items:center;gap:9px;min-height:49px;border:2px solid #a5b4fc;border-radius:28px;padding:4px 5px 4px 14px;background:#fff;color:var(--ss-accent);box-shadow:0 3px 10px rgba(79,70,229,.07)}
+.tt6-search-field:focus-within{border-color:var(--ss-accent);outline:3px solid rgba(99,102,241,.13);outline-offset:1px}
+.tt6-search-input{width:100%;min-width:0;flex:1;appearance:none;border:0!important;outline:0!important;box-shadow:none!important;background:transparent!important;padding:6px 0!important;margin:0!important;color:var(--ss-ink)!important;font-family:inherit!important;font-size:15px!important;font-weight:600!important;line-height:1.45!important}
+.tt6-search-input::placeholder{color:#94a3b8;font-weight:400}
+.tt6-search-input::-webkit-search-cancel-button{display:none}
+.tt6-smart-search button{cursor:pointer;font-family:inherit;line-height:1.3}
+.tt6-search-clear{display:grid;place-items:center;flex:none;width:29px;height:29px;padding:0!important;border:0!important;border-radius:50%;background:#f1f5f9!important;color:#64748b!important;font-size:21px!important}
+.tt6-search-clear[hidden]{display:none!important}
+.tt6-search-submit{display:grid;place-items:center;flex:none;width:39px;height:39px;padding:0!important;border:0!important;border-radius:50%;background:#4f46e5!important;color:#fff!important;box-shadow:0 3px 9px #4f46e533}
+.tt6-search-body{padding:2px 1px 0}
+.tt6-search-heading{display:flex;align-items:center;gap:7px;margin:13px 0 8px;font-size:12px;color:#1e293b}
+.tt6-search-heading>span{font-size:16px;color:#6366f1}.tt6-search-heading strong{font-weight:800}
+.tt6-search-count{margin-left:auto;color:var(--ss-muted);font-size:11px;font-weight:500}
+.tt6-search-results{display:grid;gap:5px}
+.tt6-search-product{display:flex;align-items:center;gap:10px;width:100%;min-width:0;border:1px solid transparent!important;border-radius:13px!important;padding:7px 6px!important;background:#fff!important;color:var(--ss-ink)!important;text-align:left!important;box-shadow:none!important}
+.tt6-search-product:hover,.tt6-search-product:focus-visible{background:#f8faff!important;border-color:#e4e8f7!important}
+.tt6-search-product:disabled{cursor:not-allowed;opacity:.55}
+.tt6-search-symbol{display:grid;place-items:center;flex:none;width:45px;height:45px;border:1px solid #e8edf3;border-radius:13px;background:#f6f8fc;font-size:24px}
+.tt6-search-info{display:flex;flex:1;min-width:0;flex-direction:column;gap:4px}.tt6-search-info strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:800}.tt6-search-info small{font-size:11px;color:#64748b}
+.tt6-search-price{margin-left:auto;white-space:nowrap;font-size:12px;font-weight:800;color:#254668}
+.tt6-search-suggestions,.tt6-search-categories{display:flex;flex-wrap:wrap;gap:7px}
+.tt6-search-chip{min-height:31px;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;padding:7px 11px!important;border:0!important;border-radius:999px!important;background:#eef2ff!important;color:#4338ca!important;box-shadow:none!important;font-size:12px!important;font-weight:650!important}
+.tt6-search-categories .tt6-search-chip{background:#f1f5f9!important;color:#475569!important}
+.tt6-search-chip:hover,.tt6-search-chip:focus-visible{filter:brightness(.96)}
+.tt6-search-empty{margin:4px 0 8px;color:#64748b;font-size:12px}
+.tt6-search-muted{font-size:12px;color:#64748b}
+#adminSmartSearch{margin:10px 0 14px}
+#mobileMenuSmartSearch{display:none}
+@media(max-width:760px){
+ .tt6-smart-search{margin:12px 0 16px;padding:12px;border-radius:18px;box-shadow:0 3px 14px rgba(15,23,42,.045)}
+ #adminSmartSearch{display:none}
+ #mobileMenuSmartSearch{display:block!important}
+ .tt6-search-product{gap:8px}
+ .tt6-search-symbol{width:40px;height:40px;font-size:20px}
+ .tt6-search-price{font-size:11px}
+ .tt6-search-chip{font-size:11px!important}
+ .tt6-search-input{font-size:16px!important}
+}
+@media(prefers-reduced-motion:reduce){.tt6-smart-search *{scroll-behavior:auto!important;transition:none!important;animation:none!important}}

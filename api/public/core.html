@@ -3,7 +3,7 @@
 <script defer src="/pos-sidebar.js?v=20261026-iphone-fix"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="/menu-mobile.css?v=20261028-native-menu-v1">
+<link rel="stylesheet" href="/menu-mobile.css?v=20261028-native-menu-v1"><link rel="stylesheet" href="/smart-search.css?v=20261103-1">
 </head><body>
 <div class="shell"><aside class="tt6-sidebar" id="tt6-sidebar" aria-label="Thanh điều hướng Tắm Tráng 6"><nav class="tt6-fallback-nav" aria-label="Điều hướng nhanh"><a href="/admin">Tổng quan</a><a href="/admin/core">Món & bàn</a><a href="/admin/operations">Thu–chi & kho</a><a href="/admin/users">Nhân viên</a><a href="/admin/payment">Thanh toán</a></nav></aside>
 <main><span class="eyebrow">TẮM TRÁNG 6 / QUẢN LÝ THỰC ĐƠN</span><h1>Thực đơn và bàn & QR</h1><p class="muted">Quản lý món, giá bán và mã QR của từng bàn. Hồ sơ khách hàng đã được chuyển sang một trang riêng.</p>
@@ -17,10 +17,10 @@
 <div class="pair"><label>Giá bán (VND)<input name="price" type="number" min="0" step="1" required></label><label>SKU / Mã nội bộ<input name="sku" maxlength="40"></label></div>
 <label>Mô tả<textarea name="description" maxlength="400" rows="2"></textarea></label><button type="submit">Lưu món lên Neon</button><button class="secondary" type="reset">Hủy chỉnh sửa</button></form>
 <p class="muted">Giá mới áp dụng cho đơn mới; đơn cũ vẫn giữ đơn giá chụp tại lúc đặt.</p></div>
-<div class="panel"><h2>Danh mục món</h2><div class="scroll"><table><thead><tr><th>Tên</th><th>Nhóm & bếp</th><th>Giá</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="menuRows"></tbody></table></div>
+<div class="panel"><h2>Danh mục món</h2><div id="adminSmartSearch" aria-label="Tìm kiếm quản lý món ăn"></div><div class="scroll"><table><thead><tr><th>Tên</th><th>Nhóm & bếp</th><th>Giá</th><th>Trạng thái</th><th>Thao tác</th></tr></thead><tbody id="menuRows"></tbody></table></div>
 <div id="mobileMenuApp" class="tt6-menu-mobile" aria-label="Danh mục món trên điện thoại">
  <header class="tt6-menu-mobile-head"><div class="tt6-menu-mobile-title"><span class="tt6-menu-mobile-icon" aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M4 3v7a4 4 0 0 0 4 4v7M8 3v7M12 3v7a4 4 0 0 1-4 4M18 3v18m0-18c5 1 6 9 0 10"/></svg></span><div><h2>Thực đơn</h2><p>Quản lý món ăn và đồ uống</p></div></div><button id="mobileMenuAdd" type="button" class="tt6-menu-add"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg><span>Thêm món</span></button></header>
- <label class="tt6-menu-search" for="mobileMenuSearch"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m16 16 4.5 4.5"/></svg><input id="mobileMenuSearch" type="search" placeholder="Tìm tên món, mã món..." autocomplete="off" aria-label="Tìm món ăn, đồ uống hoặc mã món"></label>
+ <div id="mobileMenuSmartSearch" aria-label="Tìm kiếm thực đơn trên điện thoại"></div>
  <div id="mobileMenuFilters" class="tt6-menu-filters" role="group" aria-label="Lọc thực đơn"></div>
  <div class="tt6-menu-list-header"><span id="mobileMenuCount" role="status">Đang tải thực đơn…</span><small>Chạm món để chỉnh sửa</small></div>
  <div id="mobileMenuList" class="tt6-menu-mobile-list" aria-live="polite"></div>
@@ -33,5 +33,6 @@
 <section class="section" id="audit"><div class="panel"><h2>Nhật ký thay đổi Backoffice</h2>
 <div class="scroll"><table><thead><tr><th>Thời điểm</th><th>Vai trò</th><th>Đối tượng</th><th>Hành động</th><th>ID</th></tr></thead><tbody id="auditRows"></tbody></table></div></div></section>
 </main></div>
-<script src="/menu-mobile.js?v=20261028-native-menu-v1"></script>
-<script src="/core.js?v=20261028-customer-split-v1"></script></body></html>
+<script src="/smart-search.js?v=20261103-1"></script>
+<script src="/menu-mobile.js?v=20261103-smartsearch-1"></script>
+<script src="/core.js?v=20261103-smartsearch-1"></script></body></html>

@@ -6,8 +6,16 @@
  const list=document.getElementById('mobileMenuList');
  const filters=document.getElementById('mobileMenuFilters');
  const count=document.getElementById('mobileMenuCount');
- const input=document.getElementById('mobileMenuSearch');
  let catalog=[],filter='all',editingDisabled=false;
+ const smartSearch=window.SalesHubSmartSearch.create({
+  root:'#mobileMenuSmartSearch', mode:'admin',
+  onChange:()=>draw(),
+  onPick:item=>{
+   filter='all';draw();
+   const button=[...list.querySelectorAll('[data-edit="menu"]')].find(el=>el.dataset.id===String(item.id));
+   if(button)button.click();
+  }
+ });
  const escapeHTML=value=>String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
  const price=new Intl.NumberFormat('vi-VN',{maximumFractionDigits:0});
  const svgPath={
@@ -37,9 +45,7 @@
   if(filter==='active'&&!item.active)return false;
   if(filter==='hidden'&&item.active)return false;
   if(filter.startsWith('cat:')&&item.category!==filter.slice(4))return false;
-  const query=input.value.trim().toLocaleLowerCase('vi-VN');
-  if(!query)return true;
-  return [item.name,item.sku,item.category,item.station==='bar'?'Bar':'Bếp'].some(x=>String(x??'').toLocaleLowerCase('vi-VN').includes(query));
+  return window.SalesHubSmartSearch.matches(item,smartSearch.getQuery());
  }
  function itemHTML(item){
   const category=String(item.category||'Khác');
@@ -70,7 +76,6 @@
   const button=event.target.closest('button[data-filter]');
   if(!button)return;filter=button.dataset.filter;draw();
  });
- input.addEventListener('input',draw);
  document.getElementById('mobileMenuAdd').addEventListener('click',()=>{
   if(editingDisabled)return;
   const button=document.querySelector('#menu .ui-form-toggle');
@@ -85,7 +90,7 @@
   },0);
  });
  window.TT6MenuMobile={
-  render(items){catalog=Array.isArray(items)?items:[];draw()},
+  render(items){catalog=Array.isArray(items)?items:[];smartSearch.setItems(catalog);draw()},
   isEnabled(){return window.matchMedia('(max-width:760px)').matches},
   setBusy(busy){editingDisabled=busy;document.getElementById('mobileMenuAdd').disabled=busy}
  };

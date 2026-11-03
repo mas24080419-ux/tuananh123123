@@ -8,6 +8,11 @@ const tableToken = location.pathname.match(/^\/t\/([0-9a-f]{48})$/)?.[1] || null
 const cart = new Map();
 const itemNotes = new Map(); // one note per dish, persisted on the order line
 let products = [], table = null, mode = 'pilot', sending = false, confirmed = false;
+const guestSearch = window.SalesHubSmartSearch.create({
+  root: '#guestSmartSearch', mode: 'guest',
+  onChange: () => render(),
+  onPick: item => changeQuantity(item.id, 1)
+});
 // Read-only, anonymous, client-side telemetry for the owner architecture view.
 // This is a browser activity indicator, not a server-confirmed sales record.
 window.saleshubQrActivity = () => ({
@@ -322,7 +327,7 @@ function render() {
   document.dispatchEvent(new Event('saleshub:qr-activity'));
   const {count, subtotal} = totalStats();
   const groups = {};
-  for (const p of products) (groups[p.category] ??= []).push(p);
+  for (const p of guestSearch.getResults()) (groups[p.category] ??= []).push(p);
   $('#menuList').innerHTML = Object.entries(groups).map(([category, list]) => `
     <h3 class="qr-category">${escapeHTML(category)}</h3>
     <div class="qr-menu-grid">${list.map(p => `<article class="qr-menu-card${cart.get(p.id) ? ' is-selected' : ''}${availableQty(p)===0?' is-sold-out':''}">
@@ -330,7 +335,7 @@ function render() {
       <div class="qr-menu-head"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div><h3>${escapeHTML(p.name)}</h3><small>${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small></div></div>
       <div class="qr-menu-bottom"><span class="qr-money">${money(p.price)}</span>${quantityUI(p, cart.get(p.id)||0)}</div><div class="qr-stock-indicator">${stockBadge(p)}</div>
       ${cart.get(p.id)?itemNoteField(p,'menu'):''}
-    </article>`).join('')}</div>`).join('') || '<p class="qr-empty">Chưa có món trong thực đơn.</p>';
+    </article>`).join('')}</div>`).join('') || '<p class="qr-empty">Không có món phù hợp. Hãy thử tên hoặc danh mục khác.</p>';
   $('#cartList').innerHTML = [...cart.entries()].map(([id, qty]) => {
     const p = products.find(x => x.id === id);
     return p ? `<article class="qr-cart-card"><div class="qr-cart-main"><div class="qr-food-art" aria-hidden="true">${art(p)}</div><div class="qr-cart-info"><h3>${escapeHTML(p.name)}</h3><small>${escapeHTML(p.category)} · ${p.station === 'bar' ? 'Quầy bar' : 'Nhà bếp'}</small><span class="qr-money">${money(qty*p.price)}</span></div>${quantityUI(p, qty)}</div>${itemNoteField(p,'cart')}</article>` : '';
@@ -444,9 +449,12 @@ async function refreshMenuAvailability(force=false){
   if(!Array.isArray(data.items))return;
   const updated=data.items.filter(p=>p.active!==false);
   const changed=force||updated.length!==products.length||updated.some((p,i)=>{
-   const old=products[i];return !old||p.id!==old.id||p.available_quantity!==old.available_quantity||p.inventory_configured!==old.inventory_configured;
+   const old=products[i];return !old||p.id!==old.id||p.available_quantity!==old.available_quantity||
+    p.inventory_configured!==old.inventory_configured||p.name!==old.name||
+    p.price!==old.price||p.category!==old.category||p.station!==old.station;
   });
   products=updated;
+  guestSearch.setItems(products);
   if(changed&&document.activeElement?.tagName!=='TEXTAREA')render();
  }catch(_){/* The server always checks stock again at order commit. */}
  finally{menuRefreshBusy=false}
@@ -457,6 +465,7 @@ async function init() {
     const data = await api(`/api/tables/${tableToken}/menu`);
     if (!data?.table || !Array.isArray(data.items)) throw Error('Phản hồi thực đơn không hợp lệ.');
     table = data.table; products = data.items.filter(p=>p.active!==false); mode = data.mode;
+    guestSearch.setItems(products);
     try{
       const config=await api('/api/payments/recipients?token='+encodeURIComponent(tableToken));
       bankRecipients=Array.isArray(config.recipients)?config.recipients:(config.recipient?[config.recipient]:[]);
