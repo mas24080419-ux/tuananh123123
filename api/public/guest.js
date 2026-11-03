@@ -449,7 +449,9 @@ async function refreshMenuAvailability(force=false){
   if(!Array.isArray(data.items))return;
   const updated=data.items.filter(p=>p.active!==false);
   const changed=force||updated.length!==products.length||updated.some((p,i)=>{
-   const old=products[i];return !old||p.id!==old.id||p.available_quantity!==old.available_quantity||p.inventory_configured!==old.inventory_configured;
+   const old=products[i];return !old||p.id!==old.id||p.available_quantity!==old.available_quantity||
+    p.inventory_configured!==old.inventory_configured||p.name!==old.name||
+    p.price!==old.price||p.category!==old.category||p.station!==old.station;
   });
   products=updated;
   guestSearch.setItems(products);
