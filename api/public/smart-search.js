@@ -41,9 +41,10 @@
     const fieldLabel = mode === 'admin' ? 'Tìm món để quản lý' : 'Tìm món trong thực đơn';
     const icon = '<svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" aria-hidden="true"><circle cx="10.7" cy="10.7" r="6.8"/><path d="m16 16 5 5"/></svg>';
     root.classList.add('tt6-smart-search');
+    if (options.compact) root.classList.add('tt6-smart-search-compact');
     root.innerHTML = '<div class="tt6-search-field">' + icon +
       '<input class="tt6-search-input" type="search" autocomplete="off" maxlength="100" aria-label="' + fieldLabel + '" placeholder="' +
-      (mode === 'admin' ? 'Tìm tên món, mã SKU, danh mục...' : 'Tìm phở, trà, nước uống...') + '">' +
+      (options.placeholder || (mode === 'admin' ? 'Tìm tên món, mã SKU, danh mục...' : 'Tìm phở, trà, nước uống...')) + '">' +
       '<button class="tt6-search-clear" type="button" data-search-action="clear" aria-label="Xóa tìm kiếm" hidden>×</button>' +
       '<button class="tt6-search-submit" type="button" data-search-action="submit" aria-label="Tìm kiếm">' + icon + '</button></div>' +
       '<div class="tt6-search-body"><div class="tt6-search-heading"><span>✦</span><strong>' +
